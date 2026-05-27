@@ -1,24 +1,48 @@
 import Dashboard from "@/components/dashboard/Dashboard";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
   let courses: any[] = [];
+  let notes: any[] = [];
   let dbError = false;
 
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
   try {
-    const supabase = await createSupabaseServerClient();
-    const { data, error } = await supabase
+    // Fetch courses
+    const { data: coursesData, error: coursesError } = await supabase
       .from("courses")
       .select("*")
       .order("created_at", { ascending: true });
 
-    if (error) {
-      console.error("Error querying courses:", error.message);
+    if (coursesError) {
+      console.error("Error querying courses:", coursesError.message);
       dbError = true;
     } else {
-      courses = data || [];
+      courses = coursesData || [];
+    }
+
+    // Fetch notes
+    const { data: notesData, error: notesError } = await supabase
+      .from("notes")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (notesError) {
+      console.error("Error querying notes:", notesError.message);
+    } else {
+      notes = notesData || [];
     }
   } catch (err) {
     console.error("Database connection exception:", err);
@@ -28,7 +52,9 @@ export default async function Home() {
   return (
     <Dashboard 
       initialCourses={courses} 
-      dbError={dbError} 
+      initialNotes={notes}
+      dbError={dbError}
+      user={user}
     />
   );
 }

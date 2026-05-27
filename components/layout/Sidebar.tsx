@@ -10,10 +10,11 @@ import {
   ChevronLeft, 
   ChevronRight, 
   GraduationCap,
-  Sparkles
+  Sparkles,
+  StickyNote
 } from "lucide-react";
 
-export type TabId = "dashboard" | "courses" | "analytics" | "settings";
+export type TabId = "dashboard" | "courses" | "analytics" | "notes" | "settings";
 
 interface SidebarProps {
   activeTab: TabId;
@@ -30,6 +31,7 @@ const navItems: NavItem[] = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "courses", label: "My Courses", icon: BookOpen },
   { id: "analytics", label: "Analytics", icon: BarChart3 },
+  { id: "notes", label: "Notes", icon: StickyNote },
   { id: "settings", label: "Settings", icon: Settings },
 ];
 

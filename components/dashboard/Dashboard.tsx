@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Sidebar, { TabId } from "@/components/layout/Sidebar";
 import BentoGrid from "@/components/layout/BentoGrid";
 import { Course } from "@/types/course";
+import { Note } from "@/types/note";
 import { 
   Sparkles, 
   BookOpen, 
@@ -20,13 +21,17 @@ import {
 } from "lucide-react";
 import ActivityChart from "./ActivityChart";
 import CourseCard from "./CourseCard";
+import NotesView from "./NotesView";
+import LogoutButton from "@/components/auth/LogoutButton";
 
 interface DashboardProps {
   initialCourses: Course[];
+  initialNotes: Note[];
   dbError: boolean;
+  user?: any;
 }
 
-export default function Dashboard({ initialCourses, dbError }: DashboardProps) {
+export default function Dashboard({ initialCourses, initialNotes, dbError, user }: DashboardProps) {
   const [activeTab, setActiveTab] = useState<TabId>("dashboard");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -71,6 +76,8 @@ export default function Dashboard({ initialCourses, dbError }: DashboardProps) {
         return "My Enrolled Courses";
       case "analytics":
         return "Performance Analytics";
+      case "notes":
+        return "Study Notes";
       case "settings":
         return "Portal Settings";
     }
@@ -98,16 +105,18 @@ export default function Dashboard({ initialCourses, dbError }: DashboardProps) {
               AURA
             </span>
           </div>
-          <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-500 flex items-center justify-center text-[10px] font-bold text-white">
-            JD
+          <div className="flex items-center gap-3">
+            <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-500 flex items-center justify-center text-[10px] font-bold text-white">
+              {user?.user_metadata?.full_name?.charAt(0) || "JD"}
+            </div>
+            <LogoutButton />
           </div>
         </header>
 
-        {/* Desktop Header bar */}
         <header className="hidden md:flex items-center justify-between h-20 px-8 shrink-0 border-b border-white/5 bg-zinc-950/5 backdrop-blur-sm">
           <div className="flex flex-col">
             <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-              {getTabTitle()}
+              Welcome {user?.user_metadata?.full_name || "Student"}
               <Sparkles className="w-4 h-4 text-violet-400 animate-pulse" />
             </h1>
             <p className="text-[11px] text-zinc-500 font-medium">AURA Student Portal &bull; Term 2</p>
@@ -116,6 +125,7 @@ export default function Dashboard({ initialCourses, dbError }: DashboardProps) {
             <span className="text-xs text-zinc-400 bg-white/5 border border-white/5 px-3 py-1.5 rounded-full font-semibold">
               Live Connection
             </span>
+            <LogoutButton />
           </div>
         </header>
 
@@ -210,7 +220,12 @@ export default function Dashboard({ initialCourses, dbError }: DashboardProps) {
             </div>
           )}
 
-          {/* 4. Settings View */}
+          {/* 4. Notes View */}
+          {activeTab === "notes" && (
+            <NotesView initialNotes={initialNotes} />
+          )}
+
+          {/* 5. Settings View */}
           {activeTab === "settings" && (
             <div className="max-w-4xl mx-auto glass-card rounded-3xl overflow-hidden relative">
               <div className="absolute inset-0 bg-mesh-violet opacity-45 pointer-events-none" />
@@ -227,7 +242,7 @@ export default function Dashboard({ initialCourses, dbError }: DashboardProps) {
                       <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Full Name</label>
                       <input 
                         type="text" 
-                        defaultValue="John Doe" 
+                        defaultValue={user?.user_metadata?.full_name || "John Doe"} 
                         className="w-full bg-zinc-950/40 border border-white/5 rounded-2xl py-2.5 px-4 text-sm text-white focus:outline-none focus:border-violet-500/50" 
                       />
                     </div>
@@ -235,7 +250,7 @@ export default function Dashboard({ initialCourses, dbError }: DashboardProps) {
                       <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Email Address</label>
                       <input 
                         type="email" 
-                        defaultValue="john.doe@aura.edu" 
+                        defaultValue={user?.email || "john.doe@aura.edu"} 
                         className="w-full bg-zinc-950/40 border border-white/5 rounded-2xl py-2.5 px-4 text-sm text-white focus:outline-none focus:border-violet-500/50" 
                       />
                     </div>

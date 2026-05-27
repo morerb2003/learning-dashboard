@@ -74,7 +74,7 @@ export default function ActivityChart() {
       </div>
 
       <div className="flex-1 w-full h-[180px] min-h-[180px] relative">
-        <ResponsiveContainer width="99%" height="100%">
+        <ResponsiveContainer width="100%" height={180}>
           <AreaChart
             data={studyData}
             margin={{ top: 5, right: 5, left: -25, bottom: 0 }}
