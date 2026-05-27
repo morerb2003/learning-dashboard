@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { 
   Atom, 
@@ -45,7 +46,8 @@ export default function CourseCard({ course, index }: CourseCardProps) {
   const meshClass = meshClasses[index % meshClasses.length];
 
   return (
-    <motion.article
+    <Link href={`/course/${course.id}`} className="block">
+      <motion.article
       className="group relative rounded-3xl overflow-hidden glass-card p-6 flex flex-col justify-between h-52 cursor-pointer"
       whileHover={{
         scale: 1.015,
@@ -109,5 +111,6 @@ export default function CourseCard({ course, index }: CourseCardProps) {
         </div>
       </div>
     </motion.article>
+    </Link>
   );
 }

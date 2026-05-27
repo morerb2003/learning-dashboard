@@ -13,10 +13,16 @@ export async function createClient() {
           return cookieStore.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(
-            ({ name, value, options }) =>
+          try {
+            // This will throw when called from a Server Component — that's fine.
+            // In Route Handlers and Server Actions it works correctly.
+            cookiesToSet.forEach(({ name, value, options }) =>
               cookieStore.set(name, value, options)
-          );
+            );
+          } catch {
+            // Intentionally ignored: cookies can only be set in Route Handlers
+            // or Server Actions, not from Server Components.
+          }
         },
       },
     }
