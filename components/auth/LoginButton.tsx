@@ -21,12 +21,12 @@ export default function LoginButton() {
     setIsLoading(true);
     setError("");
     const supabase = createClient();
-    const next = new URLSearchParams(window.location.search).get("next") || "/";
+    const origin = window.location.origin;
 
     const { error: authError } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
+        redirectTo: `${origin}/auth/callback`,
       },
     });
 
