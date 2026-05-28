@@ -15,34 +15,48 @@ const GoogleIcon = () => (
 
 export default function LoginButton() {
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleLogin = async () => {
     setIsLoading(true);
+    setError("");
     const supabase = createClient();
+    const next = new URLSearchParams(window.location.search).get("next") || "/";
 
-    await supabase.auth.signInWithOAuth({
+    const { error: authError } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
       },
     });
+
+    if (authError) {
+      setError(authError.message);
+      setIsLoading(false);
+    }
   };
 
   return (
-    <button
-      onClick={handleLogin}
-      disabled={isLoading}
-      className="group relative w-full flex items-center justify-center gap-3 rounded-xl bg-white px-6 py-3.5 text-sm font-bold text-zinc-900 shadow-lg shadow-white/5 transition-all duration-200 hover:bg-zinc-100 hover:shadow-white/10 active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100"
-    >
-      {isLoading ? (
-        <div className="w-5 h-5 rounded-full border-2 border-zinc-900/20 border-t-zinc-900 animate-spin" />
-      ) : (
-        <GoogleIcon />
+    <div className="space-y-2">
+      {error && (
+        <p className="rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-300">
+          {error}
+        </p>
       )}
-      <span>{isLoading ? "Connecting..." : "Continue with Google"}</span>
-      
-      {/* Subtle glow effect on hover */}
-      <div className="absolute inset-0 rounded-xl ring-1 ring-black/5 group-hover:ring-black/10 transition-all pointer-events-none" />
-    </button>
+      <button
+        onClick={handleLogin}
+        disabled={isLoading}
+        className="group relative w-full flex items-center justify-center gap-3 rounded-xl bg-white px-6 py-3.5 text-sm font-bold text-zinc-900 shadow-lg shadow-white/5 transition-all duration-200 hover:bg-zinc-100 hover:shadow-white/10 active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100"
+      >
+        {isLoading ? (
+          <div className="w-5 h-5 rounded-full border-2 border-zinc-900/20 border-t-zinc-900 animate-spin" />
+        ) : (
+          <GoogleIcon />
+        )}
+        <span>{isLoading ? "Connecting..." : "Continue with Google"}</span>
+        
+        <div className="absolute inset-0 rounded-xl ring-1 ring-black/5 group-hover:ring-black/10 transition-all pointer-events-none" />
+      </button>
+    </div>
   );
 }

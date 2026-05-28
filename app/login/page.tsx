@@ -1,4 +1,4 @@
-import LoginButton from "@/components/auth/LoginButton";
+import LoginForm from "@/components/auth/LoginForm";
 import { GraduationCap, Sparkles } from "lucide-react";
 
 export default function LoginPage() {
@@ -26,8 +26,8 @@ export default function LoginPage() {
         </p>
 
         {/* Action Area */}
-        <div className="w-full space-y-4">
-          <LoginButton />
+        <div className="w-full">
+          <LoginForm />
         </div>
 
         <p className="mt-8 text-[11px] text-zinc-500 font-medium tracking-wide">

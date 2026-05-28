@@ -23,7 +23,19 @@ export default function NotesView({ initialNotes }: NotesViewProps) {
 
     setIsSubmitting(true);
     
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      console.error("Unable to identify note owner:", userError);
+      setIsSubmitting(false);
+      return;
+    }
+
     const newNotePartial = {
+      user_id: user.id,
       title,
       content,
     };

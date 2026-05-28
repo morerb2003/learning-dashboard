@@ -50,6 +50,7 @@ export default async function Home() {
     const { data: notesData, error: notesError } = await supabase
       .from("notes")
       .select("*")
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
     if (notesError) {
