@@ -19,12 +19,17 @@ export type TabId = "dashboard" | "courses" | "analytics" | "notes" | "settings"
 interface SidebarProps {
   activeTab: TabId;
   setActiveTab: (tab: TabId) => void;
+  profile: {
+    full_name: string;
+    email: string;
+    role: string;
+  };
 }
 
 interface NavItem {
   id: TabId;
   label: string;
-  icon: React.ComponentType<any>;
+  icon: React.ComponentType<{ className?: string }>;
 }
 
 const navItems: NavItem[] = [
@@ -35,7 +40,7 @@ const navItems: NavItem[] = [
   { id: "settings", label: "Settings", icon: Settings },
 ];
 
-export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
+export default function Sidebar({ activeTab, setActiveTab, profile }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   return (
@@ -151,12 +156,12 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
           <div className={`mt-auto border-t border-white/5 pt-4 ${isCollapsed ? "flex justify-center" : "px-3"}`}>
             <div className="flex items-center gap-3 overflow-hidden">
               <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-500 shrink-0 flex items-center justify-center font-bold text-white text-xs shadow-md shadow-cyan-500/10">
-                JD
+                {profile.full_name.charAt(0)}
               </div>
               {!isCollapsed && (
                 <div className="flex flex-col whitespace-nowrap overflow-hidden">
-                  <span className="text-xs font-semibold text-white">John Doe</span>
-                  <span className="text-[10px] text-zinc-500 truncate">john.doe@aura.edu</span>
+                  <span className="text-xs font-semibold text-white truncate max-w-[130px]">{profile.full_name}</span>
+                  <span className="text-[10px] text-zinc-500 truncate max-w-[130px]">{profile.email}</span>
                 </div>
               )}
             </div>

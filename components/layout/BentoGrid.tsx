@@ -19,6 +19,7 @@ import ActivityChart from "@/components/dashboard/ActivityChart";
 
 interface BentoGridProps {
   courses: Course[];
+  fullName?: string;
 }
 
 // Framer Motion variants for staggered entrance
@@ -58,7 +59,7 @@ const hoverTransition = {
   damping: 20
 };
 
-export default function BentoGrid({ courses }: BentoGridProps) {
+export default function BentoGrid({ courses, fullName }: BentoGridProps) {
   const [streakClicked, setStreakClicked] = useState(false);
 
   // Fallback courses if database returns empty
@@ -135,10 +136,10 @@ export default function BentoGrid({ courses }: BentoGridProps) {
           </div>
 
           <h2 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight mt-4">
-            Welcome back, <span className="bg-clip-text text-transparent bg-gradient-to-r from-violet-400 via-indigo-200 to-cyan-300">Alex</span>!
+            Welcome back, <span className="bg-clip-text text-transparent bg-gradient-to-r from-violet-400 via-indigo-200 to-cyan-300">{fullName || "Student"}</span>!
           </h2>
           <p className="text-zinc-400 text-xs md:text-sm mt-2 max-w-md font-medium leading-relaxed">
-            You're making incredible progress this week. Your learning velocity is up 12% compared to last week. Let's finish today's checklist!
+            You&apos;re making incredible progress this week. Your learning velocity is up 12% compared to last week. Let&apos;s finish today&apos;s checklist!
           </p>
         </div>
 

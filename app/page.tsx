@@ -1,13 +1,14 @@
 import Dashboard from "@/components/dashboard/Dashboard";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { Course } from "@/types/course";
+import { Note } from "@/types/note";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  let courses: any[] = [];
-  let notes: any[] = [];
-  let dbError = false;
+  let courses: Course[] = [];
+  let notes: Note[] = [];
 
   const supabase = await createClient();
 
@@ -19,7 +20,20 @@ export default async function Home() {
     redirect("/login");
   }
 
+  let profile = null;
+
   try {
+    // Fetch user profile
+    const { data: profileData, error: profileError } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .single();
+
+    if (!profileError) {
+      profile = profileData;
+    }
+
     // Fetch courses
     const { data: coursesData, error: coursesError } = await supabase
       .from("courses")
@@ -28,7 +42,6 @@ export default async function Home() {
 
     if (coursesError) {
       console.error("Error querying courses:", coursesError.message);
-      dbError = true;
     } else {
       courses = coursesData || [];
     }
@@ -46,15 +59,19 @@ export default async function Home() {
     }
   } catch (err) {
     console.error("Database connection exception:", err);
-    dbError = true;
   }
+
+  const resolvedProfile = profile || {
+    full_name: user.user_metadata?.full_name || user.email?.split("@")[0] || "Student",
+    email: user.email || "student@aura.edu",
+    role: "student",
+  };
 
   return (
     <Dashboard 
       initialCourses={courses} 
       initialNotes={notes}
-      dbError={dbError}
-      user={user}
+      profile={resolvedProfile}
     />
   );
 }

@@ -16,7 +16,7 @@ import {
 import { Course } from "@/types/course";
 
 // Icon mapping to safely render Lucide icons dynamically based on db strings
-const iconMap: Record<string, React.ComponentType<any>> = {
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Atom: Atom,
   React: Atom,
   Network: Network,

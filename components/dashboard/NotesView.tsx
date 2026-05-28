@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { StickyNote, Plus, Trash2, Send } from "lucide-react";
+import { StickyNote, Trash2, Send } from "lucide-react";
 import { Note } from "@/types/note";
 import { createClient } from "@/lib/supabase/client";
 

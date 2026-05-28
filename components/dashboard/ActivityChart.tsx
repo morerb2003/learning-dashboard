@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { 
   AreaChart, 
   Area, 
@@ -22,44 +22,41 @@ const studyData = [
   { day: "Sun", hours: 4.8, modules: 3 },
 ];
 
-export default function ActivityChart() {
-  const [isMounted, setIsMounted] = useState(false);
+interface TooltipPayloadEntry {
+  value: number;
+  payload: { day: string; hours: number; modules: number };
+}
 
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: TooltipPayloadEntry[];
+}
 
-  if (!isMounted) {
+// Custom tooltip defined outside the component to avoid recreation on every render
+function CustomTooltip({ active, payload }: CustomTooltipProps) {
+  if (active && payload && payload.length) {
     return (
-      <div className="w-full h-full min-h-[220px] flex items-center justify-center text-zinc-500 text-sm">
-        Loading chart analytics...
+      <div className="glass-card px-4 py-3 rounded-2xl border border-white/10 shadow-2xl relative z-50">
+        <p className="text-xs font-bold text-violet-400 uppercase tracking-widest">{payload[0].payload.day}</p>
+        <div className="mt-1 space-y-0.5">
+          <p className="text-sm font-bold text-white flex items-center gap-1.5">
+            <span>{payload[0].value} hrs</span>
+            <span className="text-zinc-500 font-normal">focused</span>
+          </p>
+          <p className="text-[10px] text-zinc-400">
+            Completed {payload[0].payload.modules} modules
+          </p>
+        </div>
       </div>
     );
   }
+  return null;
+}
 
-  // Custom tooltips matching the dashboard glass aesthetics
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="glass-card px-4 py-3 rounded-2xl border border-white/10 shadow-2xl relative z-50">
-          <p className="text-xs font-bold text-violet-400 uppercase tracking-widest">{payload[0].payload.day}</p>
-          <div className="mt-1 space-y-0.5">
-            <p className="text-sm font-bold text-white flex items-center gap-1.5">
-              <span>{payload[0].value} hrs</span>
-              <span className="text-zinc-500 font-normal">focused</span>
-            </p>
-            <p className="text-[10px] text-zinc-400">
-              Completed {payload[0].payload.modules} modules
-            </p>
-          </div>
-        </div>
-      );
-    }
-    return null;
-  };
+export default function ActivityChart() {
 
   return (
-    <div className="w-full h-full min-h-[220px] flex flex-col justify-between">
+    <div className="w-full h-full min-h-[220px] flex flex-col justify-between" suppressHydrationWarning>
       <div className="flex items-center justify-between mb-4">
         <div>
           <span className="text-[10px] uppercase font-bold tracking-widest text-violet-400">Study Velocity</span>

@@ -7,12 +7,8 @@ import { Course } from "@/types/course";
 import { Note } from "@/types/note";
 import { 
   Sparkles, 
-  BookOpen, 
-  BarChart3, 
-  Settings as SettingsIcon,
   GraduationCap,
   ArrowUpRight,
-  TrendingUp,
   Search,
   Filter,
   User,
@@ -24,14 +20,19 @@ import CourseCard from "./CourseCard";
 import NotesView from "./NotesView";
 import LogoutButton from "@/components/auth/LogoutButton";
 
+export interface Profile {
+  full_name: string;
+  email: string;
+  role: string;
+}
+
 interface DashboardProps {
   initialCourses: Course[];
   initialNotes: Note[];
-  dbError: boolean;
-  user?: any;
+  profile: Profile;
 }
 
-export default function Dashboard({ initialCourses, initialNotes, dbError, user }: DashboardProps) {
+export default function Dashboard({ initialCourses, initialNotes, profile }: DashboardProps) {
   const [activeTab, setActiveTab] = useState<TabId>("dashboard");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -67,22 +68,6 @@ export default function Dashboard({ initialCourses, initialNotes, dbError, user 
     }
   ];
 
-  // Helper to render active view title
-  const getTabTitle = () => {
-    switch (activeTab) {
-      case "dashboard":
-        return "Learning Dashboard";
-      case "courses":
-        return "My Enrolled Courses";
-      case "analytics":
-        return "Performance Analytics";
-      case "notes":
-        return "Study Notes";
-      case "settings":
-        return "Portal Settings";
-    }
-  };
-
   const filteredCourses = courses.filter(course => 
     course.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -90,7 +75,7 @@ export default function Dashboard({ initialCourses, initialNotes, dbError, user 
   return (
     <div className="flex min-h-screen bg-zinc-950/20 text-zinc-100">
       {/* Sidebar Navigation */}
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} profile={profile} />
 
       {/* Main Panel Content Area */}
       <main className="flex-1 flex flex-col h-screen overflow-y-auto no-scrollbar pb-24 md:pb-6">
@@ -107,7 +92,7 @@ export default function Dashboard({ initialCourses, initialNotes, dbError, user 
           </div>
           <div className="flex items-center gap-3">
             <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-500 flex items-center justify-center text-[10px] font-bold text-white">
-              {user?.user_metadata?.full_name?.charAt(0) || "JD"}
+              {profile.full_name.charAt(0)}
             </div>
             <LogoutButton />
           </div>
@@ -116,7 +101,7 @@ export default function Dashboard({ initialCourses, initialNotes, dbError, user 
         <header className="hidden md:flex items-center justify-between h-20 px-8 shrink-0 border-b border-white/5 bg-zinc-950/5 backdrop-blur-sm">
           <div className="flex flex-col">
             <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-              Welcome {user?.user_metadata?.full_name || "Student"}
+              Welcome back, {profile.full_name}
               <Sparkles className="w-4 h-4 text-violet-400 animate-pulse" />
             </h1>
             <p className="text-[11px] text-zinc-500 font-medium">AURA Student Portal &bull; Term 2</p>
@@ -134,7 +119,7 @@ export default function Dashboard({ initialCourses, initialNotes, dbError, user 
           
           {/* 1. Dashboard View */}
           {activeTab === "dashboard" && (
-            <BentoGrid courses={initialCourses} />
+            <BentoGrid courses={initialCourses} fullName={profile.full_name} />
           )}
 
           {/* 2. Courses View */}
@@ -242,7 +227,7 @@ export default function Dashboard({ initialCourses, initialNotes, dbError, user 
                       <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Full Name</label>
                       <input 
                         type="text" 
-                        defaultValue={user?.user_metadata?.full_name || "John Doe"} 
+                        defaultValue={profile.full_name} 
                         className="w-full bg-zinc-950/40 border border-white/5 rounded-2xl py-2.5 px-4 text-sm text-white focus:outline-none focus:border-violet-500/50" 
                       />
                     </div>
@@ -250,8 +235,17 @@ export default function Dashboard({ initialCourses, initialNotes, dbError, user 
                       <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Email Address</label>
                       <input 
                         type="email" 
-                        defaultValue={user?.email || "john.doe@aura.edu"} 
+                        defaultValue={profile.email} 
                         className="w-full bg-zinc-950/40 border border-white/5 rounded-2xl py-2.5 px-4 text-sm text-white focus:outline-none focus:border-violet-500/50" 
+                      />
+                    </div>
+                    <div className="space-y-1.5 md:col-span-2">
+                      <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Account Role</label>
+                      <input 
+                        type="text" 
+                        disabled
+                        value={profile.role} 
+                        className="w-full bg-zinc-950/20 border border-white/5 rounded-2xl py-2.5 px-4 text-sm text-zinc-500 capitalize cursor-not-allowed select-none" 
                       />
                     </div>
                   </div>
