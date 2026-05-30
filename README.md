@@ -45,6 +45,39 @@ If you are setting up this project from scratch, follow these instructions to se
    * It inserts 4 sample course rows.
 4. Copy the project **URL** and **Anon Key** and add them to a `.env.local` file (modeled after **[.env.example](file:///d:/Fullstack-Project/learning-dashboard/.env.example)**).
 
+### Supabase Auth Redirects
+For Google login and email confirmation, configure Supabase with the public URL that users actually open in their browser.
+
+In **Supabase -> Authentication -> URL Configuration**:
+* **Site URL** should be your deployed app URL, for example `https://learning-dashboard.vercel.app`.
+* **Redirect URLs** should include the deployed app and callback URLs:
+
+```text
+https://learning-dashboard.vercel.app
+https://learning-dashboard.vercel.app/auth/callback
+```
+
+For local phone testing, do not use `localhost` on the phone. Run the app on your network:
+
+```bash
+npm run dev:host
+```
+
+Then open your computer's LAN address on the phone, for example:
+
+```text
+http://192.168.1.15:3000
+```
+
+Add the matching local URLs to Supabase while testing:
+
+```text
+http://192.168.1.15:3000
+http://192.168.1.15:3000/auth/callback
+```
+
+The login code uses `window.location.origin`, so it will redirect back to the exact host the browser is using.
+
 ### Graceful Fallback
 If the database connection fails, is throttled, or has no rows seeded, the application's client logic seamlessly merges and falls back to pre-rendered course data. This keeps the prototype fully interactive while displaying a status notification.
 
