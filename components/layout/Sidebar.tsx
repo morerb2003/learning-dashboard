@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -11,7 +12,8 @@ import {
   ChevronRight, 
   GraduationCap,
   Sparkles,
-  StickyNote
+  StickyNote,
+  ShieldCheck
 } from "lucide-react";
 
 export type TabId = "dashboard" | "courses" | "analytics" | "notes" | "settings";
@@ -23,6 +25,7 @@ interface SidebarProps {
     full_name: string;
     email: string;
     role: string;
+    avatar_url?: string | null;
   };
 }
 
@@ -153,15 +156,29 @@ export default function Sidebar({ activeTab, setActiveTab, profile }: SidebarPro
           </ul>
 
           {/* User profile section at the bottom */}
-          <div className={`mt-auto border-t border-white/5 pt-4 ${isCollapsed ? "flex justify-center" : "px-3"}`}>
+          <div className={`mt-auto space-y-3 border-t border-white/5 pt-4 ${isCollapsed ? "flex flex-col items-center" : "px-3"}`}>
+            {profile.role === "admin" && (
+              <Link
+                href="/admin"
+                className={`flex items-center gap-3 rounded-xl border border-red-500/20 bg-red-500/10 py-2 text-xs font-bold text-red-300 transition-colors hover:bg-red-500/15 ${isCollapsed ? "justify-center px-2" : "px-3"}`}
+                title="Admin Console"
+              >
+                <ShieldCheck className="h-4 w-4" />
+                {!isCollapsed && <span>Admin Console</span>}
+              </Link>
+            )}
+
             <div className="flex items-center gap-3 overflow-hidden">
               <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-500 shrink-0 flex items-center justify-center font-bold text-white text-xs shadow-md shadow-cyan-500/10">
-                {profile.full_name.charAt(0)}
+                {profile.full_name.charAt(0).toUpperCase()}
               </div>
               {!isCollapsed && (
                 <div className="flex flex-col whitespace-nowrap overflow-hidden">
                   <span className="text-xs font-semibold text-white truncate max-w-[130px]">{profile.full_name}</span>
                   <span className="text-[10px] text-zinc-500 truncate max-w-[130px]">{profile.email}</span>
+                  <span className="mt-1 w-fit rounded-full border border-cyan-500/20 bg-cyan-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-cyan-300">
+                    {profile.role}
+                  </span>
                 </div>
               )}
             </div>

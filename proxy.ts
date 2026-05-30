@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseUrl } from "@/lib/supabase/url";
 
-const protectedRoutes = ["/", "/admin", "/course"];
+const protectedRoutes = ["/", "/admin", "/course", "/reset-password"];
 const authRoutes = ["/login", "/register"];
 
 function isProtectedRoute(pathname: string) {
@@ -50,6 +50,21 @@ export async function proxy(request: NextRequest) {
     redirectUrl.pathname = "/login";
     redirectUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(redirectUrl);
+  }
+
+  if (user && pathname.startsWith("/admin")) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    if (profile?.role !== "admin") {
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.pathname = "/";
+      redirectUrl.search = "";
+      return NextResponse.redirect(redirectUrl);
+    }
   }
 
   if (user && isAuthRoute(pathname)) {

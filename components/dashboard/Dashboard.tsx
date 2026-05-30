@@ -24,6 +24,7 @@ export interface Profile {
   full_name: string;
   email: string;
   role: string;
+  avatar_url?: string | null;
 }
 
 interface DashboardProps {
@@ -35,6 +36,7 @@ interface DashboardProps {
 export default function Dashboard({ initialCourses, initialNotes, profile }: DashboardProps) {
   const [activeTab, setActiveTab] = useState<TabId>("dashboard");
   const [searchQuery, setSearchQuery] = useState("");
+  const displayName = profile.full_name || profile.email.split("@")[0] || "Student";
 
   // Clean data fallback for client display
   const courses = initialCourses.length > 0 ? initialCourses : [
@@ -75,7 +77,7 @@ export default function Dashboard({ initialCourses, initialNotes, profile }: Das
   return (
     <div className="flex min-h-screen bg-zinc-950/20 text-zinc-100">
       {/* Sidebar Navigation */}
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} profile={profile} />
+      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} profile={{ ...profile, full_name: displayName }} />
 
       {/* Main Panel Content Area */}
       <main className="flex-1 flex flex-col h-screen overflow-y-auto no-scrollbar pb-24 md:pb-6">
@@ -92,7 +94,7 @@ export default function Dashboard({ initialCourses, initialNotes, profile }: Das
           </div>
           <div className="flex items-center gap-3">
             <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-500 flex items-center justify-center text-[10px] font-bold text-white">
-              {profile.full_name.charAt(0)}
+              {displayName.charAt(0).toUpperCase()}
             </div>
             <LogoutButton />
           </div>
@@ -101,7 +103,7 @@ export default function Dashboard({ initialCourses, initialNotes, profile }: Das
         <header className="hidden md:flex items-center justify-between h-20 px-8 shrink-0 border-b border-white/5 bg-zinc-950/5 backdrop-blur-sm">
           <div className="flex flex-col">
             <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-              Welcome back, {profile.full_name}
+              Welcome back, {displayName}
               <Sparkles className="w-4 h-4 text-violet-400 animate-pulse" />
             </h1>
             <p className="text-[11px] text-zinc-500 font-medium">AURA Student Portal &bull; Term 2</p>
@@ -227,7 +229,7 @@ export default function Dashboard({ initialCourses, initialNotes, profile }: Das
                       <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Full Name</label>
                       <input 
                         type="text" 
-                        defaultValue={profile.full_name} 
+                        defaultValue={displayName} 
                         className="w-full bg-zinc-950/40 border border-white/5 rounded-2xl py-2.5 px-4 text-sm text-white focus:outline-none focus:border-violet-500/50" 
                       />
                     </div>

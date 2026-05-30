@@ -3,22 +3,61 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
-import { AlertCircle, CheckCircle2, Lock, Mail, User } from "lucide-react";
+import { AlertCircle, CheckCircle2, Eye, EyeOff, Lock, Mail, User } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+
+function getPasswordStrength(password: string) {
+  const checks = [
+    password.length >= 8,
+    /[A-Z]/.test(password),
+    /[a-z]/.test(password),
+    /\d/.test(password),
+    /[^A-Za-z0-9]/.test(password),
+  ];
+  const score = checks.filter(Boolean).length;
+
+  if (!password) {
+    return { score: 0, label: "Required", color: "bg-zinc-800" };
+  }
+
+  if (score <= 2) {
+    return { score, label: "Weak", color: "bg-red-500" };
+  }
+
+  if (score <= 4) {
+    return { score, label: "Good", color: "bg-orange-400" };
+  }
+
+  return { score, label: "Strong", color: "bg-emerald-400" };
+}
 
 export default function RegisterForm() {
   const router = useRouter();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const passwordStrength = getPasswordStrength(password);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError("");
     setMessage("");
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    if (passwordStrength.score < 3) {
+      setError("Use at least 8 characters with a mix of letters and numbers.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     const supabase = createClient();
@@ -47,6 +86,9 @@ export default function RegisterForm() {
     }
 
     setMessage("Check your inbox to confirm your email, then sign in.");
+    setTimeout(() => {
+      router.replace("/login?registered=1");
+    }, 1800);
   };
 
   return (
@@ -103,14 +145,50 @@ export default function RegisterForm() {
           <span className="relative block">
             <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               autoComplete="new-password"
               required
-              minLength={6}
+              minLength={8}
+              className="w-full rounded-xl border border-white/5 bg-zinc-950/40 py-2.5 pl-10 pr-11 text-sm text-white placeholder-zinc-600 transition-colors focus:border-violet-500/50 focus:outline-none"
+              placeholder="At least 8 characters"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((current) => !current)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 transition-colors hover:text-white"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </span>
+          <span className="flex items-center gap-2">
+            <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-zinc-900">
+              <span
+                className={`block h-full rounded-full transition-all ${passwordStrength.color}`}
+                style={{ width: `${Math.max(passwordStrength.score, 1) * 20}%` }}
+              />
+            </span>
+            <span className="w-12 text-right text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+              {passwordStrength.label}
+            </span>
+          </span>
+        </label>
+
+        <label className="block space-y-1.5">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Confirm Password</span>
+          <span className="relative block">
+            <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+            <input
+              type={showPassword ? "text" : "password"}
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
+              autoComplete="new-password"
+              required
+              minLength={8}
               className="w-full rounded-xl border border-white/5 bg-zinc-950/40 py-2.5 pl-10 pr-3 text-sm text-white placeholder-zinc-600 transition-colors focus:border-violet-500/50 focus:outline-none"
-              placeholder="At least 6 characters"
+              placeholder="Repeat password"
             />
           </span>
         </label>
