@@ -13,8 +13,11 @@ import {
   Filter,
   User,
   Shield,
-  Bell
+  Bell,
+  Save,
+  X
 } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 import ActivityChart from "./ActivityChart";
 import CourseCard from "./CourseCard";
 import NotesView from "./NotesView";
@@ -36,7 +39,81 @@ interface DashboardProps {
 export default function Dashboard({ initialCourses, initialNotes, profile }: DashboardProps) {
   const [activeTab, setActiveTab] = useState<TabId>("dashboard");
   const [searchQuery, setSearchQuery] = useState("");
-  const displayName = profile.full_name || profile.email.split("@")[0] || "Student";
+
+  const [fullName, setFullName] = useState(profile.full_name || "");
+  const [email, setEmail] = useState(profile.email || "");
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [profileStatus, setProfileStatus] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  const displayName = fullName || profile.email.split("@")[0] || "Student";
+
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!fullName.trim() || !email.trim()) return;
+
+    setIsSavingProfile(true);
+    setProfileStatus(null);
+
+    const supabase = createClient();
+
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        setProfileStatus({ type: "error", text: "You must be logged in to update your profile." });
+        setIsSavingProfile(false);
+        return;
+      }
+
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({
+          full_name: fullName,
+          email: email,
+        })
+        .eq("id", user.id);
+
+      if (profileError) {
+        setProfileStatus({ type: "error", text: profileError.message });
+        setIsSavingProfile(false);
+        return;
+      }
+
+      if (email !== user.email) {
+        const { error: authError } = await supabase.auth.updateUser({
+          email: email,
+          data: { full_name: fullName }
+        });
+
+        if (authError) {
+          setProfileStatus({ 
+            type: "error", 
+            text: `Profile updated, but email update failed: ${authError.message}` 
+          });
+          setIsSavingProfile(false);
+          return;
+        }
+        setProfileStatus({ 
+          type: "success", 
+          text: "Profile updated! A verification link has been sent to your new email." 
+        });
+      } else {
+        await supabase.auth.updateUser({
+          data: { full_name: fullName }
+        });
+        setProfileStatus({ type: "success", text: "Profile updated successfully!" });
+      }
+
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : "An unexpected error occurred.";
+      setProfileStatus({ type: "error", text: errMsg });
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
 
   // Clean data fallback for client display
   const courses = initialCourses.length > 0 ? initialCourses : [
@@ -220,25 +297,50 @@ export default function Dashboard({ initialCourses, initialNotes, profile }: Das
               
               <div className="p-6 md:p-8 space-y-8 relative z-10">
                 {/* Account Section */}
-                <section className="space-y-4">
+                <form onSubmit={handleSaveProfile} className="space-y-4">
                   <h3 className="text-sm font-bold text-white border-b border-white/5 pb-2 flex items-center gap-2">
                     <User className="w-4 h-4 text-violet-400" /> Account Profile
                   </h3>
+
+                  {/* Status Alerts */}
+                  {profileStatus && (
+                    <div
+                      className={`flex items-center justify-between p-4 rounded-2xl border text-xs font-medium ${
+                        profileStatus.type === "success"
+                          ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-300"
+                          : "bg-red-500/10 border-red-500/20 text-red-300"
+                      }`}
+                    >
+                      <span>{profileStatus.text}</span>
+                      <button
+                        type="button"
+                        onClick={() => setProfileStatus(null)}
+                        className="text-zinc-400 hover:text-white cursor-pointer"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Full Name</label>
                       <input 
                         type="text" 
-                        defaultValue={displayName} 
+                        value={fullName} 
+                        onChange={(e) => setFullName(e.target.value)}
                         className="w-full bg-zinc-950/40 border border-white/5 rounded-2xl py-2.5 px-4 text-sm text-white focus:outline-none focus:border-violet-500/50" 
+                        required
                       />
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Email Address</label>
                       <input 
                         type="email" 
-                        defaultValue={profile.email} 
+                        value={email} 
+                        onChange={(e) => setEmail(e.target.value)}
                         className="w-full bg-zinc-950/40 border border-white/5 rounded-2xl py-2.5 px-4 text-sm text-white focus:outline-none focus:border-violet-500/50" 
+                        required
                       />
                     </div>
                     <div className="space-y-1.5 md:col-span-2">
@@ -251,7 +353,23 @@ export default function Dashboard({ initialCourses, initialNotes, profile }: Das
                       />
                     </div>
                   </div>
-                </section>
+
+                  <div className="flex justify-end pt-2">
+                    <button
+                      type="submit"
+                      disabled={isSavingProfile}
+                      className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold transition-all disabled:opacity-50 cursor-pointer shadow-lg"
+                    >
+                      {isSavingProfile ? (
+                        "Saving Changes..."
+                      ) : (
+                        <>
+                          <Save className="w-4 h-4" /> Save Profile Changes
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
 
                 {/* Notifications Section */}
                 <section className="space-y-4">

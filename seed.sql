@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     full_name TEXT,
     email TEXT,
-    role TEXT NOT NULL DEFAULT 'student' CHECK (role IN ('student', 'teacher', 'admin')),
+    role TEXT NOT NULL DEFAULT 'student' CHECK (role IN ('student', 'pending_teacher', 'teacher', 'admin')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
@@ -56,18 +56,24 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $$
+DECLARE
+    requested_role TEXT;
+    assigned_role TEXT;
 BEGIN
+    requested_role := NEW.raw_user_meta_data ->> 'role';
+    assigned_role := CASE WHEN requested_role = 'teacher' THEN 'pending_teacher' ELSE 'student' END;
+
     INSERT INTO public.profiles (id, full_name, email, role)
     VALUES (
         NEW.id,
         COALESCE(NEW.raw_user_meta_data ->> 'full_name', split_part(NEW.email, '@', 1)),
         NEW.email,
-        'student'
+        assigned_role
     )
     ON CONFLICT (id) DO UPDATE
     SET
-        full_name = EXCLUDED.full_name,
-        email = EXCLUDED.email,
+        full_name = COALESCE(EXCLUDED.full_name, public.profiles.full_name),
+        email = COALESCE(EXCLUDED.email, public.profiles.email),
         updated_at = timezone('utc'::text, now());
 
     RETURN NEW;

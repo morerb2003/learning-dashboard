@@ -63,6 +63,7 @@ export default async function Home() {
   }
 
   const resolvedProfile = profile || {
+    id: user.id,
     full_name: user.user_metadata?.full_name || user.email?.split("@")[0] || "Student",
     email: user.email || "student@aura.edu",
     role: "student",

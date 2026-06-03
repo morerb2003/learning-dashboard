@@ -3,33 +3,14 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
-import { AlertCircle, CheckCircle2, Eye, EyeOff, Lock, Mail, User } from "lucide-react";
+import { motion } from "framer-motion";
+import { AlertCircle, BookOpen, CheckCircle2, GraduationCap, Loader2, Mail, User } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import GoogleButton from "@/components/auth/GoogleButton";
+import PasswordInput from "@/components/auth/PasswordInput";
+import PasswordStrength, { getPasswordStrength } from "@/components/auth/PasswordStrength";
 
-function getPasswordStrength(password: string) {
-  const checks = [
-    password.length >= 8,
-    /[A-Z]/.test(password),
-    /[a-z]/.test(password),
-    /\d/.test(password),
-    /[^A-Za-z0-9]/.test(password),
-  ];
-  const score = checks.filter(Boolean).length;
-
-  if (!password) {
-    return { score: 0, label: "Required", color: "bg-zinc-800" };
-  }
-
-  if (score <= 2) {
-    return { score, label: "Weak", color: "bg-red-500" };
-  }
-
-  if (score <= 4) {
-    return { score, label: "Good", color: "bg-orange-400" };
-  }
-
-  return { score, label: "Strong", color: "bg-emerald-400" };
-}
+type SignupRole = "student" | "teacher";
 
 export default function RegisterForm() {
   const router = useRouter();
@@ -37,7 +18,8 @@ export default function RegisterForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const [role, setRole] = useState<SignupRole>("student");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -58,6 +40,11 @@ export default function RegisterForm() {
       return;
     }
 
+    if (!acceptedTerms) {
+      setError("Accept the terms and conditions to create your account.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     const supabase = createClient();
@@ -67,6 +54,7 @@ export default function RegisterForm() {
       options: {
         data: {
           full_name: fullName,
+          role,
         },
         emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
@@ -85,127 +73,184 @@ export default function RegisterForm() {
       return;
     }
 
-    setMessage("Check your inbox to confirm your email, then sign in.");
+    setMessage(
+      role === "teacher"
+        ? "Check your inbox to verify your email. Teacher access will stay pending until an admin approves it."
+        : "Check your inbox to confirm your email, then sign in."
+    );
     setTimeout(() => {
       router.replace("/login?registered=1");
     }, 1800);
   };
 
   return (
-    <div className="w-full space-y-5">
+    <div className="w-full space-y-6">
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="flex items-start gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-300">
-            <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          <div role="alert" className="flex items-start gap-3 rounded-2xl border border-rose-400/20 bg-rose-500/10 px-4 py-3 text-sm font-medium text-rose-200">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
         {message && (
-          <div className="flex items-start gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-300">
-            <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          <div role="status" className="flex items-start gap-3 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 px-4 py-3 text-sm font-medium text-emerald-200">
+            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
             <span>{message}</span>
           </div>
         )}
 
-        <label className="block space-y-1.5">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Full Name</span>
+        <label htmlFor="fullName" className="block space-y-2">
+          <span className="text-sm font-semibold text-zinc-200">Full Name</span>
           <span className="relative block">
-            <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+            <User className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
             <input
+              id="fullName"
               type="text"
               value={fullName}
               onChange={(event) => setFullName(event.target.value)}
               autoComplete="name"
               required
-              className="w-full rounded-xl border border-white/5 bg-zinc-950/40 py-2.5 pl-10 pr-3 text-sm text-white placeholder-zinc-600 transition-colors focus:border-violet-500/50 focus:outline-none"
+              className="h-12 w-full rounded-2xl border border-white/10 bg-white/[0.04] pl-11 pr-4 text-sm text-white shadow-inner shadow-black/10 outline-none transition-all duration-200 placeholder:text-zinc-600 focus:border-cyan-300/60 focus:bg-white/[0.07] focus:ring-4 focus:ring-cyan-300/10"
               placeholder="Your name"
             />
           </span>
         </label>
 
-        <label className="block space-y-1.5">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Email</span>
+        <label htmlFor="email" className="block space-y-2">
+          <span className="text-sm font-semibold text-zinc-200">Email</span>
           <span className="relative block">
-            <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+            <Mail className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
             <input
+              id="email"
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               autoComplete="email"
               required
-              className="w-full rounded-xl border border-white/5 bg-zinc-950/40 py-2.5 pl-10 pr-3 text-sm text-white placeholder-zinc-600 transition-colors focus:border-violet-500/50 focus:outline-none"
-              placeholder="you@aura.edu"
+              className="h-12 w-full rounded-2xl border border-white/10 bg-white/[0.04] pl-11 pr-4 text-sm text-white shadow-inner shadow-black/10 outline-none transition-all duration-200 placeholder:text-zinc-600 focus:border-cyan-300/60 focus:bg-white/[0.07] focus:ring-4 focus:ring-cyan-300/10"
+              placeholder="you@example.com"
             />
           </span>
         </label>
 
-        <label className="block space-y-1.5">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Password</span>
-          <span className="relative block">
-            <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
-            <input
-              type={showPassword ? "text" : "password"}
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              autoComplete="new-password"
-              required
-              minLength={8}
-              className="w-full rounded-xl border border-white/5 bg-zinc-950/40 py-2.5 pl-10 pr-11 text-sm text-white placeholder-zinc-600 transition-colors focus:border-violet-500/50 focus:outline-none"
-              placeholder="At least 8 characters"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword((current) => !current)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 transition-colors hover:text-white"
-              aria-label={showPassword ? "Hide password" : "Show password"}
-            >
-              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </button>
-          </span>
-          <span className="flex items-center gap-2">
-            <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-zinc-900">
-              <span
-                className={`block h-full rounded-full transition-all ${passwordStrength.color}`}
-                style={{ width: `${Math.max(passwordStrength.score, 1) * 20}%` }}
-              />
-            </span>
-            <span className="w-12 text-right text-[10px] font-bold uppercase tracking-wider text-zinc-500">
-              {passwordStrength.label}
-            </span>
+        <PasswordInput
+          id="password"
+          name="password"
+          label="Password"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          autoComplete="new-password"
+          required
+          minLength={8}
+          placeholder="At least 8 characters"
+        />
+
+        <PasswordStrength password={password} />
+
+        <PasswordInput
+          id="confirmPassword"
+          name="confirmPassword"
+          label="Confirm Password"
+          value={confirmPassword}
+          onChange={(event) => setConfirmPassword(event.target.value)}
+          autoComplete="new-password"
+          required
+          minLength={8}
+          placeholder="Repeat password"
+        />
+
+        <fieldset className="space-y-3">
+          <legend className="text-sm font-semibold text-zinc-200">Select Role</legend>
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              {
+                value: "student" as const,
+                title: "Student",
+                description: "Start learning today",
+                icon: BookOpen,
+              },
+              {
+                value: "teacher" as const,
+                title: "Teacher",
+                description: "Requires approval",
+                icon: GraduationCap,
+              },
+            ].map((option) => {
+              const Icon = option.icon;
+              const selected = role === option.value;
+
+              return (
+                <label
+                  key={option.value}
+                  className={`cursor-pointer rounded-2xl border p-4 transition-all duration-200 ${
+                    selected
+                      ? "border-cyan-300/60 bg-cyan-300/10 shadow-lg shadow-cyan-500/10"
+                      : "border-white/10 bg-white/[0.035] hover:border-white/20 hover:bg-white/[0.06]"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="role"
+                    value={option.value}
+                    checked={selected}
+                    onChange={() => setRole(option.value)}
+                    className="sr-only"
+                  />
+                  <span className="flex items-start gap-3">
+                    <span className={`flex h-10 w-10 items-center justify-center rounded-xl ${selected ? "bg-cyan-300 text-zinc-950" : "bg-white/10 text-zinc-300"}`}>
+                      <Icon className="h-5 w-5" />
+                    </span>
+                    <span>
+                      <span className="block text-sm font-bold text-white">{option.title}</span>
+                      <span className="mt-1 block text-xs text-zinc-500">{option.description}</span>
+                    </span>
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+        </fieldset>
+
+        <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.035] p-4 text-sm font-medium text-zinc-400">
+          <input
+            type="checkbox"
+            checked={acceptedTerms}
+            onChange={(event) => setAcceptedTerms(event.target.checked)}
+            className="mt-0.5 h-4 w-4 rounded border-white/10 bg-zinc-950 accent-cyan-300"
+          />
+          <span>
+            I agree to the{" "}
+            <Link href="#" className="font-bold text-cyan-200 outline-none transition hover:text-white focus-visible:ring-2 focus-visible:ring-cyan-300/60">
+              Terms & Conditions
+            </Link>
           </span>
         </label>
 
-        <label className="block space-y-1.5">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Confirm Password</span>
-          <span className="relative block">
-            <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
-            <input
-              type={showPassword ? "text" : "password"}
-              value={confirmPassword}
-              onChange={(event) => setConfirmPassword(event.target.value)}
-              autoComplete="new-password"
-              required
-              minLength={8}
-              className="w-full rounded-xl border border-white/5 bg-zinc-950/40 py-2.5 pl-10 pr-3 text-sm text-white placeholder-zinc-600 transition-colors focus:border-violet-500/50 focus:outline-none"
-              placeholder="Repeat password"
-            />
-          </span>
-        </label>
-
-        <button
+        <motion.button
           type="submit"
           disabled={isSubmitting}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-bold text-zinc-950 shadow-lg shadow-white/5 transition-all hover:bg-zinc-100 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70 disabled:active:scale-100"
+          whileHover={{ y: -1 }}
+          whileTap={{ scale: 0.985 }}
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-300 via-sky-300 to-violet-300 px-6 text-sm font-black text-zinc-950 shadow-xl shadow-cyan-500/20 outline-none transition focus-visible:ring-2 focus-visible:ring-cyan-200 disabled:cursor-not-allowed disabled:opacity-70"
         >
+          {isSubmitting && <Loader2 className="h-4 w-4 motion-safe:animate-spin" />}
           {isSubmitting ? "Creating account..." : "Create account"}
-        </button>
+        </motion.button>
       </form>
 
-      <p className="text-center text-xs font-medium text-zinc-500">
-        Already registered?{" "}
-        <Link href="/login" className="font-bold text-violet-400 hover:text-violet-300">
-          Sign in
+      <div className="flex items-center gap-3">
+        <div className="h-px flex-1 bg-white/10" />
+        <span className="text-xs font-bold uppercase tracking-widest text-zinc-500">or</span>
+        <div className="h-px flex-1 bg-white/10" />
+      </div>
+
+      <GoogleButton mode="register" />
+
+      <p className="text-center text-sm font-medium text-zinc-500">
+        Already have an account?{" "}
+        <Link href="/login" className="font-bold text-cyan-200 outline-none transition hover:text-white focus-visible:ring-2 focus-visible:ring-cyan-300/60">
+          Login
         </Link>
       </p>
     </div>

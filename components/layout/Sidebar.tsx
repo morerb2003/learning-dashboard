@@ -13,7 +13,8 @@ import {
   GraduationCap,
   Sparkles,
   StickyNote,
-  ShieldCheck
+  ShieldCheck,
+  Users
 } from "lucide-react";
 
 export type TabId = "dashboard" | "courses" | "analytics" | "notes" | "settings";
@@ -45,6 +46,32 @@ const navItems: NavItem[] = [
 
 export default function Sidebar({ activeTab, setActiveTab, profile }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
+
+  const mainNavItems = React.useMemo(() => {
+    const role = profile.role?.toLowerCase() || "student";
+    if (role === "teacher") {
+      return [
+        { id: "dashboard" as TabId, label: "Dashboard", icon: LayoutDashboard },
+        { id: "courses" as TabId, label: "My Courses", icon: BookOpen },
+        { id: "notes" as TabId, label: "Lessons", icon: StickyNote },
+        { id: "settings" as TabId, label: "Settings", icon: Settings },
+      ];
+    }
+    if (role === "admin") {
+      return [
+        { id: "dashboard" as TabId, label: "Dashboard", icon: LayoutDashboard },
+        { id: "courses" as TabId, label: "My Courses", icon: BookOpen },
+        { id: "notes" as TabId, label: "Notes", icon: StickyNote },
+      ];
+    }
+    // Student (default)
+    return [
+      { id: "dashboard" as TabId, label: "Dashboard", icon: LayoutDashboard },
+      { id: "courses" as TabId, label: "My Courses", icon: BookOpen },
+      { id: "notes" as TabId, label: "Notes", icon: StickyNote },
+      { id: "settings" as TabId, label: "Settings", icon: Settings },
+    ];
+  }, [profile.role]);
 
   return (
     <>
@@ -86,7 +113,7 @@ export default function Sidebar({ activeTab, setActiveTab, profile }: SidebarPro
           {/* Collapse Button (Only visible on large screens where it can actually collapse) */}
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="hidden lg:flex w-6 h-6 rounded-md border border-white/10 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white items-center justify-center transition-colors absolute -right-3 top-7 z-40 shadow-md"
+            className="hidden lg:flex w-6 h-6 rounded-md border border-white/10 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white items-center justify-center transition-colors absolute -right-3 top-7 z-40 shadow-md cursor-pointer"
             aria-label="Toggle Sidebar"
           >
             {isCollapsed ? (
@@ -98,76 +125,109 @@ export default function Sidebar({ activeTab, setActiveTab, profile }: SidebarPro
         </div>
 
         {/* Sidebar Navigation Links */}
-        <nav className="flex-1 px-3 py-6 space-y-1.5 flex flex-col justify-between">
-          <ul className="space-y-1.5">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = activeTab === item.id;
-              // On tablet (md:max-lg), force collapsed appearance
-              const displayCollapsed = isCollapsed;
+        <nav className="flex-1 px-3 py-6 space-y-1.5 flex flex-col justify-between overflow-y-auto no-scrollbar">
+          <div className="space-y-4">
+            <ul className="space-y-1.5">
+              {mainNavItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = activeTab === item.id;
+                // On tablet (md:max-lg), force collapsed appearance
+                const displayCollapsed = isCollapsed;
 
-              return (
-                <li key={item.id} className="relative">
-                  <button
-                    onClick={() => setActiveTab(item.id)}
-                    className={`
-                      w-full flex items-center gap-4 py-3 rounded-xl text-sm font-medium transition-colors relative group
-                      ${displayCollapsed ? "justify-center px-0" : "px-4"}
-                      ${isActive ? "text-white" : "text-zinc-400 hover:text-white"}
-                    `}
-                  >
-                    {/* Active highlight background pill using layoutId */}
-                    {isActive && (
-                      <motion.div
-                        layoutId="activeTabGlow"
-                        className="absolute inset-0 bg-gradient-to-r from-violet-600/15 to-indigo-600/10 border-l-2 border-violet-500 rounded-xl"
-                        transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                      />
-                    )}
-
-                    <div className="relative z-10">
-                      <Icon className={`w-5 h-5 transition-transform duration-300 group-hover:scale-110 ${isActive ? "text-violet-400" : "text-zinc-400 group-hover:text-white"}`} />
-                    </div>
-
-                    <AnimatePresence>
-                      {!displayCollapsed && (
-                        <motion.span
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: -10 }}
-                          transition={{ duration: 0.2 }}
-                          className="relative z-10 font-medium tracking-wide text-xs lg:text-sm whitespace-nowrap block"
-                        >
-                          {item.label}
-                        </motion.span>
+                return (
+                  <li key={item.id} className="relative">
+                    <button
+                      onClick={() => setActiveTab(item.id)}
+                      className={`
+                        w-full flex items-center gap-4 py-3 rounded-xl text-sm font-medium transition-colors relative group cursor-pointer
+                        ${displayCollapsed ? "justify-center px-0" : "px-4"}
+                        ${isActive ? "text-white" : "text-zinc-400 hover:text-white"}
+                      `}
+                    >
+                      {/* Active highlight background pill using layoutId */}
+                      {isActive && (
+                        <motion.div
+                          layoutId="activeTabGlow"
+                          className="absolute inset-0 bg-gradient-to-r from-violet-600/15 to-indigo-600/10 border-l-2 border-violet-500 rounded-xl"
+                          transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                        />
                       )}
-                    </AnimatePresence>
 
-                    {/* Tooltip for collapsed states */}
-                    {displayCollapsed && (
-                      <div className="absolute left-20 bg-zinc-900 border border-white/10 text-white text-xs px-2.5 py-1.5 rounded-md opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 shadow-xl whitespace-nowrap z-50">
-                        {item.label}
+                      <div className="relative z-10">
+                        <Icon className={`w-5 h-5 transition-transform duration-300 group-hover:scale-110 ${isActive ? "text-violet-400" : "text-zinc-400 group-hover:text-white"}`} />
                       </div>
-                    )}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
+
+                      <AnimatePresence>
+                        {!displayCollapsed && (
+                          <motion.span
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -10 }}
+                            transition={{ duration: 0.2 }}
+                            className="relative z-10 font-medium tracking-wide text-xs lg:text-sm whitespace-nowrap block"
+                          >
+                            {item.label}
+                          </motion.span>
+                        )}
+                      </AnimatePresence>
+
+                      {/* Tooltip for collapsed states */}
+                      {displayCollapsed && (
+                        <div className="absolute left-20 bg-zinc-900 border border-white/10 text-white text-xs px-2.5 py-1.5 rounded-md opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 shadow-xl whitespace-nowrap z-50">
+                          {item.label}
+                        </div>
+                      )}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+
+            {/* Nested Admin Console Tools (Visible only for admin role) */}
+            {profile.role === "admin" && (
+              <div className="pt-4 border-t border-white/5 space-y-2">
+                {!isCollapsed && (
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 px-4 block">
+                    Admin Tools
+                  </span>
+                )}
+                <ul className="space-y-1">
+                  {[
+                    { href: "/admin", label: "Overview", icon: ShieldCheck },
+                    { href: "/admin/users", label: "Users", icon: Users },
+                    { href: "/admin/courses", label: "Courses", icon: BookOpen },
+                    { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
+                    { href: "/admin/settings", label: "Settings", icon: Settings },
+                  ].map((sub) => {
+                    const SubIcon = sub.icon;
+                    return (
+                      <li key={sub.href}>
+                        <Link
+                          href={sub.href}
+                          className={`
+                            flex items-center gap-3 py-2 rounded-xl text-xs font-semibold transition-colors group relative
+                            ${isCollapsed ? "justify-center px-0" : "px-4"}
+                            text-zinc-400 hover:text-white hover:bg-white/[0.03]
+                          `}
+                        >
+                          <SubIcon className="w-4 h-4 text-zinc-500 group-hover:text-violet-400" />
+                          {!isCollapsed && <span>{sub.label}</span>}
+                          {isCollapsed && (
+                            <div className="absolute left-20 bg-zinc-900 border border-white/10 text-white text-xs px-2.5 py-1.5 rounded-md opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 shadow-xl whitespace-nowrap z-50">
+                              {sub.label}
+                            </div>
+                          )}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
+          </div>
 
           {/* User profile section at the bottom */}
           <div className={`mt-auto space-y-3 border-t border-white/5 pt-4 ${isCollapsed ? "flex flex-col items-center" : "px-3"}`}>
-            {profile.role === "admin" && (
-              <Link
-                href="/admin"
-                className={`flex items-center gap-3 rounded-xl border border-red-500/20 bg-red-500/10 py-2 text-xs font-bold text-red-300 transition-colors hover:bg-red-500/15 ${isCollapsed ? "justify-center px-2" : "px-3"}`}
-                title="Admin Console"
-              >
-                <ShieldCheck className="h-4 w-4" />
-                {!isCollapsed && <span>Admin Console</span>}
-              </Link>
-            )}
-
             <div className="flex items-center gap-3 overflow-hidden">
               <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-500 shrink-0 flex items-center justify-center font-bold text-white text-xs shadow-md shadow-cyan-500/10">
                 {profile.full_name.charAt(0).toUpperCase()}
