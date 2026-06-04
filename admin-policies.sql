@@ -46,6 +46,54 @@ to authenticated
 using (public.is_admin())
 with check (public.is_admin());
 
+CREATE TABLE IF NOT EXISTS public.enrollments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    course_id UUID NOT NULL REFERENCES public.courses(id) ON DELETE CASCADE,
+    enrolled_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    progress INTEGER NOT NULL DEFAULT 0 CHECK (progress >= 0 AND progress <= 100),
+    last_accessed_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    UNIQUE (user_id, course_id)
+);
+
+ALTER TABLE public.enrollments ENABLE ROW LEVEL SECURITY;
+
+drop policy if exists "Users can read own enrollments" on public.enrollments;
+create policy "Users can read own enrollments"
+on public.enrollments
+for select
+to authenticated
+using (user_id = auth.uid());
+
+drop policy if exists "Users can create own enrollments" on public.enrollments;
+create policy "Users can create own enrollments"
+on public.enrollments
+for insert
+to authenticated
+with check (user_id = auth.uid());
+
+drop policy if exists "Users can update own enrollments" on public.enrollments;
+create policy "Users can update own enrollments"
+on public.enrollments
+for update
+to authenticated
+using (user_id = auth.uid())
+with check (user_id = auth.uid());
+
+drop policy if exists "Users can delete own enrollments" on public.enrollments;
+create policy "Users can delete own enrollments"
+on public.enrollments
+for delete
+to authenticated
+using (user_id = auth.uid());
+
+drop policy if exists "Admins can view all enrollments" on public.enrollments;
+create policy "Admins can view all enrollments"
+on public.enrollments
+for select
+to authenticated
+using (public.is_admin());
+
 -- ==========================================
 -- PHASE 3 DATABASE SCHEMA MIGRATIONS
 -- ==========================================
@@ -161,4 +209,3 @@ CREATE TRIGGER on_auth_user_created
 AFTER INSERT ON auth.users
 FOR EACH ROW
 EXECUTE FUNCTION public.handle_new_user();
-

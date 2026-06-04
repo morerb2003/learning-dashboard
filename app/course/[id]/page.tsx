@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { enrollUser, isUserEnrolled, unenrollUser } from "@/lib/course/enrollment";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import {
@@ -17,6 +18,9 @@ import {
   ChevronRight,
   Play,
   Circle,
+  UserPlus,
+  BookmarkCheck,
+  LogOut,
 } from "lucide-react";
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
@@ -249,6 +253,8 @@ export default async function CourseDetailPage({
 
   if (error || !course) notFound();
 
+  const isEnrolled = await isUserEnrolled(course.id);
+
   // Match content to this specific course by title
   const content = getCourseContent(course.title);
   const colors = colorMap[content.color] ?? colorMap.violet;
@@ -326,6 +332,41 @@ export default async function CourseDetailPage({
                     <Award className="w-3.5 h-3.5 text-zinc-500" />
                     {content.instructor}
                   </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-3 pt-3">
+                  {isEnrolled ? (
+                    <>
+                      <Link
+                        href="/learning"
+                        className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-300 via-sky-300 to-violet-300 px-5 text-xs font-black text-zinc-950 shadow-xl shadow-cyan-500/20 transition hover:brightness-110"
+                      >
+                        <BookmarkCheck className="h-4 w-4" />
+                        Continue Learning
+                      </Link>
+                      <form action={unenrollUser}>
+                        <input type="hidden" name="courseId" value={course.id} />
+                        <button
+                          type="submit"
+                          className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-5 text-xs font-bold text-zinc-300 transition hover:border-rose-400/30 hover:bg-rose-500/10 hover:text-rose-200 sm:w-auto"
+                        >
+                          <LogOut className="h-4 w-4" />
+                          Unenroll
+                        </button>
+                      </form>
+                    </>
+                  ) : (
+                    <form action={enrollUser}>
+                      <input type="hidden" name="courseId" value={course.id} />
+                      <button
+                        type="submit"
+                        className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-300 via-sky-300 to-violet-300 px-5 text-xs font-black text-zinc-950 shadow-xl shadow-cyan-500/20 transition hover:brightness-110 sm:w-auto"
+                      >
+                        <UserPlus className="h-4 w-4" />
+                        Enroll Now
+                      </button>
+                    </form>
+                  )}
                 </div>
               </div>
 

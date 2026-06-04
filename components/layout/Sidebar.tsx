@@ -34,11 +34,12 @@ interface NavItem {
   id: TabId;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
+  href?: string;
 }
 
 const navItems: NavItem[] = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { id: "courses", label: "My Courses", icon: BookOpen },
+  { id: "courses", label: "My Courses", icon: BookOpen, href: "/learning" },
   { id: "analytics", label: "Analytics", icon: BarChart3 },
   { id: "notes", label: "Notes", icon: StickyNote },
   { id: "settings", label: "Settings", icon: Settings },
@@ -52,7 +53,7 @@ export default function Sidebar({ activeTab, setActiveTab, profile }: SidebarPro
     if (role === "teacher") {
       return [
         { id: "dashboard" as TabId, label: "Dashboard", icon: LayoutDashboard },
-        { id: "courses" as TabId, label: "My Courses", icon: BookOpen },
+        { id: "courses" as TabId, label: "My Courses", icon: BookOpen, href: "/learning" },
         { id: "notes" as TabId, label: "Lessons", icon: StickyNote },
         { id: "settings" as TabId, label: "Settings", icon: Settings },
       ];
@@ -60,14 +61,14 @@ export default function Sidebar({ activeTab, setActiveTab, profile }: SidebarPro
     if (role === "admin") {
       return [
         { id: "dashboard" as TabId, label: "Dashboard", icon: LayoutDashboard },
-        { id: "courses" as TabId, label: "My Courses", icon: BookOpen },
+        { id: "courses" as TabId, label: "My Courses", icon: BookOpen, href: "/learning" },
         { id: "notes" as TabId, label: "Notes", icon: StickyNote },
       ];
     }
     // Student (default)
     return [
       { id: "dashboard" as TabId, label: "Dashboard", icon: LayoutDashboard },
-      { id: "courses" as TabId, label: "My Courses", icon: BookOpen },
+      { id: "courses" as TabId, label: "My Courses", icon: BookOpen, href: "/learning" },
       { id: "notes" as TabId, label: "Notes", icon: StickyNote },
       { id: "settings" as TabId, label: "Settings", icon: Settings },
     ];
@@ -133,51 +134,60 @@ export default function Sidebar({ activeTab, setActiveTab, profile }: SidebarPro
                 const isActive = activeTab === item.id;
                 // On tablet (md:max-lg), force collapsed appearance
                 const displayCollapsed = isCollapsed;
+                const itemClassName = `
+                  w-full flex items-center gap-4 py-3 rounded-xl text-sm font-medium transition-colors relative group cursor-pointer
+                  ${displayCollapsed ? "justify-center px-0" : "px-4"}
+                  ${isActive ? "text-white" : "text-zinc-400 hover:text-white"}
+                `;
+                const itemContent = (
+                  <>
+                    {/* Active highlight background pill using layoutId */}
+                    {isActive && (
+                      <motion.div
+                        layoutId="activeTabGlow"
+                        className="absolute inset-0 bg-gradient-to-r from-violet-600/15 to-indigo-600/10 border-l-2 border-violet-500 rounded-xl"
+                        transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                      />
+                    )}
+
+                    <div className="relative z-10">
+                      <Icon className={`w-5 h-5 transition-transform duration-300 group-hover:scale-110 ${isActive ? "text-violet-400" : "text-zinc-400 group-hover:text-white"}`} />
+                    </div>
+
+                    <AnimatePresence>
+                      {!displayCollapsed && (
+                        <motion.span
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -10 }}
+                          transition={{ duration: 0.2 }}
+                          className="relative z-10 font-medium tracking-wide text-xs lg:text-sm whitespace-nowrap block"
+                        >
+                          {item.label}
+                        </motion.span>
+                      )}
+                    </AnimatePresence>
+
+                    {/* Tooltip for collapsed states */}
+                    {displayCollapsed && (
+                      <div className="absolute left-20 bg-zinc-900 border border-white/10 text-white text-xs px-2.5 py-1.5 rounded-md opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 shadow-xl whitespace-nowrap z-50">
+                        {item.label}
+                      </div>
+                    )}
+                  </>
+                );
 
                 return (
                   <li key={item.id} className="relative">
-                    <button
-                      onClick={() => setActiveTab(item.id)}
-                      className={`
-                        w-full flex items-center gap-4 py-3 rounded-xl text-sm font-medium transition-colors relative group cursor-pointer
-                        ${displayCollapsed ? "justify-center px-0" : "px-4"}
-                        ${isActive ? "text-white" : "text-zinc-400 hover:text-white"}
-                      `}
-                    >
-                      {/* Active highlight background pill using layoutId */}
-                      {isActive && (
-                        <motion.div
-                          layoutId="activeTabGlow"
-                          className="absolute inset-0 bg-gradient-to-r from-violet-600/15 to-indigo-600/10 border-l-2 border-violet-500 rounded-xl"
-                          transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                        />
-                      )}
-
-                      <div className="relative z-10">
-                        <Icon className={`w-5 h-5 transition-transform duration-300 group-hover:scale-110 ${isActive ? "text-violet-400" : "text-zinc-400 group-hover:text-white"}`} />
-                      </div>
-
-                      <AnimatePresence>
-                        {!displayCollapsed && (
-                          <motion.span
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -10 }}
-                            transition={{ duration: 0.2 }}
-                            className="relative z-10 font-medium tracking-wide text-xs lg:text-sm whitespace-nowrap block"
-                          >
-                            {item.label}
-                          </motion.span>
-                        )}
-                      </AnimatePresence>
-
-                      {/* Tooltip for collapsed states */}
-                      {displayCollapsed && (
-                        <div className="absolute left-20 bg-zinc-900 border border-white/10 text-white text-xs px-2.5 py-1.5 rounded-md opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 shadow-xl whitespace-nowrap z-50">
-                          {item.label}
-                        </div>
-                      )}
-                    </button>
+                    {item.href ? (
+                      <Link href={item.href} className={itemClassName}>
+                        {itemContent}
+                      </Link>
+                    ) : (
+                      <button onClick={() => setActiveTab(item.id)} className={itemClassName}>
+                        {itemContent}
+                      </button>
+                    )}
                   </li>
                 );
               })}
@@ -251,14 +261,8 @@ export default function Sidebar({ activeTab, setActiveTab, profile }: SidebarPro
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
-
-          return (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className="flex flex-col items-center justify-center flex-1 h-full py-1 text-zinc-400 relative"
-              aria-label={item.label}
-            >
+          const mobileContent = (
+            <>
               {isActive && (
                 <motion.div
                   layoutId="activeMobileTabGlow"
@@ -270,6 +274,26 @@ export default function Sidebar({ activeTab, setActiveTab, profile }: SidebarPro
               <span className={`text-[10px] mt-1 font-medium tracking-wide ${isActive ? "text-white font-semibold" : "text-zinc-500"}`}>
                 {item.label}
               </span>
+            </>
+          );
+
+          return item.href ? (
+            <Link
+              key={item.id}
+              href={item.href}
+              className="flex flex-col items-center justify-center flex-1 h-full py-1 text-zinc-400 relative"
+              aria-label={item.label}
+            >
+              {mobileContent}
+            </Link>
+          ) : (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id)}
+              className="flex flex-col items-center justify-center flex-1 h-full py-1 text-zinc-400 relative"
+              aria-label={item.label}
+            >
+              {mobileContent}
             </button>
           );
         })}
