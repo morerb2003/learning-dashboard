@@ -6,6 +6,7 @@ import { FormEvent, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { AlertCircle, CheckCircle2, Loader2, Mail } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { getSafeRedirectPath } from "@/lib/auth/redirects";
 import GoogleButton from "@/components/auth/GoogleButton";
 import PasswordInput from "@/components/auth/PasswordInput";
 
@@ -21,12 +22,17 @@ export default function LoginForm() {
 
   useEffect(() => {
     const rememberedEmail = window.localStorage.getItem("aura_remembered_email");
-    const registered = new URLSearchParams(window.location.search).get("registered");
+    const searchParams = new URLSearchParams(window.location.search);
+    const registered = searchParams.get("registered");
+    const callbackError = searchParams.get("error");
 
     const timer = setTimeout(() => {
       if (rememberedEmail) {
         setEmail(rememberedEmail);
         setRememberEmail(true);
+      }
+      if (callbackError === "auth_callback_failed") {
+        setError("Authentication failed. Please try signing in again.");
       }
       if (registered) {
         setMessage("Account created. Confirm your email if needed, then sign in.");
@@ -62,7 +68,7 @@ export default function LoginForm() {
     }
 
     const nextPath = new URLSearchParams(window.location.search).get("next");
-    const redirectTo = nextPath?.startsWith("/") && !nextPath.startsWith("//") ? nextPath : "/";
+    const redirectTo = getSafeRedirectPath(nextPath);
     router.replace(redirectTo);
     router.refresh();
   };

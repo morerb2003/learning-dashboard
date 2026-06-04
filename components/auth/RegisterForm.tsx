@@ -6,6 +6,7 @@ import { FormEvent, useState } from "react";
 import { motion } from "framer-motion";
 import { AlertCircle, BookOpen, CheckCircle2, GraduationCap, Loader2, Mail, User } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { getSafeRedirectPath } from "@/lib/auth/redirects";
 import GoogleButton from "@/components/auth/GoogleButton";
 import PasswordInput from "@/components/auth/PasswordInput";
 import PasswordStrength, { getPasswordStrength } from "@/components/auth/PasswordStrength";
@@ -48,6 +49,12 @@ export default function RegisterForm() {
     setIsSubmitting(true);
 
     const supabase = createClient();
+    const callbackUrl = new URL("/auth/callback", window.location.origin);
+    callbackUrl.searchParams.set(
+      "next",
+      getSafeRedirectPath(new URLSearchParams(window.location.search).get("next"))
+    );
+
     const { data, error: authError } = await supabase.auth.signUp({
       email,
       password,
@@ -56,7 +63,7 @@ export default function RegisterForm() {
           full_name: fullName,
           role,
         },
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: callbackUrl.toString(),
       },
     });
 

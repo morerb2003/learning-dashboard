@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { getSafeRedirectPath } from "@/lib/auth/redirects";
 import { getSupabaseUrl } from "@/lib/supabase/url";
 
 const protectedRoutes = ["/", "/admin", "/course", "/reset-password"];
@@ -48,7 +49,10 @@ export async function proxy(request: NextRequest) {
   if (!user && isProtectedRoute(pathname)) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/login";
-    redirectUrl.searchParams.set("next", pathname);
+    redirectUrl.searchParams.set(
+      "next",
+      getSafeRedirectPath(`${pathname}${request.nextUrl.search}`)
+    );
     return NextResponse.redirect(redirectUrl);
   }
 

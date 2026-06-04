@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getSafeRedirectPath } from "@/lib/auth/redirects";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
@@ -9,10 +10,16 @@ export async function GET(request: Request) {
 
   if (code) {
     const supabase = await createClient();
-    await supabase.auth.exchangeCodeForSession(code);
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+
+    if (error) {
+      const loginUrl = new URL("/login", requestUrl.origin);
+      loginUrl.searchParams.set("error", "auth_callback_failed");
+      return NextResponse.redirect(loginUrl);
+    }
   }
 
-  const redirectPath = next?.startsWith("/") && !next.startsWith("//") ? next : "/";
+  const redirectPath = getSafeRedirectPath(next);
 
   return NextResponse.redirect(new URL(redirectPath, requestUrl.origin));
 }
