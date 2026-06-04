@@ -46,6 +46,9 @@ export default function RegisterForm() {
       return;
     }
 
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedFullName = fullName.trim();
+
     setIsSubmitting(true);
 
     const supabase = createClient();
@@ -56,11 +59,11 @@ export default function RegisterForm() {
     );
 
     const { data, error: authError } = await supabase.auth.signUp({
-      email,
+      email: normalizedEmail,
       password,
       options: {
         data: {
-          full_name: fullName,
+          full_name: normalizedFullName,
           role,
         },
         emailRedirectTo: callbackUrl.toString(),
@@ -70,7 +73,11 @@ export default function RegisterForm() {
     setIsSubmitting(false);
 
     if (authError) {
-      setError(authError.message);
+      setError(
+        authError.message.toLowerCase().includes("database error")
+          ? "Registration is blocked by the database profile trigger. Run fix-registration.sql in Supabase SQL Editor, then try again."
+          : authError.message
+      );
       return;
     }
 

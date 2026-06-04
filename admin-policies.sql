@@ -54,7 +54,35 @@ with check (public.is_admin());
 ALTER TABLE public.courses ADD COLUMN IF NOT EXISTS icon_name TEXT DEFAULT 'BookOpen';
 
 -- 2. Ensure profiles table has updated_at
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS full_name TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS email TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS role TEXT NOT NULL DEFAULT 'student';
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL;
+ALTER TABLE public.profiles ALTER COLUMN role SET DEFAULT 'student';
+
+DO $$
+DECLARE
+    constraint_record RECORD;
+BEGIN
+    FOR constraint_record IN
+        SELECT conname
+        FROM pg_constraint
+        WHERE conrelid = 'public.profiles'::regclass
+          AND contype = 'c'
+          AND pg_get_constraintdef(oid) ILIKE '%role%'
+    LOOP
+        EXECUTE format('ALTER TABLE public.profiles DROP CONSTRAINT IF EXISTS %I', constraint_record.conname);
+    END LOOP;
+END $$;
+
+UPDATE public.profiles
+SET role = 'student'
+WHERE role IS NULL OR role NOT IN ('student', 'pending_teacher', 'teacher', 'admin');
+
+ALTER TABLE public.profiles
+ADD CONSTRAINT profiles_role_check
+CHECK (role IN ('student', 'pending_teacher', 'teacher', 'admin'));
 
 -- 3. Secure function to allow admins to delete users from auth.users (cascades to profiles)
 CREATE OR REPLACE FUNCTION public.delete_user_by_admin(target_user_id UUID)
@@ -91,7 +119,7 @@ CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
+SET search_path = public, auth
 AS $$
 DECLARE
     requested_role TEXT;
@@ -112,7 +140,7 @@ BEGIN
     INSERT INTO public.profiles (id, full_name, email, role)
     VALUES (
         NEW.id,
-        COALESCE(NEW.raw_user_meta_data ->> 'full_name', split_part(NEW.email, '@', 1)),
+        COALESCE(NULLIF(NEW.raw_user_meta_data ->> 'full_name', ''), split_part(NEW.email, '@', 1), 'New user'),
         NEW.email,
         assigned_role
     )
@@ -133,5 +161,4 @@ CREATE TRIGGER on_auth_user_created
 AFTER INSERT ON auth.users
 FOR EACH ROW
 EXECUTE FUNCTION public.handle_new_user();
-
 
