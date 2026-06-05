@@ -5,15 +5,13 @@ import {
   BookOpen,
   Clock,
   ExternalLink,
-  PlayCircle,
   Sparkles,
-  ChevronLeft,
-  ChevronRight,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth/roles";
 import { getLessonProgressForCourse } from "@/lib/course/progress";
 import MarkCompleteButton from "@/components/course/MarkCompleteButton";
+import VideoPlayer from "@/components/course/VideoPlayer";
 
 export const dynamic = "force-dynamic";
 
@@ -21,27 +19,6 @@ interface LessonPageProps {
   params: Promise<{ id: string; lessonId: string }>;
 }
 
-function embedUrl(videoUrl: string | null) {
-  if (!videoUrl) return null;
-
-  try {
-    const url = new URL(videoUrl);
-
-    if (url.hostname.includes("youtu.be")) {
-      const videoId = url.pathname.replace("/", "");
-      return `https://www.youtube.com/embed/${videoId}`;
-    }
-
-    if (url.hostname.includes("youtube.com")) {
-      const videoId = url.searchParams.get("v");
-      if (videoId) return `https://www.youtube.com/embed/${videoId}`;
-    }
-  } catch {
-    return null;
-  }
-
-  return videoUrl;
-}
 
 export default async function LessonPage({ params }: LessonPageProps) {
   const { id, lessonId } = await params;
@@ -71,9 +48,10 @@ export default async function LessonPage({ params }: LessonPageProps) {
   if (lessonError || !lesson) notFound();
 
   // Fetch all lessons in this course for prev/next navigation
+  // video_url is included so VideoPlayer can resolve each lesson's embed URL
   const { data: allLessons } = await supabase
     .from("lessons")
-    .select("id, title, lesson_order")
+    .select("id, title, lesson_order, video_url")
     .eq("course_id", id)
     .order("lesson_order", { ascending: true });
 
@@ -107,16 +85,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
   const progressPct =
     totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
 
-  // Prev / next lesson navigation
   const sortedLessons = allLessons ?? [];
-  const currentIndex = sortedLessons.findIndex((l) => l.id === lessonId);
-  const prevLesson = currentIndex > 0 ? sortedLessons[currentIndex - 1] : null;
-  const nextLesson =
-    currentIndex < sortedLessons.length - 1
-      ? sortedLessons[currentIndex + 1]
-      : null;
-
-  const videoEmbed = embedUrl(lesson.video_url);
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
@@ -200,60 +169,17 @@ export default async function LessonPage({ params }: LessonPageProps) {
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Video + Notes */}
           <div className="lg:col-span-2 space-y-6">
-            <div className="relative overflow-hidden rounded-3xl glass-card">
-              <div className="grain-overlay" />
-              <div className="relative aspect-video bg-zinc-900/80">
-                {videoEmbed ? (
-                  <iframe
-                    src={videoEmbed}
-                    title={lesson.title}
-                    className="absolute inset-0 h-full w-full"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  />
-                ) : (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-center">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-full border border-white/10 bg-white/[0.06]">
-                      <PlayCircle className="h-8 w-8 text-white" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-white">No video link yet</p>
-                      <p className="mt-1 text-xs text-zinc-500">
-                        Add a YouTube or embed URL in the admin lesson editor.
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Prev / Next navigation */}
-            {(prevLesson || nextLesson) && (
-              <div className="grid grid-cols-2 gap-3">
-                {prevLesson ? (
-                  <Link
-                    href={`/course/${id}/lesson/${prevLesson.id}`}
-                    className="flex items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.03] px-4 py-3 text-xs font-semibold text-zinc-400 transition hover:border-violet-500/30 hover:bg-violet-500/5 hover:text-white"
-                  >
-                    <ChevronLeft className="h-4 w-4 shrink-0" />
-                    <span className="truncate">{prevLesson.title}</span>
-                  </Link>
-                ) : (
-                  <div />
-                )}
-                {nextLesson ? (
-                  <Link
-                    href={`/course/${id}/lesson/${nextLesson.id}`}
-                    className="flex items-center justify-end gap-3 rounded-2xl border border-white/5 bg-white/[0.03] px-4 py-3 text-xs font-semibold text-zinc-400 transition hover:border-cyan-500/30 hover:bg-cyan-500/5 hover:text-white text-right"
-                  >
-                    <span className="truncate">{nextLesson.title}</span>
-                    <ChevronRight className="h-4 w-4 shrink-0" />
-                  </Link>
-                ) : (
-                  <div />
-                )}
-              </div>
-            )}
+            {/* ── Video Player ─────────────────────────────────────────────── */}
+            <VideoPlayer
+              lesson={{
+                id: lesson.id,
+                title: lesson.title,
+                lesson_order: lesson.lesson_order,
+                video_url: lesson.video_url,
+              }}
+              allLessons={sortedLessons}
+              courseId={id}
+            />
 
             <div className="rounded-3xl glass-card p-6">
               <h2 className="text-sm font-bold text-white">Lesson Notes</h2>
