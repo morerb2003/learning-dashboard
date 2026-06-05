@@ -94,6 +94,33 @@ for select
 to authenticated
 using (public.is_admin());
 
+CREATE TABLE IF NOT EXISTS public.lessons (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    course_id UUID NOT NULL REFERENCES public.courses(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    description TEXT,
+    video_url TEXT,
+    lesson_order INTEGER NOT NULL DEFAULT 1,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE public.lessons ENABLE ROW LEVEL SECURITY;
+
+drop policy if exists "Authenticated users can view lessons" on public.lessons;
+create policy "Authenticated users can view lessons"
+on public.lessons
+for select
+to authenticated
+using (true);
+
+drop policy if exists "Admins can manage all lessons" on public.lessons;
+create policy "Admins can manage all lessons"
+on public.lessons
+for all
+to authenticated
+using (public.is_admin())
+with check (public.is_admin());
+
 -- ==========================================
 -- PHASE 3 DATABASE SCHEMA MIGRATIONS
 -- ==========================================

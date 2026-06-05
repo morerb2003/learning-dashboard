@@ -6,10 +6,16 @@ export const dynamic = "force-dynamic";
 export default async function AdminCoursesPage() {
   const supabase = await createClient();
 
-  const { data: courses } = await supabase
-    .from("courses")
-    .select("*")
-    .order("created_at", { ascending: true });
+  const [{ data: courses }, { data: lessons }] = await Promise.all([
+    supabase
+      .from("courses")
+      .select("*")
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("lessons")
+      .select("*")
+      .order("lesson_order", { ascending: true }),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -17,7 +23,7 @@ export default async function AdminCoursesPage() {
         <h2 className="text-xl font-black text-white tracking-tight">Academic Course Catalog</h2>
         <p className="text-xs font-semibold text-zinc-500 mt-1 uppercase tracking-wider">Publish modules, edit details, and modify curriculum progression</p>
       </div>
-      <CourseManager initialCourses={courses || []} />
+      <CourseManager initialCourses={courses || []} initialLessons={lessons || []} />
     </div>
   );
 }

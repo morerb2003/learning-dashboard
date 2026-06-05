@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { enrollUser, isUserEnrolled, unenrollUser } from "@/lib/course/enrollment";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
+import type { Lesson as DbLesson } from "@/types/lesson";
 import {
   ArrowLeft,
   PlayCircle,
@@ -24,7 +25,7 @@ import {
 } from "lucide-react";
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
-interface Lesson {
+interface CatalogueLesson {
   id: number;
   title: string;
   duration: string;
@@ -45,7 +46,7 @@ interface CourseContent {
   students: string;
   level: string;
   color: string;
-  lessons: Lesson[];
+  lessons: CatalogueLesson[];
   resources: Resource[];
 }
 
@@ -253,6 +254,12 @@ export default async function CourseDetailPage({
 
   if (error || !course) notFound();
 
+  const { data: dbLessons } = await supabase
+    .from("lessons")
+    .select("*")
+    .eq("course_id", course.id)
+    .order("lesson_order", { ascending: true });
+
   const isEnrolled = await isUserEnrolled(course.id);
 
   // Match content to this specific course by title
@@ -260,10 +267,31 @@ export default async function CourseDetailPage({
   const colors = colorMap[content.color] ?? colorMap.violet;
 
   // Derive completed/locked state from the real DB progress value
-  const totalLessons = content.lessons.length;
+  const courseLessons =
+    dbLessons && dbLessons.length > 0
+      ? (dbLessons as DbLesson[]).map((lesson) => ({
+          id: lesson.id,
+          title: lesson.title,
+          duration: "Lesson",
+          description: lesson.description,
+          videoUrl: lesson.video_url,
+          order: lesson.lesson_order,
+          isDatabaseLesson: true,
+        }))
+      : content.lessons.map((lesson) => ({
+          id: String(lesson.id),
+          title: lesson.title,
+          duration: lesson.duration,
+          description: null,
+          videoUrl: null,
+          order: lesson.id,
+          isDatabaseLesson: false,
+        }));
+
+  const totalLessons = courseLessons.length;
   const completedCount = Math.round((course.progress / 100) * totalLessons);
 
-  const lessons = content.lessons.map((lesson, index) => ({
+  const lessons = courseLessons.map((lesson, index) => ({
     ...lesson,
     completed: index < completedCount,
     // The next lesson after completed ones is the active one (unlocked)
@@ -434,12 +462,12 @@ export default async function CourseDetailPage({
                   <span className="text-[10px] font-bold text-white uppercase tracking-wider">Now Playing</span>
                 </div>
                 <div className="absolute bottom-4 right-4 text-xs font-bold text-zinc-400 bg-black/60 backdrop-blur-sm px-2.5 py-1 rounded-lg border border-white/10">
-                  Lesson {activeLesson.id} &bull; {activeLesson.duration}
+                  Lesson {activeLesson.order} &bull; {activeLesson.duration}
                 </div>
               </div>
               <div className="p-5">
                 <h2 className="text-base font-bold text-white">
-                  Lesson {activeLesson.id}: {activeLesson.title}
+                  Lesson {activeLesson.order}: {activeLesson.title}
                 </h2>
                 <p className="text-xs text-zinc-500 mt-1">{content.instructor} &bull; {activeLesson.duration}</p>
               </div>
@@ -495,17 +523,8 @@ export default async function CourseDetailPage({
               <ul className="relative z-10 divide-y divide-white/[0.04] max-h-[520px] overflow-y-auto no-scrollbar">
                 {lessons.map((lesson) => {
                   const isActive = lesson.id === activeLesson.id;
-                  return (
-                    <li
-                      key={lesson.id}
-                      className={`flex items-center gap-3 px-5 py-4 transition-colors duration-150 ${
-                        lesson.locked
-                          ? "opacity-40 cursor-not-allowed"
-                          : isActive
-                          ? "bg-violet-500/10 cursor-pointer"
-                          : "hover:bg-white/[0.03] cursor-pointer"
-                      }`}
-                    >
+                  const lessonBody = (
+                    <>
                       {/* Status Icon */}
                       <div className="shrink-0">
                         {lesson.completed ? (
@@ -533,6 +552,35 @@ export default async function CourseDetailPage({
                         <span className="shrink-0 text-[9px] font-bold text-violet-400 bg-violet-500/10 border border-violet-500/20 px-1.5 py-0.5 rounded-full uppercase tracking-wider">
                           Now
                         </span>
+                      )}
+                    </>
+                  );
+
+                  return (
+                    <li key={lesson.id}>
+                      {lesson.isDatabaseLesson && isEnrolled && !lesson.locked ? (
+                        <Link
+                          href={`/course/${course.id}/lesson/${lesson.id}`}
+                          className={`flex items-center gap-3 px-5 py-4 transition-colors duration-150 ${
+                            isActive
+                              ? "bg-violet-500/10"
+                              : "hover:bg-white/[0.03]"
+                          }`}
+                        >
+                          {lessonBody}
+                        </Link>
+                      ) : (
+                        <div
+                          className={`flex items-center gap-3 px-5 py-4 transition-colors duration-150 ${
+                            lesson.locked
+                              ? "opacity-40 cursor-not-allowed"
+                              : isActive
+                              ? "bg-violet-500/10"
+                              : "hover:bg-white/[0.03]"
+                          }`}
+                        >
+                          {lessonBody}
+                        </div>
                       )}
                     </li>
                   );

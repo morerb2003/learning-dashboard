@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import { Plus, Edit2, Trash2, X, Layers, Check, ShieldAlert, Sparkles } from "lucide-react";
+import { Plus, Edit2, Trash2, X, Layers, Check, ShieldAlert, Sparkles, ListVideo, PlaySquare } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import type { Lesson } from "@/types/lesson";
 
 interface Course {
   id: string;
@@ -20,19 +21,26 @@ interface Course {
 
 interface CourseManagerProps {
   initialCourses: Course[];
+  initialLessons: Lesson[];
 }
 
 const colors = ["violet", "cyan", "emerald", "orange"] as const;
 const levels = ["Beginner", "Intermediate", "Advanced"] as const;
 const icons = ["Atom", "Network", "Sparkles", "Database", "Code", "BookOpen", "Layers"] as const;
 
-export default function CourseManager({ initialCourses }: CourseManagerProps) {
+export default function CourseManager({ initialCourses, initialLessons }: CourseManagerProps) {
   const [courses, setCourses] = useState<Course[]>(initialCourses);
+  const [lessons, setLessons] = useState<Lesson[]>(initialLessons);
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
+  const [selectedCourseId, setSelectedCourseId] = useState(initialCourses[0]?.id ?? "");
+  const [isLessonModalOpen, setIsLessonModalOpen] = useState(false);
+  const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSavingLesson, setIsSavingLesson] = useState(false);
   const [deletingCourseId, setDeletingCourseId] = useState<string | null>(null);
+  const [deletingLessonId, setDeletingLessonId] = useState<string | null>(null);
   const [showConfirmDelete, setShowConfirmDelete] = useState<string | null>(null);
 
   // Form states
@@ -45,6 +53,10 @@ export default function CourseManager({ initialCourses }: CourseManagerProps) {
   const [color, setColor] = useState<typeof colors[number]>("violet");
   const [progress, setProgress] = useState(0);
   const [isPublished, setIsPublished] = useState(true);
+  const [lessonTitle, setLessonTitle] = useState("");
+  const [lessonDescription, setLessonDescription] = useState("");
+  const [lessonVideoUrl, setLessonVideoUrl] = useState("");
+  const [lessonOrder, setLessonOrder] = useState(1);
 
   const supabase = createClient();
 
@@ -59,6 +71,14 @@ export default function CourseManager({ initialCourses }: CourseManagerProps) {
     setProgress(0);
     setIsPublished(true);
     setEditingCourse(null);
+  };
+
+  const resetLessonForm = () => {
+    setLessonTitle("");
+    setLessonDescription("");
+    setLessonVideoUrl("");
+    setLessonOrder(selectedCourseLessons.length + 1);
+    setEditingLesson(null);
   };
 
   const openAddModal = () => {
@@ -78,6 +98,25 @@ export default function CourseManager({ initialCourses }: CourseManagerProps) {
     setProgress(course.progress || 0);
     setIsPublished(course.is_published !== false);
     setIsModalOpen(true);
+  };
+
+  const openAddLessonModal = () => {
+    setEditingLesson(null);
+    setLessonTitle("");
+    setLessonDescription("");
+    setLessonVideoUrl("");
+    setLessonOrder(selectedCourseLessons.length + 1);
+    setIsLessonModalOpen(true);
+  };
+
+  const openEditLessonModal = (lesson: Lesson) => {
+    setEditingLesson(lesson);
+    setSelectedCourseId(lesson.course_id);
+    setLessonTitle(lesson.title);
+    setLessonDescription(lesson.description || "");
+    setLessonVideoUrl(lesson.video_url || "");
+    setLessonOrder(lesson.lesson_order || 1);
+    setIsLessonModalOpen(true);
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -145,9 +184,73 @@ export default function CourseManager({ initialCourses }: CourseManagerProps) {
     setDeletingCourseId(null);
   };
 
+  const handleSaveLesson = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!selectedCourseId || !lessonTitle.trim()) return;
+
+    setIsSavingLesson(true);
+
+    const lessonData = {
+      course_id: selectedCourseId,
+      title: lessonTitle.trim(),
+      description: lessonDescription.trim() || null,
+      video_url: lessonVideoUrl.trim() || null,
+      lesson_order: lessonOrder,
+    };
+
+    if (editingLesson) {
+      const { data, error } = await supabase
+        .from("lessons")
+        .update(lessonData)
+        .eq("id", editingLesson.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Error updating lesson:", error);
+      } else if (data) {
+        setLessons(lessons.map((lesson) => (lesson.id === editingLesson.id ? data : lesson)));
+        setIsLessonModalOpen(false);
+        resetLessonForm();
+      }
+    } else {
+      const { data, error } = await supabase
+        .from("lessons")
+        .insert([lessonData])
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Error creating lesson:", error);
+      } else if (data) {
+        setLessons([...lessons, data]);
+        setIsLessonModalOpen(false);
+        resetLessonForm();
+      }
+    }
+
+    setIsSavingLesson(false);
+  };
+
+  const handleDeleteLesson = async (lessonId: string) => {
+    setDeletingLessonId(lessonId);
+    const { error } = await supabase.from("lessons").delete().eq("id", lessonId);
+
+    if (error) {
+      console.error("Error deleting lesson:", error);
+    } else {
+      setLessons(lessons.filter((lesson) => lesson.id !== lessonId));
+    }
+
+    setDeletingLessonId(null);
+  };
+
   const filteredCourses = courses.filter((course) =>
     course.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
+  const selectedCourseLessons = lessons
+    .filter((lesson) => lesson.course_id === selectedCourseId)
+    .sort((a, b) => a.lesson_order - b.lesson_order);
 
   return (
     <div className="space-y-4">
@@ -262,6 +365,118 @@ export default function CourseManager({ initialCourses }: CourseManagerProps) {
           </table>
         </div>
       </div>
+
+      {/* Lesson Manager */}
+      <section className="overflow-hidden rounded-3xl border border-white/5 bg-white/[0.02]">
+        <div className="flex flex-col gap-4 border-b border-white/5 bg-white/[0.01] p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 className="flex items-center gap-2 text-sm font-black text-white">
+              <ListVideo className="h-4 w-4 text-cyan-300" />
+              Manage Lessons
+            </h3>
+            <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+              Add, edit, and order course lessons
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <select
+              value={selectedCourseId}
+              onChange={(event) => setSelectedCourseId(event.target.value)}
+              className="w-full rounded-2xl border border-white/5 bg-zinc-950/50 px-4 py-2.5 text-xs font-semibold text-zinc-300 outline-none transition focus:border-cyan-400/40 sm:w-72"
+            >
+              {courses.map((course) => (
+                <option key={course.id} value={course.id}>
+                  {course.title}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={openAddLessonModal}
+              disabled={!selectedCourseId}
+              className="flex items-center justify-center gap-2 rounded-2xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-2 text-xs font-bold text-cyan-200 transition hover:bg-cyan-500/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Plus className="h-4 w-4" />
+              Add Lesson
+            </button>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[760px] text-left text-xs">
+            <thead>
+              <tr className="border-b border-white/5 text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                <th className="px-6 py-4">Order</th>
+                <th className="px-6 py-4">Lesson</th>
+                <th className="px-6 py-4">Video</th>
+                <th className="px-6 py-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {selectedCourseLessons.length > 0 ? (
+                selectedCourseLessons.map((lesson) => (
+                  <tr key={lesson.id} className="text-zinc-300 transition-colors hover:bg-white/[0.01]">
+                    <td className="px-6 py-4">
+                      <span className="inline-flex h-7 w-7 items-center justify-center rounded-xl border border-cyan-500/20 bg-cyan-500/10 text-[10px] font-black text-cyan-200">
+                        {lesson.lesson_order}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="text-sm font-bold text-white">{lesson.title}</p>
+                      <p className="mt-1 line-clamp-1 max-w-xl text-[10px] font-medium text-zinc-500">
+                        {lesson.description || "No description provided."}
+                      </p>
+                    </td>
+                    <td className="px-6 py-4">
+                      {lesson.video_url ? (
+                        <a
+                          href={lesson.video_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1.5 rounded-xl border border-white/5 bg-white/[0.03] px-3 py-1.5 text-[10px] font-bold text-cyan-200 transition hover:border-cyan-400/30 hover:text-white"
+                        >
+                          <PlaySquare className="h-3.5 w-3.5" />
+                          Preview
+                        </a>
+                      ) : (
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-600">
+                          Not added
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => openEditLessonModal(lesson)}
+                          className="rounded-xl border border-violet-500/10 bg-violet-500/5 p-2 text-violet-400 transition hover:border-violet-500/25 hover:bg-violet-500/15"
+                        >
+                          <Edit2 className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          disabled={deletingLessonId === lesson.id}
+                          onClick={() => handleDeleteLesson(lesson.id)}
+                          className="rounded-xl border border-red-500/10 bg-red-500/5 p-2 text-red-400 transition hover:border-red-500/25 hover:bg-red-500/15 disabled:opacity-50"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={4} className="py-12 text-center text-xs font-semibold text-zinc-500">
+                    No lessons found for this course. Add the first lesson to build the curriculum.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
 
       {/* Create / Edit Dialog */}
       {isModalOpen && (
@@ -416,6 +631,101 @@ export default function CourseManager({ initialCourses }: CourseManagerProps) {
                 className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold transition-all disabled:opacity-50"
               >
                 {isSaving ? "Saving..." : editingCourse ? "Save Changes" : "Publish Course"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Lesson Create / Edit Dialog */}
+      {isLessonModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="relative w-full max-w-lg overflow-hidden rounded-3xl border border-white/10 bg-zinc-950 p-6 shadow-2xl">
+            <div className="absolute inset-0 bg-mesh-cyan opacity-25 pointer-events-none" />
+
+            <div className="relative z-10 mb-4 flex items-center justify-between border-b border-white/5 pb-4">
+              <h3 className="flex items-center gap-2 text-base font-extrabold text-white">
+                <ListVideo className="h-4 w-4 text-cyan-300" />
+                {editingLesson ? "Edit Lesson" : "Add Lesson"}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsLessonModalOpen(false)}
+                className="rounded-xl border border-white/5 bg-zinc-900 p-1.5 text-zinc-400 hover:text-white"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveLesson} className="relative z-10 space-y-4">
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Course</label>
+                <select
+                  value={selectedCourseId}
+                  onChange={(event) => setSelectedCourseId(event.target.value)}
+                  className="w-full rounded-xl border border-white/5 bg-zinc-900/50 px-3 py-2.5 text-sm text-zinc-300 outline-none focus:border-cyan-500/50"
+                >
+                  {courses.map((course) => (
+                    <option key={course.id} value={course.id}>
+                      {course.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_110px]">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Lesson Title</label>
+                  <input
+                    type="text"
+                    required
+                    value={lessonTitle}
+                    onChange={(event) => setLessonTitle(event.target.value)}
+                    className="w-full rounded-xl border border-white/5 bg-zinc-900/50 px-3 py-2 text-sm text-white outline-none focus:border-cyan-500/50"
+                    placeholder="e.g. Introduction and setup"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Order</label>
+                  <input
+                    type="number"
+                    min="1"
+                    required
+                    value={lessonOrder}
+                    onChange={(event) => setLessonOrder(Number(event.target.value))}
+                    className="w-full rounded-xl border border-white/5 bg-zinc-900/50 px-3 py-2 text-sm text-white outline-none focus:border-cyan-500/50"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Video URL</label>
+                <input
+                  type="url"
+                  value={lessonVideoUrl}
+                  onChange={(event) => setLessonVideoUrl(event.target.value)}
+                  className="w-full rounded-xl border border-white/5 bg-zinc-900/50 px-3 py-2 text-sm text-white outline-none focus:border-cyan-500/50"
+                  placeholder="https://..."
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Description</label>
+                <textarea
+                  rows={4}
+                  value={lessonDescription}
+                  onChange={(event) => setLessonDescription(event.target.value)}
+                  className="w-full resize-none rounded-xl border border-white/5 bg-zinc-900/50 px-3 py-2 text-sm text-white outline-none focus:border-cyan-500/50"
+                  placeholder="What this lesson covers..."
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSavingLesson}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-cyan-600 py-2.5 text-xs font-bold text-white transition hover:bg-cyan-700 disabled:opacity-50"
+              >
+                {isSavingLesson ? "Saving..." : editingLesson ? "Save Lesson" : "Add Lesson"}
               </button>
             </form>
           </div>
