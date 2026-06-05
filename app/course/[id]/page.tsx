@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/auth/roles";
 import { enrollUser, isUserEnrolled, unenrollUser } from "@/lib/course/enrollment";
+import { getLessonProgressForCourse } from "@/lib/course/progress";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import type { Lesson as DbLesson } from "@/types/lesson";
@@ -238,12 +240,11 @@ export default async function CourseDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) redirect("/login");
 
+  const isAdmin = user.role === "admin";
+  const supabase = await createClient();
   const { id } = await params;
 
   const { data: course, error } = await supabase
@@ -262,11 +263,14 @@ export default async function CourseDetailPage({
 
   const isEnrolled = await isUserEnrolled(course.id);
 
+  // ── Real lesson progress ──────────────────────────────────────────────────
+  const progressRows = await getLessonProgressForCourse(course.id);
+  const completedLessonIds = new Set(progressRows.map((p) => p.lesson_id));
+
   // Match content to this specific course by title
   const content = getCourseContent(course.title);
   const colors = colorMap[content.color] ?? colorMap.violet;
 
-  // Derive completed/locked state from the real DB progress value
   const courseLessons =
     dbLessons && dbLessons.length > 0
       ? (dbLessons as DbLesson[]).map((lesson) => ({
@@ -289,17 +293,28 @@ export default async function CourseDetailPage({
         }));
 
   const totalLessons = courseLessons.length;
-  const completedCount = Math.round((course.progress / 100) * totalLessons);
 
-  const lessons = courseLessons.map((lesson, index) => ({
+  // Real completed count (fallback to estimate from course.progress for non-DB lessons)
+  const completedCount =
+    dbLessons && dbLessons.length > 0
+      ? completedLessonIds.size
+      : Math.round((course.progress / 100) * totalLessons);
+
+  const realProgress =
+    totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
+
+  const lessons = courseLessons.map((lesson) => ({
     ...lesson,
-    completed: index < completedCount,
-    // The next lesson after completed ones is the active one (unlocked)
-    // Everything beyond that is locked
-    locked: index > completedCount,
+    completed:
+      dbLessons && dbLessons.length > 0
+        ? completedLessonIds.has(lesson.id)
+        : false,
+    locked: false, // all DB lessons are accessible; only non-DB fallback locks
   }));
 
-  const activeLesson = lessons.find((l) => !l.completed && !l.locked) ?? lessons[0];
+  // Active lesson: first incomplete, or last lesson
+  const activeLesson =
+    lessons.find((l) => !l.completed) ?? lessons[lessons.length - 1] ?? lessons[0];
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
@@ -319,7 +334,7 @@ export default async function CourseDetailPage({
         <span className="text-xs font-bold text-zinc-500 hidden sm:block">AURA &bull; Course Detail</span>
         <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-bold ${colors.badge}`}>
           <BarChart3 className="w-3 h-3" />
-          {course.progress}% Complete
+          {realProgress}% Complete
         </div>
       </nav>
 
@@ -398,7 +413,7 @@ export default async function CourseDetailPage({
                 </div>
               </div>
 
-              {/* Progress Circle */}
+              {/* Real Progress Circle */}
               <div className="flex flex-col items-center gap-2 shrink-0">
                 <div className="relative w-28 h-28">
                   <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
@@ -408,7 +423,7 @@ export default async function CourseDetailPage({
                       stroke="url(#prog-grad)" strokeWidth="8"
                       strokeLinecap="round"
                       strokeDasharray={`${2 * Math.PI * 42}`}
-                      strokeDashoffset={`${2 * Math.PI * 42 * (1 - course.progress / 100)}`}
+                      strokeDashoffset={`${2 * Math.PI * 42 * (1 - realProgress / 100)}`}
                       style={{ transition: "stroke-dashoffset 1s ease" }}
                     />
                     <defs>
@@ -419,7 +434,7 @@ export default async function CourseDetailPage({
                     </defs>
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-2xl font-black text-white">{course.progress}%</span>
+                    <span className="text-2xl font-black text-white">{realProgress}%</span>
                     <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Progress</span>
                   </div>
                 </div>
@@ -427,16 +442,16 @@ export default async function CourseDetailPage({
               </div>
             </div>
 
-            {/* Progress Bar */}
+            {/* Real Progress Bar */}
             <div className="mt-6 space-y-2">
               <div className="flex justify-between text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
                 <span>Course Progress</span>
-                <span>{course.progress}%</span>
+                <span>{realProgress}%</span>
               </div>
               <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
                 <div
                   className={`h-full bg-gradient-to-r ${colors.progress} rounded-full`}
-                  style={{ width: `${course.progress}%`, transition: "width 1s ease" }}
+                  style={{ width: `${realProgress}%`, transition: "width 1s ease" }}
                 />
               </div>
             </div>

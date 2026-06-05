@@ -84,7 +84,7 @@ export default async function LearningPage() {
         {enrollments.length > 0 ? (
           <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {enrollments.map((enrollment, index) => {
-              const courseProgress = enrollment.progress || enrollment.course.progress || 0;
+              const courseProgress = enrollment.progress;
               const meshClasses = ["bg-mesh-violet", "bg-mesh-cyan", "bg-mesh-emerald", "bg-mesh-orange"];
 
               return (

@@ -7,9 +7,13 @@ import {
   ExternalLink,
   PlayCircle,
   Sparkles,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth/roles";
+import { getLessonProgressForCourse } from "@/lib/course/progress";
+import MarkCompleteButton from "@/components/course/MarkCompleteButton";
 
 export const dynamic = "force-dynamic";
 
@@ -66,6 +70,13 @@ export default async function LessonPage({ params }: LessonPageProps) {
 
   if (lessonError || !lesson) notFound();
 
+  // Fetch all lessons in this course for prev/next navigation
+  const { data: allLessons } = await supabase
+    .from("lessons")
+    .select("id, title, lesson_order")
+    .eq("course_id", id)
+    .order("lesson_order", { ascending: true });
+
   const isAdmin = user.role === "admin";
   const { data: enrollment } = await supabase
     .from("enrollments")
@@ -85,6 +96,26 @@ export default async function LessonPage({ params }: LessonPageProps) {
       .eq("id", enrollment.id);
   }
 
+  // Fetch real lesson progress for this course
+  const progressRows = await getLessonProgressForCourse(id);
+  const completedLessonIds = new Set(progressRows.map((p) => p.lesson_id));
+  const isCompleted = completedLessonIds.has(lessonId);
+
+  // Total and completed counts for progress display
+  const totalLessons = allLessons?.length ?? 0;
+  const completedCount = completedLessonIds.size;
+  const progressPct =
+    totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
+
+  // Prev / next lesson navigation
+  const sortedLessons = allLessons ?? [];
+  const currentIndex = sortedLessons.findIndex((l) => l.id === lessonId);
+  const prevLesson = currentIndex > 0 ? sortedLessons[currentIndex - 1] : null;
+  const nextLesson =
+    currentIndex < sortedLessons.length - 1
+      ? sortedLessons[currentIndex + 1]
+      : null;
+
   const videoEmbed = embedUrl(lesson.video_url);
 
   return (
@@ -92,6 +123,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
       <div className="fixed inset-0 bg-mesh-violet opacity-20 pointer-events-none" />
       <div className="fixed inset-0 bg-mesh-cyan opacity-10 pointer-events-none mix-blend-screen" />
 
+      {/* Nav */}
       <nav className="sticky top-0 z-50 glass-card border-b border-white/5 px-4 md:px-8 h-16 flex items-center justify-between">
         <Link
           href={`/course/${id}`}
@@ -100,14 +132,23 @@ export default async function LessonPage({ params }: LessonPageProps) {
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
           Back to Course
         </Link>
-        <span className="text-xs font-bold text-zinc-500 hidden sm:block">AURA &bull; Lesson View</span>
-        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-cyan-500/20 bg-cyan-500/10 text-xs font-bold text-cyan-300">
-          <Sparkles className="w-3 h-3" />
-          Lesson {lesson.lesson_order}
+        <span className="text-xs font-bold text-zinc-500 hidden sm:block">
+          AURA &bull; Lesson View
+        </span>
+        <div className="flex items-center gap-2">
+          {/* Real progress pill */}
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 text-xs font-bold text-emerald-300">
+            {completedCount}/{totalLessons} done
+          </div>
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-cyan-500/20 bg-cyan-500/10 text-xs font-bold text-cyan-300">
+            <Sparkles className="w-3 h-3" />
+            Lesson {lesson.lesson_order}
+          </div>
         </div>
       </nav>
 
       <main className="relative z-10 max-w-7xl mx-auto px-4 md:px-8 py-8 space-y-8">
+        {/* Hero section */}
         <section className="relative overflow-hidden rounded-3xl glass-card p-6 md:p-10">
           <div className="absolute inset-0 bg-mesh-violet opacity-60 pointer-events-none" />
           <div className="grain-overlay" />
@@ -126,6 +167,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
               </p>
             </div>
 
+            {/* Stats grid */}
             <div className="grid grid-cols-2 gap-3 text-xs sm:min-w-[280px]">
               <div className="rounded-2xl border border-white/5 bg-white/[0.03] p-4">
                 <p className="text-zinc-500 uppercase tracking-wider font-bold text-[10px]">Order</p>
@@ -133,17 +175,30 @@ export default async function LessonPage({ params }: LessonPageProps) {
               </div>
               <div className="rounded-2xl border border-white/5 bg-white/[0.03] p-4">
                 <p className="text-zinc-500 uppercase tracking-wider font-bold text-[10px]">Video</p>
-                <p className="mt-2 text-lg font-black text-white">{lesson.video_url ? "Ready" : "None"}</p>
+                <p className="mt-2 text-lg font-black text-white">
+                  {lesson.video_url ? "Ready" : "None"}
+                </p>
               </div>
               <div className="col-span-2 rounded-2xl border border-white/5 bg-white/[0.03] p-4">
-                <p className="text-zinc-500 uppercase tracking-wider font-bold text-[10px]">Course progress</p>
-                <p className="mt-2 text-lg font-black text-white">{course.progress}%</p>
+                <p className="text-zinc-500 uppercase tracking-wider font-bold text-[10px]">
+                  Course Progress
+                </p>
+                <div className="mt-2 flex items-center gap-3">
+                  <p className="text-lg font-black text-white">{progressPct}%</p>
+                  <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-violet-500 to-cyan-400 rounded-full transition-all duration-700"
+                      style={{ width: `${progressPct}%` }}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </section>
 
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Video + Notes */}
           <div className="lg:col-span-2 space-y-6">
             <div className="relative overflow-hidden rounded-3xl glass-card">
               <div className="grain-overlay" />
@@ -163,22 +218,62 @@ export default async function LessonPage({ params }: LessonPageProps) {
                     </div>
                     <div>
                       <p className="text-sm font-bold text-white">No video link yet</p>
-                      <p className="mt-1 text-xs text-zinc-500">Add a YouTube or embed URL in the admin lesson editor.</p>
+                      <p className="mt-1 text-xs text-zinc-500">
+                        Add a YouTube or embed URL in the admin lesson editor.
+                      </p>
                     </div>
                   </div>
                 )}
               </div>
             </div>
 
+            {/* Prev / Next navigation */}
+            {(prevLesson || nextLesson) && (
+              <div className="grid grid-cols-2 gap-3">
+                {prevLesson ? (
+                  <Link
+                    href={`/course/${id}/lesson/${prevLesson.id}`}
+                    className="flex items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.03] px-4 py-3 text-xs font-semibold text-zinc-400 transition hover:border-violet-500/30 hover:bg-violet-500/5 hover:text-white"
+                  >
+                    <ChevronLeft className="h-4 w-4 shrink-0" />
+                    <span className="truncate">{prevLesson.title}</span>
+                  </Link>
+                ) : (
+                  <div />
+                )}
+                {nextLesson ? (
+                  <Link
+                    href={`/course/${id}/lesson/${nextLesson.id}`}
+                    className="flex items-center justify-end gap-3 rounded-2xl border border-white/5 bg-white/[0.03] px-4 py-3 text-xs font-semibold text-zinc-400 transition hover:border-cyan-500/30 hover:bg-cyan-500/5 hover:text-white text-right"
+                  >
+                    <span className="truncate">{nextLesson.title}</span>
+                    <ChevronRight className="h-4 w-4 shrink-0" />
+                  </Link>
+                ) : (
+                  <div />
+                )}
+              </div>
+            )}
+
             <div className="rounded-3xl glass-card p-6">
               <h2 className="text-sm font-bold text-white">Lesson Notes</h2>
               <p className="mt-3 text-sm leading-relaxed text-zinc-400">
-                Use this space to add notes, supporting links, or a transcript later. For now it gives the lesson a real destination and keeps the route useful.
+                Use this space to add notes, supporting links, or a transcript
+                later. For now it gives the lesson a real destination and keeps
+                the route useful.
               </p>
             </div>
           </div>
 
-          <aside className="space-y-6">
+          {/* Sidebar */}
+          <aside className="space-y-4">
+            {/* ✓ Mark Complete button */}
+            <MarkCompleteButton
+              lessonId={lessonId}
+              courseId={id}
+              initialCompleted={isCompleted}
+            />
+
             <div className="rounded-3xl glass-card p-6">
               <h2 className="flex items-center gap-2 text-sm font-bold text-white">
                 <Clock className="h-4 w-4 text-cyan-300" />
@@ -186,16 +281,36 @@ export default async function LessonPage({ params }: LessonPageProps) {
               </h2>
               <dl className="mt-4 space-y-4 text-sm">
                 <div>
-                  <dt className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Lesson Order</dt>
+                  <dt className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+                    Lesson Order
+                  </dt>
                   <dd className="mt-1 text-zinc-300">{lesson.lesson_order}</dd>
                 </div>
                 <div>
-                  <dt className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Created</dt>
-                  <dd className="mt-1 text-zinc-300">{new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(new Date(lesson.created_at))}</dd>
+                  <dt className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+                    Created
+                  </dt>
+                  <dd className="mt-1 text-zinc-300">
+                    {new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(
+                      new Date(lesson.created_at)
+                    )}
+                  </dd>
                 </div>
                 <div>
-                  <dt className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Source</dt>
-                  <dd className="mt-1 text-zinc-300">{lesson.video_url ? "External video" : "Admin only"}</dd>
+                  <dt className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+                    Status
+                  </dt>
+                  <dd className="mt-1 text-zinc-300">
+                    {isCompleted ? "✅ Completed" : "⬜ Not completed"}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+                    Source
+                  </dt>
+                  <dd className="mt-1 text-zinc-300">
+                    {lesson.video_url ? "External video" : "Admin only"}
+                  </dd>
                 </div>
               </dl>
             </div>

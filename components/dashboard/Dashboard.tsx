@@ -34,9 +34,10 @@ interface DashboardProps {
   initialCourses: Course[];
   initialNotes: Note[];
   profile: Profile;
+  totalCompletedLessons?: number;
 }
 
-export default function Dashboard({ initialCourses, initialNotes, profile }: DashboardProps) {
+export default function Dashboard({ initialCourses, initialNotes, profile, totalCompletedLessons = 0 }: DashboardProps) {
   const [activeTab, setActiveTab] = useState<TabId>("dashboard");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -198,7 +199,7 @@ export default function Dashboard({ initialCourses, initialNotes, profile }: Das
           
           {/* 1. Dashboard View */}
           {activeTab === "dashboard" && (
-            <BentoGrid courses={initialCourses} fullName={profile.full_name} />
+            <BentoGrid courses={initialCourses} fullName={profile.full_name} totalCompletedLessons={totalCompletedLessons} />
           )}
 
           {/* 2. Courses View */}

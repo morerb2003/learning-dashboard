@@ -9,6 +9,7 @@ export const dynamic = "force-dynamic";
 export default async function Home() {
   let courses: Course[] = [];
   let notes: Note[] = [];
+  let totalCompletedLessons = 0;
 
   const supabase = await createClient();
 
@@ -58,6 +59,46 @@ export default async function Home() {
     } else {
       notes = notesData || [];
     }
+
+    // ── Real lesson progress ──────────────────────────────────────────────
+    // Fetch all lessons and all completed lesson_progress rows for this user
+    const [{ data: allLessons }, { data: progressRows }] = await Promise.all([
+      supabase.from("lessons").select("id, course_id"),
+      supabase
+        .from("lesson_progress")
+        .select("lesson_id")
+        .eq("user_id", user.id)
+        .eq("completed", true),
+    ]);
+
+    if (allLessons && progressRows) {
+      const completedIds = new Set(progressRows.map((p) => p.lesson_id));
+      totalCompletedLessons = completedIds.size;
+
+      // Build a lookup: courseId -> { total, completed }
+      const courseStats: Record<string, { total: number; completed: number }> = {};
+      for (const lesson of allLessons) {
+        if (!courseStats[lesson.course_id]) {
+          courseStats[lesson.course_id] = { total: 0, completed: 0 };
+        }
+        courseStats[lesson.course_id].total++;
+        if (completedIds.has(lesson.id)) {
+          courseStats[lesson.course_id].completed++;
+        }
+      }
+
+      // Override course.progress with real calculated percentage
+      courses = courses.map((course) => {
+        const stats = courseStats[course.id];
+        if (stats && stats.total > 0) {
+          return {
+            ...course,
+            progress: Math.round((stats.completed / stats.total) * 100),
+          };
+        }
+        return course;
+      });
+    }
   } catch (err) {
     console.error("Database connection exception:", err);
   }
@@ -70,10 +111,11 @@ export default async function Home() {
   };
 
   return (
-    <Dashboard 
-      initialCourses={courses} 
+    <Dashboard
+      initialCourses={courses}
       initialNotes={notes}
       profile={resolvedProfile}
+      totalCompletedLessons={totalCompletedLessons}
     />
   );
 }

@@ -20,6 +20,7 @@ import ActivityChart from "@/components/dashboard/ActivityChart";
 interface BentoGridProps {
   courses: Course[];
   fullName?: string;
+  totalCompletedLessons?: number;
 }
 
 // Framer Motion variants for staggered entrance
@@ -59,7 +60,7 @@ const hoverTransition = {
   damping: 20
 };
 
-export default function BentoGrid({ courses, fullName }: BentoGridProps) {
+export default function BentoGrid({ courses, fullName, totalCompletedLessons = 0 }: BentoGridProps) {
   const [streakClicked, setStreakClicked] = useState(false);
 
   // Fallback courses if database returns empty
@@ -147,7 +148,7 @@ export default function BentoGrid({ courses, fullName }: BentoGridProps) {
           <div className="flex flex-col">
             <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Completed</span>
             <span className="text-lg md:text-xl font-bold text-white mt-0.5 flex items-baseline gap-1">
-              12 <span className="text-xs font-normal text-zinc-500">lessons</span>
+              {totalCompletedLessons} <span className="text-xs font-normal text-zinc-500">lessons</span>
             </span>
           </div>
           <div className="flex flex-col">
