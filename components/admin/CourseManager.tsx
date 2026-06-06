@@ -1,34 +1,32 @@
 "use client";
 
 import React, { useState } from "react";
-import { Plus, Edit2, Trash2, X, Layers, Check, ShieldAlert, Sparkles, ListVideo, PlaySquare } from "lucide-react";
+import { Plus, Edit2, Trash2, X, Layers, Check, ShieldAlert, Sparkles, ListVideo, PlaySquare, UploadCloud, Image as ImageIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { Lesson } from "@/types/lesson";
-
-interface Course {
-  id: string;
-  title: string;
-  progress: number;
-  icon_name: string;
-  created_at: string;
-  description?: string | null;
-  category?: string | null;
-  level?: string | null;
-  teacher_name?: string | null;
-  color?: string | null;
-  is_published?: boolean | null;
-}
+import type { Course } from "@/types/course";
 
 interface CourseManagerProps {
   initialCourses: Course[];
   initialLessons: Lesson[];
+  currentUserId?: string;
+  currentTeacherId?: string;
+  currentTeacherName?: string | null;
+  mode?: "admin" | "teacher";
 }
 
 const colors = ["violet", "cyan", "emerald", "orange"] as const;
 const levels = ["Beginner", "Intermediate", "Advanced"] as const;
 const icons = ["Atom", "Network", "Sparkles", "Database", "Code", "BookOpen", "Layers"] as const;
 
-export default function CourseManager({ initialCourses, initialLessons }: CourseManagerProps) {
+export default function CourseManager({
+  initialCourses,
+  initialLessons,
+  currentUserId,
+  currentTeacherId,
+  currentTeacherName,
+  mode = "admin",
+}: CourseManagerProps) {
   const [courses, setCourses] = useState<Course[]>(initialCourses);
   const [lessons, setLessons] = useState<Lesson[]>(initialLessons);
   const [searchQuery, setSearchQuery] = useState("");
@@ -42,6 +40,7 @@ export default function CourseManager({ initialCourses, initialLessons }: Course
   const [deletingCourseId, setDeletingCourseId] = useState<string | null>(null);
   const [deletingLessonId, setDeletingLessonId] = useState<string | null>(null);
   const [showConfirmDelete, setShowConfirmDelete] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   // Form states
   const [title, setTitle] = useState("");
@@ -53,6 +52,9 @@ export default function CourseManager({ initialCourses, initialLessons }: Course
   const [color, setColor] = useState<typeof colors[number]>("violet");
   const [progress, setProgress] = useState(0);
   const [isPublished, setIsPublished] = useState(true);
+  const [thumbnailUrl, setThumbnailUrl] = useState("");
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [thumbnailPreview, setThumbnailPreview] = useState("");
   const [lessonTitle, setLessonTitle] = useState("");
   const [lessonDescription, setLessonDescription] = useState("");
   const [lessonVideoUrl, setLessonVideoUrl] = useState("");
@@ -66,10 +68,14 @@ export default function CourseManager({ initialCourses, initialLessons }: Course
     setCategory("");
     setLevel("Beginner");
     setIconName("BookOpen");
-    setTeacherName("");
+    setTeacherName(mode === "teacher" ? currentTeacherName || "" : "");
     setColor("violet");
     setProgress(0);
     setIsPublished(true);
+    setThumbnailUrl("");
+    setThumbnailFile(null);
+    setThumbnailPreview("");
+    setSaveError(null);
     setEditingCourse(null);
   };
 
@@ -97,6 +103,10 @@ export default function CourseManager({ initialCourses, initialLessons }: Course
     setColor((course.color as typeof colors[number]) || "violet");
     setProgress(course.progress || 0);
     setIsPublished(course.is_published !== false);
+    setThumbnailUrl(course.thumbnail_url || "");
+    setThumbnailFile(null);
+    setThumbnailPreview(course.thumbnail_url || "");
+    setSaveError(null);
     setIsModalOpen(true);
   };
 
@@ -119,34 +129,93 @@ export default function CourseManager({ initialCourses, initialLessons }: Course
     setIsLessonModalOpen(true);
   };
 
+  const handleThumbnailChange = (file: File | null) => {
+    setThumbnailFile(file);
+    if (file) {
+      setThumbnailPreview(URL.createObjectURL(file));
+    } else {
+      setThumbnailPreview(thumbnailUrl);
+    }
+  };
+
+  const uploadThumbnail = async () => {
+    if (!thumbnailFile) {
+      return thumbnailUrl.trim() || null;
+    }
+
+    const ownerId = currentUserId || currentTeacherId;
+    if (!ownerId) {
+      throw new Error("A teacher account is required before uploading a course thumbnail.");
+    }
+
+    const extension = thumbnailFile.name.split(".").pop()?.toLowerCase() || "jpg";
+    const safeName = `${Date.now()}-${crypto.randomUUID()}.${extension}`;
+    const path = `${ownerId}/${safeName}`;
+
+    const { error } = await supabase.storage
+      .from("course-thumbnails")
+      .upload(path, thumbnailFile, {
+        cacheControl: "3600",
+        upsert: true,
+      });
+
+    if (error) {
+      throw error;
+    }
+
+    const { data } = supabase.storage
+      .from("course-thumbnails")
+      .getPublicUrl(path);
+
+    return data.publicUrl;
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
 
     setIsSaving(true);
+    setSaveError(null);
+
+    let uploadedThumbnailUrl: string | null = null;
+    try {
+      uploadedThumbnailUrl = await uploadThumbnail();
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : "Thumbnail upload failed.");
+      setIsSaving(false);
+      return;
+    }
+
     const courseData = {
-      title,
-      description,
-      category,
+      title: title.trim(),
+      description: description.trim() || null,
+      category: category.trim() || null,
       level,
       icon_name: iconName,
-      teacher_name: teacherName,
+      teacher_name: teacherName.trim() || null,
       color,
       progress,
       is_published: isPublished,
+      thumbnail_url: uploadedThumbnailUrl,
+      ...(mode === "teacher" && currentTeacherId ? { teacher_id: currentTeacherId } : {}),
     };
 
     if (editingCourse) {
       // Update operation
-      const { data, error } = await supabase
+      let query = supabase
         .from("courses")
         .update(courseData)
-        .eq("id", editingCourse.id)
-        .select()
-        .single();
+        .eq("id", editingCourse.id);
+
+      if (mode === "teacher" && currentTeacherId) {
+        query = query.eq("teacher_id", currentTeacherId);
+      }
+
+      const { data, error } = await query.select().single();
 
       if (error) {
         console.error("Error updating course:", error);
+        setSaveError(error.message);
       } else if (data) {
         setCourses(courses.map((c) => (c.id === editingCourse.id ? data : c)));
         setIsModalOpen(false);
@@ -162,8 +231,10 @@ export default function CourseManager({ initialCourses, initialLessons }: Course
 
       if (error) {
         console.error("Error creating course:", error);
+        setSaveError(error.message);
       } else if (data) {
         setCourses([...courses, data]);
+        setSelectedCourseId(data.id);
         setIsModalOpen(false);
         resetForm();
       }
@@ -173,7 +244,11 @@ export default function CourseManager({ initialCourses, initialLessons }: Course
 
   const handleDelete = async (courseId: string) => {
     setDeletingCourseId(courseId);
-    const { error } = await supabase.from("courses").delete().eq("id", courseId);
+    let query = supabase.from("courses").delete().eq("id", courseId);
+    if (mode === "teacher" && currentTeacherId) {
+      query = query.eq("teacher_id", currentTeacherId);
+    }
+    const { error } = await query;
 
     if (error) {
       console.error("Error deleting course:", error);
@@ -291,12 +366,25 @@ export default function CourseManager({ initialCourses, initialLessons }: Course
                 filteredCourses.map((course) => (
                   <tr key={course.id} className="text-zinc-300 hover:bg-white/[0.01] transition-colors">
                     <td className="px-6 py-4">
-                      <div>
-                        <p className="font-bold text-white text-sm">{course.title}</p>
-                        <p className="mt-1 text-[10px] text-zinc-500 font-semibold uppercase tracking-wider flex items-center gap-1.5">
-                          <Layers className="w-3 h-3 text-violet-400" />
-                          Icon: {course.icon_name || "BookOpen"} &bull; Progress: {course.progress}%
-                        </p>
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-12 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-zinc-900/60 text-zinc-600">
+                          {course.thumbnail_url ? (
+                            <img
+                              src={course.thumbnail_url}
+                              alt=""
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <ImageIcon className="h-4 w-4" />
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-bold text-white text-sm">{course.title}</p>
+                          <p className="mt-1 text-[10px] text-zinc-500 font-semibold uppercase tracking-wider flex items-center gap-1.5">
+                            <Layers className="w-3 h-3 text-violet-400" />
+                            Icon: {course.icon_name || "BookOpen"} - Progress: {course.progress}%
+                          </p>
+                        </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 font-semibold text-zinc-400">{course.category || "General"}</td>
@@ -501,6 +589,12 @@ export default function CourseManager({ initialCourses, initialLessons }: Course
 
             {/* Form */}
             <form onSubmit={handleSave} className="relative z-10 space-y-4 max-h-[70vh] overflow-y-auto pr-1 no-scrollbar">
+              {saveError && (
+                <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-xs font-semibold text-red-300">
+                  {saveError}
+                </div>
+              )}
+
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Course Title</label>
                 <input
@@ -511,6 +605,29 @@ export default function CourseManager({ initialCourses, initialLessons }: Course
                   placeholder="e.g. Next.js App Router Architecture"
                   className="w-full bg-zinc-900/50 border border-white/5 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-violet-500/50"
                 />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Thumbnail</label>
+                <div className="grid gap-3 sm:grid-cols-[112px_1fr] sm:items-center">
+                  <div className="flex aspect-video w-28 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/60 text-zinc-600">
+                    {thumbnailPreview ? (
+                      <img src={thumbnailPreview} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <ImageIcon className="h-5 w-5" />
+                    )}
+                  </div>
+                  <label className="flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-xs font-bold text-zinc-300 transition hover:border-violet-500/30 hover:text-white">
+                    <UploadCloud className="h-4 w-4 text-violet-300" />
+                    Upload thumbnail
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(event) => handleThumbnailChange(event.target.files?.[0] ?? null)}
+                    />
+                  </label>
+                </div>
               </div>
 
               <div className="space-y-1">
@@ -574,8 +691,9 @@ export default function CourseManager({ initialCourses, initialLessons }: Course
                     type="text"
                     value={teacherName}
                     onChange={(e) => setTeacherName(e.target.value)}
+                    disabled={mode === "teacher"}
                     placeholder="e.g. Dr. Alex Vance"
-                    className="w-full bg-zinc-900/50 border border-white/5 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-violet-500/50"
+                    className="w-full bg-zinc-900/50 border border-white/5 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-violet-500/50 disabled:cursor-not-allowed disabled:text-zinc-500"
                   />
                 </div>
               </div>
@@ -630,7 +748,7 @@ export default function CourseManager({ initialCourses, initialLessons }: Course
                 disabled={isSaving}
                 className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold transition-all disabled:opacity-50"
               >
-                {isSaving ? "Saving..." : editingCourse ? "Save Changes" : "Publish Course"}
+                {isSaving ? "Saving..." : editingCourse ? "Save Changes" : isPublished ? "Publish Course" : "Save Draft"}
               </button>
             </form>
           </div>

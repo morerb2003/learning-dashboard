@@ -7,8 +7,15 @@ export const dynamic = "force-dynamic";
 export default async function TeacherAnalyticsPage() {
   const supabase = await createClient();
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   const [coursesResult, studentsResult, enrollmentsResult, lessonsResult] = await Promise.all([
-    supabase.from("courses").select("id, title, progress, category, level, is_published, created_at"),
+    supabase
+      .from("courses")
+      .select("id, title, progress, category, level, is_published, created_at")
+      .eq("teacher_id", user?.id ?? ""),
     supabase.from("profiles").select("id, created_at").eq("role", "student"),
     supabase.from("enrollments").select("id, course_id, user_id, enrolled_at"),
     supabase.from("lessons").select("id, course_id"),
@@ -16,8 +23,13 @@ export default async function TeacherAnalyticsPage() {
 
   const courses = coursesResult.data ?? [];
   const students = studentsResult.data ?? [];
-  const enrollments = enrollmentsResult.data ?? [];
-  const lessons = lessonsResult.data ?? [];
+  const teacherCourseIds = new Set(courses.map((course) => course.id));
+  const enrollments = (enrollmentsResult.data ?? []).filter((enrollment) =>
+    teacherCourseIds.has(enrollment.course_id)
+  );
+  const lessons = (lessonsResult.data ?? []).filter((lesson) =>
+    teacherCourseIds.has(lesson.course_id)
+  );
 
   // Compute per-course enrollment counts
   const enrollmentMap: Record<string, number> = {};

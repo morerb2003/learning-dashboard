@@ -6,19 +6,27 @@ export const dynamic = "force-dynamic";
 export default async function TeacherStudentsPage() {
   const supabase = await createClient();
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   const [studentsResult, coursesResult, enrollmentsResult] = await Promise.all([
     supabase
       .from("profiles")
       .select("id, full_name, email, created_at")
       .eq("role", "student")
       .order("created_at", { ascending: false }),
-    supabase.from("courses").select("id, title"),
+    supabase.from("courses").select("id, title").eq("teacher_id", user?.id ?? ""),
     supabase.from("enrollments").select("id, user_id, course_id, enrolled_at"),
   ]);
 
-  const students = studentsResult.data ?? [];
   const courses = coursesResult.data ?? [];
-  const enrollments = enrollmentsResult.data ?? [];
+  const teacherCourseIds = new Set(courses.map((course) => course.id));
+  const enrollments = (enrollmentsResult.data ?? []).filter((enrollment) =>
+    teacherCourseIds.has(enrollment.course_id)
+  );
+  const studentIds = new Set(enrollments.map((enrollment) => enrollment.user_id));
+  const students = (studentsResult.data ?? []).filter((student) => studentIds.has(student.id));
 
   // Build lookup maps
   const courseMap = Object.fromEntries(courses.map((c) => [c.id, c.title]));

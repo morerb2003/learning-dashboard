@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Sparkles, BookOpen, ChevronLeft } from "lucide-react";
+import { Sparkles, BookOpen, ChevronLeft, UploadCloud, Image as ImageIcon } from "lucide-react";
 import Link from "next/link";
 
 const colors = ["violet", "cyan", "emerald", "orange"] as const;
@@ -12,7 +12,7 @@ const icons = ["Atom", "Network", "Sparkles", "Database", "Code", "BookOpen", "L
 
 export default function CreateCoursePage() {
   const router = useRouter();
-  const supabase = createClient();
+  const supabase = React.useMemo(() => createClient(), []);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -22,8 +22,62 @@ export default function CreateCoursePage() {
   const [teacherName, setTeacherName] = useState("");
   const [color, setColor] = useState<typeof colors[number]>("violet");
   const [isPublished, setIsPublished] = useState(true);
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [thumbnailPreview, setThumbnailPreview] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadTeacherName() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name, email")
+        .eq("id", user.id)
+        .single();
+
+      if (isMounted) {
+        setTeacherName(profile?.full_name || profile?.email?.split("@")[0] || "");
+      }
+    }
+
+    loadTeacherName();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [supabase]);
+
+  const uploadThumbnail = async (userId: string) => {
+    if (!thumbnailFile) return null;
+
+    const extension = thumbnailFile.name.split(".").pop()?.toLowerCase() || "jpg";
+    const path = `${userId}/${Date.now()}-${crypto.randomUUID()}.${extension}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("course-thumbnails")
+      .upload(path, thumbnailFile, {
+        cacheControl: "3600",
+        upsert: true,
+      });
+
+    if (uploadError) {
+      throw uploadError;
+    }
+
+    const { data } = supabase.storage
+      .from("course-thumbnails")
+      .getPublicUrl(path);
+
+    return data.publicUrl;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,9 +86,29 @@ export default function CreateCoursePage() {
     setIsSaving(true);
     setError(null);
 
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      setError("You must be logged in as a teacher to create a course.");
+      setIsSaving(false);
+      return;
+    }
+
+    let thumbnailUrl: string | null = null;
+    try {
+      thumbnailUrl = await uploadThumbnail(user.id);
+    } catch (uploadError) {
+      setError(uploadError instanceof Error ? uploadError.message : "Thumbnail upload failed.");
+      setIsSaving(false);
+      return;
+    }
+
     const { data, error: saveError } = await supabase
       .from("courses")
       .insert([{
+        teacher_id: user.id,
         title: title.trim(),
         description: description.trim() || null,
         category: category.trim() || null,
@@ -44,6 +118,7 @@ export default function CreateCoursePage() {
         color,
         progress: 0,
         is_published: isPublished,
+        thumbnail_url: thumbnailUrl,
       }])
       .select()
       .single();
@@ -120,6 +195,36 @@ export default function CreateCoursePage() {
             />
           </div>
 
+          {/* Thumbnail */}
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+              Thumbnail
+            </label>
+            <div className="grid gap-3 sm:grid-cols-[128px_1fr] sm:items-center">
+              <div className="flex aspect-video w-32 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/60 text-zinc-600">
+                {thumbnailPreview ? (
+                  <img src={thumbnailPreview} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <ImageIcon className="h-5 w-5" />
+                )}
+              </div>
+              <label className="flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-xs font-bold text-zinc-300 transition hover:border-violet-500/30 hover:text-white">
+                <UploadCloud className="h-4 w-4 text-violet-300" />
+                Upload thumbnail
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0] ?? null;
+                    setThumbnailFile(file);
+                    setThumbnailPreview(file ? URL.createObjectURL(file) : "");
+                  }}
+                />
+              </label>
+            </div>
+          </div>
+
           {/* Category + Level */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
@@ -174,8 +279,9 @@ export default function CreateCoursePage() {
                 type="text"
                 value={teacherName}
                 onChange={(e) => setTeacherName(e.target.value)}
+                disabled
                 placeholder="e.g. Dr. Alex Vance"
-                className="w-full bg-zinc-900/50 border border-white/5 rounded-xl py-2.5 px-4 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-violet-500/50 transition-colors"
+                className="w-full bg-zinc-900/50 border border-white/5 rounded-xl py-2.5 px-4 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-violet-500/50 transition-colors disabled:cursor-not-allowed disabled:text-zinc-500"
               />
             </div>
           </div>

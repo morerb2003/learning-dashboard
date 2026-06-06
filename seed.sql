@@ -1,11 +1,16 @@
 -- Courses table
 CREATE TABLE IF NOT EXISTS public.courses (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    teacher_id UUID,
     title TEXT NOT NULL,
     progress INTEGER NOT NULL CHECK (progress >= 0 AND progress <= 100),
     icon_name TEXT NOT NULL,
+    thumbnail_url TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
+
+ALTER TABLE public.courses ADD COLUMN IF NOT EXISTS teacher_id UUID;
+ALTER TABLE public.courses ADD COLUMN IF NOT EXISTS thumbnail_url TEXT;
 
 ALTER TABLE public.courses ENABLE ROW LEVEL SECURITY;
 
@@ -63,6 +68,20 @@ WHERE role IS NULL OR role NOT IN ('student', 'pending_teacher', 'teacher', 'adm
 ALTER TABLE public.profiles
 ADD CONSTRAINT profiles_role_check
 CHECK (role IN ('student', 'pending_teacher', 'teacher', 'admin'));
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_constraint
+        WHERE conrelid = 'public.courses'::regclass
+          AND conname = 'courses_teacher_id_fkey'
+    ) THEN
+        ALTER TABLE public.courses
+        ADD CONSTRAINT courses_teacher_id_fkey
+        FOREIGN KEY (teacher_id) REFERENCES public.profiles(id) ON DELETE SET NULL;
+    END IF;
+END $$;
 
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 

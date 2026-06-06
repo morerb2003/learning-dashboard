@@ -23,21 +23,27 @@ export default async function TeacherDashboardPage() {
 
   const [
     coursesResult,
-    allStudentsResult,
     lessonsResult,
     enrollmentsResult,
   ] = await Promise.all([
-    supabase.from("courses").select("id, title, category, level, is_published, created_at, progress", { count: "exact" }),
-    supabase.from("profiles").select("id", { count: "exact", head: true }).eq("role", "student"),
-    supabase.from("lessons").select("id", { count: "exact", head: true }),
+    supabase
+      .from("courses")
+      .select("id, title, category, level, is_published, created_at, progress", { count: "exact" })
+      .eq("teacher_id", user?.id ?? ""),
+    supabase.from("lessons").select("id, course_id"),
     supabase.from("enrollments").select("id, course_id, user_id, enrolled_at", { count: "exact" }),
   ]);
 
   const courses = coursesResult.data ?? [];
+  const teacherCourseIds = new Set(courses.map((course) => course.id));
   const totalCourses = coursesResult.count ?? 0;
-  const totalStudents = allStudentsResult.count ?? 0;
-  const totalLessons = lessonsResult.count ?? 0;
-  const enrollments = enrollmentsResult.data ?? [];
+  const totalLessons = (lessonsResult.data ?? []).filter((lesson) =>
+    teacherCourseIds.has(lesson.course_id)
+  ).length;
+  const enrollments = (enrollmentsResult.data ?? []).filter((enrollment) =>
+    teacherCourseIds.has(enrollment.course_id)
+  );
+  const totalStudents = new Set(enrollments.map((enrollment) => enrollment.user_id)).size;
 
   // Compute average completion rate from course progress field
   const avgCompletion =
@@ -222,7 +228,7 @@ export default async function TeacherDashboardPage() {
                         <td className="py-3 pr-4">
                           <p className="font-bold text-white">{course.title}</p>
                           <p className="text-[10px] text-zinc-500 mt-0.5">
-                            {course.category || "General"} • {course.level || "Beginner"}
+                            {course.category || "General"} - {course.level || "Beginner"}
                           </p>
                         </td>
                         <td className="py-3">
@@ -258,7 +264,7 @@ export default async function TeacherDashboardPage() {
                     <td colSpan={4} className="py-10 text-center text-zinc-500 font-semibold">
                       No courses yet.{" "}
                       <Link href="/teacher/courses/create" className="text-violet-400 hover:text-violet-300 underline underline-offset-2">
-                        Create your first course →
+                        Create your first course -&gt;
                       </Link>
                     </td>
                   </tr>

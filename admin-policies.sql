@@ -16,6 +16,24 @@ $$;
 revoke all on function public.is_admin() from public;
 grant execute on function public.is_admin() to authenticated;
 
+create or replace function public.is_teacher()
+returns boolean
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select exists (
+    select 1
+    from public.profiles
+    where id = auth.uid()
+      and role in ('teacher', 'admin')
+  );
+$$;
+
+revoke all on function public.is_teacher() from public;
+grant execute on function public.is_teacher() to authenticated;
+
 drop policy if exists "Admins can view all profiles" on public.profiles;
 create policy "Admins can view all profiles"
 on public.profiles
@@ -45,6 +63,28 @@ for all
 to authenticated
 using (public.is_admin())
 with check (public.is_admin());
+
+drop policy if exists "Teachers can create own courses" on public.courses;
+create policy "Teachers can create own courses"
+on public.courses
+for insert
+to authenticated
+with check (teacher_id = auth.uid() and public.is_teacher());
+
+drop policy if exists "Teachers can update own courses" on public.courses;
+create policy "Teachers can update own courses"
+on public.courses
+for update
+to authenticated
+using (teacher_id = auth.uid() and public.is_teacher())
+with check (teacher_id = auth.uid() and public.is_teacher());
+
+drop policy if exists "Teachers can delete own courses" on public.courses;
+create policy "Teachers can delete own courses"
+on public.courses
+for delete
+to authenticated
+using (teacher_id = auth.uid() and public.is_teacher());
 
 CREATE TABLE IF NOT EXISTS public.enrollments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -121,12 +161,55 @@ to authenticated
 using (public.is_admin())
 with check (public.is_admin());
 
+drop policy if exists "Teachers can manage lessons for own courses" on public.lessons;
+create policy "Teachers can manage lessons for own courses"
+on public.lessons
+for all
+to authenticated
+using (
+  exists (
+    select 1
+    from public.courses
+    where courses.id = lessons.course_id
+      and courses.teacher_id = auth.uid()
+  )
+  and public.is_teacher()
+)
+with check (
+  exists (
+    select 1
+    from public.courses
+    where courses.id = lessons.course_id
+      and courses.teacher_id = auth.uid()
+  )
+  and public.is_teacher()
+);
+
 -- ==========================================
 -- PHASE 3 DATABASE SCHEMA MIGRATIONS
 -- ==========================================
 
 -- 1. Ensure courses table has icon_name
 ALTER TABLE public.courses ADD COLUMN IF NOT EXISTS icon_name TEXT DEFAULT 'BookOpen';
+ALTER TABLE public.courses ADD COLUMN IF NOT EXISTS teacher_id UUID;
+ALTER TABLE public.courses ADD COLUMN IF NOT EXISTS thumbnail_url TEXT;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_constraint
+        WHERE conrelid = 'public.courses'::regclass
+          AND conname = 'courses_teacher_id_fkey'
+    ) THEN
+        ALTER TABLE public.courses
+        ADD CONSTRAINT courses_teacher_id_fkey
+        FOREIGN KEY (teacher_id) REFERENCES public.profiles(id) ON DELETE SET NULL;
+    END IF;
+END $$;
+
+CREATE INDEX IF NOT EXISTS courses_teacher_id_idx
+ON public.courses(teacher_id);
 
 -- 2. Ensure profiles table has updated_at
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS full_name TEXT;
@@ -236,3 +319,43 @@ CREATE TRIGGER on_auth_user_created
 AFTER INSERT ON auth.users
 FOR EACH ROW
 EXECUTE FUNCTION public.handle_new_user();
+
+-- ==========================================
+-- COURSE THUMBNAIL STORAGE
+-- ==========================================
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('course-thumbnails', 'course-thumbnails', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+DROP POLICY IF EXISTS "Public can view course thumbnails" ON storage.objects;
+CREATE POLICY "Public can view course thumbnails"
+ON storage.objects
+FOR SELECT
+USING (bucket_id = 'course-thumbnails');
+
+DROP POLICY IF EXISTS "Teachers can upload course thumbnails" ON storage.objects;
+CREATE POLICY "Teachers can upload course thumbnails"
+ON storage.objects
+FOR INSERT
+TO authenticated
+WITH CHECK (
+    bucket_id = 'course-thumbnails'
+    AND public.is_teacher()
+    AND (storage.foldername(name))[1] = auth.uid()::text
+);
+
+DROP POLICY IF EXISTS "Teachers can update own course thumbnails" ON storage.objects;
+CREATE POLICY "Teachers can update own course thumbnails"
+ON storage.objects
+FOR UPDATE
+TO authenticated
+USING (
+    bucket_id = 'course-thumbnails'
+    AND public.is_teacher()
+    AND (storage.foldername(name))[1] = auth.uid()::text
+)
+WITH CHECK (
+    bucket_id = 'course-thumbnails'
+    AND public.is_teacher()
+    AND (storage.foldername(name))[1] = auth.uid()::text
+);
