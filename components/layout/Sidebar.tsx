@@ -14,7 +14,8 @@ import {
   Sparkles,
   StickyNote,
   ShieldCheck,
-  Users
+  Users,
+  Plus
 } from "lucide-react";
 
 export type TabId = "dashboard" | "courses" | "analytics" | "notes" | "settings";
@@ -192,6 +193,48 @@ export default function Sidebar({ activeTab, setActiveTab, profile }: SidebarPro
                 );
               })}
             </ul>
+
+            {/* Nested Teacher Tools (Visible only for teacher role) */}
+            {profile.role === "teacher" && (
+              <div className="pt-4 border-t border-white/5 space-y-2">
+                {!isCollapsed && (
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 px-4 block">
+                    Teacher Tools
+                  </span>
+                )}
+                <ul className="space-y-1">
+                  {[
+                    { href: "/teacher", label: "Dashboard", icon: GraduationCap },
+                    { href: "/teacher/courses", label: "My Courses", icon: BookOpen },
+                    { href: "/teacher/courses/create", label: "Create Course", icon: Plus },
+                    { href: "/teacher/students", label: "Students", icon: Users },
+                    { href: "/teacher/analytics", label: "Analytics", icon: BarChart3 },
+                  ].map((sub) => {
+                    const SubIcon = sub.icon;
+                    return (
+                      <li key={sub.href}>
+                        <Link
+                          href={sub.href}
+                          className={`
+                            flex items-center gap-3 py-2 rounded-xl text-xs font-semibold transition-colors group relative
+                            ${isCollapsed ? "justify-center px-0" : "px-4"}
+                            text-zinc-400 hover:text-white hover:bg-white/[0.03]
+                          `}
+                        >
+                          <SubIcon className="w-4 h-4 text-zinc-500 group-hover:text-emerald-400" />
+                          {!isCollapsed && <span>{sub.label}</span>}
+                          {isCollapsed && (
+                            <div className="absolute left-20 bg-zinc-900 border border-white/10 text-white text-xs px-2.5 py-1.5 rounded-md opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 shadow-xl whitespace-nowrap z-50">
+                              {sub.label}
+                            </div>
+                          )}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
 
             {/* Nested Admin Console Tools (Visible only for admin role) */}
             {profile.role === "admin" && (
