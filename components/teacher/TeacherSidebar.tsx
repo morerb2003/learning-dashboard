@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   ArrowLeft,
   BarChart3,
+  ClipboardList,
   BookOpen,
   GraduationCap,
   LayoutDashboard,
@@ -31,6 +32,7 @@ const navItems = [
   { href: "/teacher", label: "Dashboard", icon: LayoutDashboard },
   { href: "/teacher/courses", label: "My Courses", icon: BookOpen },
   { href: "/teacher/courses/create", label: "Create Course", icon: Plus },
+  { href: "/teacher/assignments", label: "Assignments", icon: ClipboardList },
   { href: "/teacher/students", label: "Students", icon: Users },
   { href: "/teacher/analytics", label: "Analytics", icon: BarChart3 },
 ] as const;

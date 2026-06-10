@@ -15,10 +15,11 @@ import {
   StickyNote,
   ShieldCheck,
   Users,
-  Plus
+  Plus,
+  ClipboardList
 } from "lucide-react";
 
-export type TabId = "dashboard" | "courses" | "analytics" | "notes" | "settings";
+export type TabId = "dashboard" | "courses" | "analytics" | "notes" | "settings" | "assignments";
 
 interface SidebarProps {
   activeTab: TabId;
@@ -55,6 +56,7 @@ export default function Sidebar({ activeTab, setActiveTab, profile }: SidebarPro
       return [
         { id: "dashboard" as TabId, label: "Dashboard", icon: LayoutDashboard },
         { id: "courses" as TabId, label: "My Courses", icon: BookOpen, href: "/learning" },
+        { id: "assignments" as TabId, label: "Assignments", icon: ClipboardList, href: "/teacher/assignments" },
         { id: "notes" as TabId, label: "Lessons", icon: StickyNote },
         { id: "settings" as TabId, label: "Settings", icon: Settings },
       ];
@@ -207,6 +209,7 @@ export default function Sidebar({ activeTab, setActiveTab, profile }: SidebarPro
                     { href: "/teacher", label: "Dashboard", icon: GraduationCap },
                     { href: "/teacher/courses", label: "My Courses", icon: BookOpen },
                     { href: "/teacher/courses/create", label: "Create Course", icon: Plus },
+                    { href: "/teacher/assignments", label: "Assignments", icon: ClipboardList },
                     { href: "/teacher/students", label: "Students", icon: Users },
                     { href: "/teacher/analytics", label: "Analytics", icon: BarChart3 },
                   ].map((sub) => {

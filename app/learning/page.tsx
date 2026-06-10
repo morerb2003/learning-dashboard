@@ -5,6 +5,7 @@ import {
   BookOpen,
   CalendarClock,
   Clock,
+  ClipboardList,
   GraduationCap,
   PlayCircle,
   Search,
@@ -73,10 +74,17 @@ export default async function LearningPage() {
 
             <Link
               href="/"
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-5 text-xs font-bold text-zinc-300 transition hover:border-violet-400/30 hover:bg-violet-500/10 hover:text-white"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/4 px-5 text-xs font-bold text-zinc-300 transition hover:border-violet-400/30 hover:bg-violet-500/10 hover:text-white"
             >
               <Search className="h-4 w-4" />
               Explore Courses
+            </Link>
+            <Link
+              href="/learning/assignments"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-linear-to-r from-cyan-300 via-sky-300 to-violet-300 px-5 text-xs font-black text-zinc-950 shadow-xl shadow-cyan-500/20 transition hover:brightness-110"
+            >
+              <ClipboardList className="h-4 w-4" />
+              View Assignments
             </Link>
           </div>
         </section>
@@ -90,14 +98,14 @@ export default async function LearningPage() {
               return (
                 <article
                   key={enrollment.id}
-                  className="relative overflow-hidden rounded-3xl glass-card p-6 min-h-[260px]"
+                  className="relative overflow-hidden rounded-3xl glass-card min-h-65 p-6"
                 >
                   <div className={`absolute inset-0 ${meshClasses[index % meshClasses.length]} opacity-70 pointer-events-none`} />
                   <div className="grain-overlay" />
 
                   <div className="relative z-10 flex h-full flex-col">
                     <div className="flex items-start justify-between gap-4">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.06]">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/6">
                         <BookOpen className="h-5 w-5 text-violet-200" />
                       </div>
                       <span className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-emerald-300">
@@ -128,7 +136,7 @@ export default async function LearningPage() {
                       </div>
                       <div className="h-2 overflow-hidden rounded-full bg-white/5">
                         <div
-                          className="h-full rounded-full bg-gradient-to-r from-violet-500 to-cyan-400"
+                            className="h-full rounded-full bg-linear-to-r from-violet-500 to-cyan-400"
                           style={{ width: `${courseProgress}%` }}
                         />
                       </div>
@@ -145,7 +153,7 @@ export default async function LearningPage() {
                           <input type="hidden" name="courseId" value={enrollment.course.id} />
                           <button
                             type="submit"
-                            className="inline-flex h-10 w-full items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] px-3 text-zinc-400 transition hover:border-rose-400/30 hover:bg-rose-500/10 hover:text-rose-200 sm:w-11"
+                            className="inline-flex h-10 w-full items-center justify-center rounded-2xl border border-white/10 bg-white/4 px-3 text-zinc-400 transition hover:border-rose-400/30 hover:bg-rose-500/10 hover:text-rose-200 sm:w-11"
                             aria-label={`Unenroll from ${enrollment.course.title}`}
                             title="Unenroll"
                           >
@@ -164,7 +172,7 @@ export default async function LearningPage() {
             <div className="absolute inset-0 bg-mesh-cyan opacity-40 pointer-events-none" />
             <div className="grain-overlay" />
             <div className="relative z-10 mx-auto max-w-xl space-y-4">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.06]">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/6">
                 <BookOpen className="h-6 w-6 text-cyan-200" />
               </div>
               <h2 className="text-xl font-black text-white">No enrolled courses yet</h2>
@@ -173,7 +181,7 @@ export default async function LearningPage() {
               </p>
               <Link
                 href="/"
-                className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-300 via-sky-300 to-violet-300 px-5 text-xs font-black text-zinc-950 shadow-xl shadow-cyan-500/20 transition hover:brightness-110"
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-linear-to-r from-cyan-300 via-sky-300 to-violet-300 px-5 text-xs font-black text-zinc-950 shadow-xl shadow-cyan-500/20 transition hover:brightness-110"
               >
                 Explore Courses
               </Link>
