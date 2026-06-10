@@ -48,7 +48,7 @@ export default function AuthLayout({ eyebrow, title, subtitle, children }: AuthL
           className="hidden border-r border-white/10 px-10 py-10 lg:flex lg:flex-col lg:justify-between xl:px-16"
         >
           <div>
-            <div className="inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 shadow-2xl shadow-cyan-500/5 backdrop-blur-xl">
+            <div className="inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/4 px-4 py-3 shadow-2xl shadow-cyan-500/5 backdrop-blur-xl">
               <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-cyan-300 text-zinc-950">
                 <GraduationCap className="h-6 w-6" />
               </span>
@@ -81,7 +81,7 @@ export default function AuthLayout({ eyebrow, title, subtitle, children }: AuthL
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.12 + index * 0.06, duration: 0.45 }}
-                    className="rounded-2xl border border-white/10 bg-white/[0.045] p-4 shadow-2xl shadow-black/20 backdrop-blur-xl"
+                    className="rounded-2xl border border-white/10 bg-white/4.5 p-4 shadow-2xl shadow-black/20 backdrop-blur-xl"
                   >
                     <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-cyan-200">
                       <Icon className="h-5 w-5" />
@@ -94,7 +94,7 @@ export default function AuthLayout({ eyebrow, title, subtitle, children }: AuthL
             </div>
           </div>
 
-          <div className="relative mt-12 overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.04] p-5 shadow-2xl shadow-cyan-500/10 backdrop-blur-xl">
+          <div className="relative mt-12 overflow-hidden rounded-4xl border border-white/10 bg-white/4 p-5 shadow-2xl shadow-cyan-500/10 backdrop-blur-xl">
             <div className="absolute right-6 top-6 h-24 w-24 rounded-full bg-cyan-300/20 blur-3xl" />
             <div className="grid grid-cols-[1fr_0.75fr] gap-4">
               <div className="rounded-3xl border border-white/10 bg-zinc-950/70 p-5">
@@ -107,16 +107,16 @@ export default function AuthLayout({ eyebrow, title, subtitle, children }: AuthL
                 </div>
                 <div className="flex h-28 items-end gap-2">
                   {[42, 58, 38, 72, 64, 86, 78].map((height, index) => (
-                    <div key={index} className="flex-1 rounded-t-xl bg-gradient-to-t from-cyan-400 to-violet-300" style={{ height: `${height}%` }} />
+                    <div key={index} className="flex-1 rounded-t-xl bg-linear-to-t from-cyan-400 to-violet-300" style={{ height: `${height}%` }} />
                   ))}
                 </div>
               </div>
               <div className="space-y-4">
-                <div className="rounded-3xl border border-white/10 bg-white/[0.05] p-4">
+                <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
                   <p className="text-xs font-semibold text-zinc-500">Certificates</p>
                   <p className="mt-2 text-2xl font-black">12</p>
                 </div>
-                <div className="rounded-3xl border border-white/10 bg-white/[0.05] p-4">
+                <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
                   <p className="text-xs font-semibold text-zinc-500">Smart notes</p>
                   <p className="mt-2 text-2xl font-black">248</p>
                 </div>
@@ -130,7 +130,7 @@ export default function AuthLayout({ eyebrow, title, subtitle, children }: AuthL
             initial={{ opacity: 0, y: 24, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
-            className="w-full max-w-[30rem]"
+            className="w-full max-w-120"
           >
             <div className="mb-8 flex items-center gap-3 lg:hidden">
               <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-cyan-300 text-zinc-950">
@@ -142,7 +142,7 @@ export default function AuthLayout({ eyebrow, title, subtitle, children }: AuthL
               </div>
             </div>
 
-            <div className="rounded-[2rem] border border-white/10 bg-zinc-950/65 p-5 shadow-2xl shadow-black/40 backdrop-blur-2xl sm:p-8">
+            <div className="rounded-4xl border border-white/10 bg-zinc-950/65 p-5 shadow-2xl shadow-black/40 backdrop-blur-2xl sm:p-8">
               <div className="mb-8">
                 <p className="text-xs font-bold uppercase tracking-[0.22em] text-cyan-200">{eyebrow}</p>
                 <h2 className="mt-3 text-3xl font-black tracking-tight text-white sm:text-4xl">{title}</h2>

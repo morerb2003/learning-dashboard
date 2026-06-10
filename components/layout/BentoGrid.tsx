@@ -122,7 +122,7 @@ export default function BentoGrid({ courses, fullName, totalCompletedLessons = 0
         variants={cardVariants}
         whileHover={hoverAnimation}
         transition={hoverTransition}
-        className="col-span-1 md:col-span-2 lg:col-span-2 rounded-3xl p-6 glass-card relative overflow-hidden flex flex-col justify-between min-h-[220px]"
+        className="col-span-1 md:col-span-2 lg:col-span-2 rounded-3xl p-6 glass-card relative overflow-hidden flex flex-col justify-between min-h-55"
       >
         <div className="absolute inset-0 bg-mesh-violet opacity-70 pointer-events-none" />
         <div className="grain-overlay" />
@@ -137,7 +137,7 @@ export default function BentoGrid({ courses, fullName, totalCompletedLessons = 0
           </div>
 
           <h2 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight mt-4">
-            Welcome back, <span className="bg-clip-text text-transparent bg-gradient-to-r from-violet-400 via-indigo-200 to-cyan-300">{fullName || "Student"}</span>!
+            Welcome back, <span className="bg-clip-text text-transparent bg-linear-to-r from-violet-400 via-indigo-200 to-cyan-300">{fullName || "Student"}</span>!
           </h2>
           <p className="text-zinc-400 text-xs md:text-sm mt-2 max-w-md font-medium leading-relaxed">
             You&apos;re making incredible progress this week. Your learning velocity is up 12% compared to last week. Let&apos;s finish today&apos;s checklist!
@@ -171,7 +171,7 @@ export default function BentoGrid({ courses, fullName, totalCompletedLessons = 0
         variants={cardVariants}
         whileHover={hoverAnimation}
         transition={hoverTransition}
-        className="col-span-1 rounded-3xl p-6 glass-card relative overflow-hidden flex flex-col justify-between min-h-[220px] select-none"
+        className="col-span-1 rounded-3xl p-6 glass-card relative overflow-hidden flex flex-col justify-between min-h-55 select-none"
       >
         <div className="absolute inset-0 bg-mesh-orange opacity-70 pointer-events-none" />
         <div className="grain-overlay" />
@@ -193,7 +193,7 @@ export default function BentoGrid({ courses, fullName, totalCompletedLessons = 0
         </div>
 
         <div className="relative z-10 my-4 text-center">
-          <span className="text-5xl font-black bg-clip-text text-transparent bg-gradient-to-b from-orange-400 to-red-600 tracking-tight filter drop-shadow-[0_4px_12px_rgba(249,115,22,0.15)]">
+          <span className="text-5xl font-black bg-clip-text text-transparent bg-linear-to-b from-orange-400 to-red-600 tracking-tight filter drop-shadow-[0_4px_12px_rgba(249,115,22,0.15)]">
             7
           </span>
           <span className="text-base font-extrabold text-orange-400 ml-1">Days</span>
@@ -212,7 +212,7 @@ export default function BentoGrid({ courses, fullName, totalCompletedLessons = 0
                   className={`
                     w-full aspect-square rounded-lg flex items-center justify-center transition-all duration-300
                     ${completed 
-                      ? "bg-gradient-to-br from-orange-500/40 to-red-500/30 border border-orange-500/30 text-orange-400 shadow-sm shadow-orange-500/10" 
+                      ? "bg-linear-to-br from-orange-500/40 to-red-500/30 border border-orange-500/30 text-orange-400 shadow-sm shadow-orange-500/10" 
                       : "bg-white/5 border border-white/5 text-zinc-600"
                     }
                   `}
@@ -241,7 +241,7 @@ export default function BentoGrid({ courses, fullName, totalCompletedLessons = 0
         variants={cardVariants}
         whileHover={hoverAnimation}
         transition={hoverTransition}
-        className="col-span-1 md:col-span-2 lg:col-span-2 rounded-3xl p-6 glass-card relative overflow-hidden flex flex-col justify-between min-h-[260px]"
+        className="col-span-1 md:col-span-2 lg:col-span-2 rounded-3xl p-6 glass-card relative overflow-hidden flex flex-col justify-between min-h-65"
       >
         <div className="absolute inset-0 bg-mesh-violet opacity-60 pointer-events-none" />
         <div className="grain-overlay" />
@@ -257,7 +257,7 @@ export default function BentoGrid({ courses, fullName, totalCompletedLessons = 0
         variants={cardVariants}
         whileHover={hoverAnimation}
         transition={hoverTransition}
-        className="col-span-1 rounded-3xl p-6 glass-card relative overflow-hidden flex flex-col justify-between min-h-[260px]"
+        className="col-span-1 rounded-3xl p-6 glass-card relative overflow-hidden flex flex-col justify-between min-h-65"
       >
         <div className="absolute inset-0 bg-mesh-cyan opacity-70 pointer-events-none" />
         <div className="grain-overlay" />

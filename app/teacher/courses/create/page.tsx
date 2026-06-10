@@ -155,7 +155,7 @@ export default function CreateCoursePage() {
       </div>
 
       {/* Form */}
-      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02] p-6">
+      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/2 p-6">
         <div className="absolute inset-0 bg-mesh-violet opacity-20 pointer-events-none" />
         <div className="grain-overlay" />
 
@@ -208,7 +208,7 @@ export default function CreateCoursePage() {
                   <ImageIcon className="h-5 w-5" />
                 )}
               </div>
-              <label className="flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-xs font-bold text-zinc-300 transition hover:border-violet-500/30 hover:text-white">
+              <label className="flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/3 px-4 py-3 text-xs font-bold text-zinc-300 transition hover:border-violet-500/30 hover:text-white">
                 <UploadCloud className="h-4 w-4 text-violet-300" />
                 Upload thumbnail
                 <input
@@ -335,7 +335,7 @@ export default function CreateCoursePage() {
           <button
             type="submit"
             disabled={isSaving}
-            className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white text-sm font-bold transition-all disabled:opacity-50 shadow-lg shadow-violet-500/20 cursor-pointer"
+            className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-linear-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white text-sm font-bold transition-all disabled:opacity-50 shadow-lg shadow-violet-500/20 cursor-pointer"
           >
             {isSaving ? (
               "Creating Course..."

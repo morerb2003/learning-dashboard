@@ -160,7 +160,7 @@ export default async function TeacherDashboardPage() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`group relative overflow-hidden rounded-2xl border ${palette.border} bg-white/[0.02] p-5 transition-all duration-300 hover:bg-white/[0.04] hover:shadow-lg`}
+                className={`group relative overflow-hidden rounded-2xl border ${palette.border} bg-white/2 p-5 transition-all duration-300 hover:bg-white/4 hover:shadow-lg`}
               >
                 <div className={`absolute inset-0 ${palette.bg} opacity-20 pointer-events-none transition-opacity duration-300 group-hover:opacity-35`} />
                 <div className="grain-overlay" />
@@ -189,7 +189,7 @@ export default async function TeacherDashboardPage() {
       <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
 
         {/* Recent Courses Table */}
-        <section className="xl:col-span-3 relative overflow-hidden rounded-2xl border border-white/5 bg-white/[0.02] p-6">
+        <section className="xl:col-span-3 relative overflow-hidden rounded-2xl border border-white/5 bg-white/2 p-6">
           <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-5">
             <div>
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
@@ -224,7 +224,7 @@ export default async function TeacherDashboardPage() {
                     const enrolled = enrollmentMap[course.id] ?? 0;
                     const progress = course.progress ?? 0;
                     return (
-                      <tr key={course.id} className="text-zinc-300 hover:bg-white/[0.01] transition-colors">
+                      <tr key={course.id} className="text-zinc-300 hover:bg-white/1 transition-colors">
                         <td className="py-3 pr-4">
                           <p className="font-bold text-white">{course.title}</p>
                           <p className="text-[10px] text-zinc-500 mt-0.5">
@@ -238,7 +238,7 @@ export default async function TeacherDashboardPage() {
                           <div className="flex items-center gap-2">
                             <div className="w-16 h-1.5 rounded-full bg-white/5 overflow-hidden">
                               <div
-                                className="h-full rounded-full bg-gradient-to-r from-violet-500 to-indigo-500"
+                                className="h-full rounded-full bg-linear-to-r from-violet-500 to-indigo-500"
                                 style={{ width: `${progress}%` }}
                               />
                             </div>
@@ -277,7 +277,7 @@ export default async function TeacherDashboardPage() {
         {/* Quick Insights Panel */}
         <section className="xl:col-span-2 space-y-4">
           {/* Teaching Summary */}
-          <div className="relative overflow-hidden rounded-2xl border border-white/5 bg-white/[0.02] p-5">
+          <div className="relative overflow-hidden rounded-2xl border border-white/5 bg-white/2 p-5">
             <div className="absolute inset-0 bg-mesh-violet opacity-20 pointer-events-none" />
             <div className="grain-overlay" />
             <div className="relative z-10">
@@ -313,7 +313,7 @@ export default async function TeacherDashboardPage() {
           </div>
 
           {/* Completion Rate Visual */}
-          <div className="relative overflow-hidden rounded-2xl border border-white/5 bg-white/[0.02] p-5">
+          <div className="relative overflow-hidden rounded-2xl border border-white/5 bg-white/2 p-5">
             <div className="absolute inset-0 bg-mesh-emerald opacity-20 pointer-events-none" />
             <div className="grain-overlay" />
             <div className="relative z-10">
