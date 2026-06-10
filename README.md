@@ -1,133 +1,142 @@
-# Next-Gen Student Learning Dashboard
+# AURA Learning Management System
 
-A futuristic, highly animated Student Dashboard built with **Next.js (App Router)**, **Supabase**, **Tailwind CSS**, and **Framer Motion**. Designed for zero layout shifts, dynamic database integration, and micro-interactions.
+AURA is a role-based learning management system built with Next.js and
+Supabase. It provides student learning workflows, teacher course management,
+and platform administration in one application.
 
----
+## Features
 
-## 🚀 Architectural Choices & Split
+- Email/password authentication, Google OAuth, and password recovery
+- Student, pending teacher, teacher, and admin roles
+- Course discovery with search, filters, sorting, and enrollment
+- Lessons, progress tracking, notes, assignments, quizzes, and certificates
+- Course reviews, notifications, messaging, discussions, and announcements
+- Teacher analytics, course cloning, bulk lesson import, and CSV export
+- Admin user management, moderation, audit logs, and platform analytics
+- Supabase Row Level Security (RLS), database triggers, storage, and Realtime
+- Unit tests and Playwright end-to-end tests
 
-This project follows modern Next.js App Router patterns, strictly decoupling server-side data fetching from interactive client components:
+## Technology
 
-### 1. Server Components (RSC) & Data Fetching
-* **[app/page.tsx](file:///d:/Fullstack-Project/learning-dashboard/app/page.tsx)**: Runs exclusively on the server. It instantiates the secure database connection using `@supabase/ssr` cookies and fetches course data. This keeps API keys hidden and reduces client bundle sizes.
-* **[app/loading.tsx](file:///d:/Fullstack-Project/learning-dashboard/app/loading.tsx)**: Implements a server-rendered bento skeleton layout that mirrors the dashboard perfectly. It streams down immediately while Supabase fetches finish, preventing sudden layout shifts on load.
-* **[lib/supabase/server.ts](file:///d:/Fullstack-Project/learning-dashboard/lib/supabase/server.ts)**: Configures both the standard `@supabase/supabase-js` client and the modern cookie-based `@supabase/ssr` client, handling path sanitization automatically (stripping trailing `/rest/v1/` suffixes).
+- Next.js 16 App Router
+- React 19 and TypeScript
+- Supabase Auth, Postgres, Storage, and Realtime
+- Tailwind CSS 4
+- Framer Motion and Recharts
+- Node.js test runner and Playwright
 
-### 2. Client Components & Animation
-* **[components/dashboard/Dashboard.tsx](file:///d:/Fullstack-Project/learning-dashboard/components/dashboard/Dashboard.tsx)**: Coordinates high-fidelity client states like active navigation tabs, tab views, and search filters.
-* **[components/layout/Sidebar.tsx](file:///d:/Fullstack-Project/learning-dashboard/components/layout/Sidebar.tsx)**: A responsive navigation element that handles desktop (collapsible), tablet (icon-only), and mobile (bottom navigation bar) breakpoints. Highlights active items dynamically using Framer Motion's `layoutId` pill.
-* **[components/layout/BentoGrid.tsx](file:///d:/Fullstack-Project/learning-dashboard/components/layout/BentoGrid.tsx)**: Handles the Bento Grid layouts and staggers the entry animations of child elements on load.
-* **[components/dashboard/CourseCard.tsx](file:///d:/Fullstack-Project/learning-dashboard/components/dashboard/CourseCard.tsx)**: Renders individual courses, maps Lucide icons, animates custom progress indicators, and handles card elevations.
-* **[components/dashboard/ActivityChart.tsx](file:///d:/Fullstack-Project/learning-dashboard/components/dashboard/ActivityChart.tsx)**: Renders study velocity lines using `recharts`, using mounting guards to prevent SSR hydration mismatches.
+## Quick Start
 
----
+Requirements:
 
-## ⚡ Animation Design & Zero Layout Shifts
+- Node.js 20.9 or newer
+- npm
+- A Supabase project
 
-To optimize rendering speeds and prevent browser repaints:
-* **Staggered Page Load**: Bento cards fade and translate upwards (`opacity` and `transform`) via Framer Motion spring physics.
-* **Elevated Hover States**: Hovering cards scale up by 1.5% and shift up (`scale: 1.015, y: -2`) using hardware-accelerated CSS transforms.
-* **Glow Reveal on Hover**: To avoid reflowing text or cells, we do not modify borders. Instead, we use absolute overlays with opacity transitions (`opacity-0` to `opacity-100`) to reveal gradient borders and backdrops on hover.
-* **Animated Progress Bars**: We animate the `scaleX` property of the progress bar instead of its `width` to keep layout calculations out of the main thread.
-
----
-
-## 🗃️ Database Setup & Row-Level Security (RLS)
-
-If you are setting up this project from scratch, follow these instructions to seed your Supabase database:
-
-1. Create a free project on [Supabase](https://supabase.com).
-2. Go to the **SQL Editor** in your Supabase project dashboard.
-3. Paste and run the code provided in **[seed.sql](file:///d:/Fullstack-Project/learning-dashboard/seed.sql)**:
-   * It creates the `courses` table.
-   * It enables **Row-Level Security (RLS)**.
-   * It sets up a policy allowing public read access (`SELECT`) using the anon key.
-   * It inserts 4 sample course rows.
-4. Copy the project **URL** and **Anon Key** and add them to a `.env.local` file (modeled after **[.env.example](file:///d:/Fullstack-Project/learning-dashboard/.env.example)**).
-
-### Supabase Auth Redirects
-For Google login and email confirmation, configure Supabase with the public URL that users actually open in their browser.
-
-In **Supabase -> Authentication -> URL Configuration**:
-* **Site URL** should be your deployed app URL, for example `https://learning-dashboard.vercel.app`.
-* **Redirect URLs** should include the deployed app and callback URLs:
-
-```text
-https://learning-dashboard.vercel.app
-https://learning-dashboard.vercel.app/auth/callback
-```
-
-For local phone testing, do not use `localhost` on the phone. Run the app on your network:
+Install dependencies and configure the environment:
 
 ```bash
-npm run dev:host
-```
-
-Then open your computer's LAN address on the phone, for example:
-
-```text
-http://192.168.1.15:3000
-```
-
-Add the matching local URLs to Supabase while testing:
-
-```text
-http://192.168.1.15:3000
-http://192.168.1.15:3000/auth/callback
-```
-
-The login code uses `window.location.origin`, so it will redirect back to the exact host the browser is using.
-
-### Graceful Fallback
-If the database connection fails, is throttled, or has no rows seeded, the application's client logic seamlessly merges and falls back to pre-rendered course data. This keeps the prototype fully interactive while displaying a status notification.
-
----
-
-## 🛠️ Installation & Testing
-
-To test the application locally:
-
-```bash
-# Install dependencies
 npm install
-
-# Run the development server
-npm run dev
-
-# Run a production typecheck and build validation
-npm run build
+copy .env.example .env.local
 ```
 
-### Automated Tests
-
-Run unit tests:
-
-```bash
-npm test
-```
-
-Install Chromium and run Playwright E2E tests:
-
-```bash
-npm run test:e2e:install
-npm run test:e2e
-```
-
-Anonymous authentication tests work without test accounts. Add these variables
-to `.env.local` to enable authenticated workflows:
+Set the following required variables in `.env.local`:
 
 ```text
-E2E_STUDENT_EMAIL=
-E2E_STUDENT_PASSWORD=
-E2E_TEACHER_EMAIL=
-E2E_TEACHER_PASSWORD=
-E2E_ADMIN_EMAIL=
-E2E_ADMIN_PASSWORD=
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 ```
 
-The student account should have an enrolled course with an assignment and a
-published quiz. The messaging test requires an available teacher or admin
-contact. Tests skip clearly when required credentials or seeded records are
-missing.
+Run the SQL files in the Supabase SQL Editor in this order:
 
-Set `E2E_BASE_URL` to run the suite against a deployed environment.
+1. `seed.sql`
+2. `admin-policies.sql`
+3. `lesson_progress.sql`
+4. `assignments.sql`
+5. `quizzes.sql`
+6. `teacher-course-management.sql`
+7. `professional-features.sql`
+8. `remaining-features.sql`
+
+The scripts are designed to be rerunnable. `fix-registration.sql`,
+`enrollments.sql`, and `lessons.sql` are compatibility or focused repair
+scripts and are not required after the complete sequence above.
+
+Start the application:
+
+```bash
+npm run dev
+```
+
+Open `http://localhost:3000`.
+
+## Supabase Configuration
+
+In **Authentication > URL Configuration**, set the site URL and allow the auth
+callback URL:
+
+```text
+http://localhost:3000
+http://localhost:3000/auth/callback
+```
+
+For a deployed app, replace the local origin with the production origin.
+
+The SQL setup creates these public storage buckets:
+
+- `course-thumbnails`
+- `assignment-submissions`
+
+Teacher registrations initially receive the `pending_teacher` role. An admin
+must promote the profile to `teacher` before teacher routes become available.
+
+## Commands
+
+```bash
+npm run dev             # Start the local development server
+npm run dev:host        # Expose the server to the local network
+npm run lint            # Run ESLint
+npm test                # Run unit tests
+npm run test:e2e        # Run Playwright tests
+npm run test:e2e:ui     # Open Playwright UI mode
+npm run test:e2e:install
+npm run build           # Validate types and create a production build
+npm start               # Run the production build
+```
+
+Authenticated E2E workflows use optional test account variables documented in
+[`.env.example`](.env.example). Tests skip workflows whose credentials or seed
+records are unavailable.
+
+## Project Structure
+
+```text
+app/          App Router pages, layouts, and the OAuth callback route
+components/   Client UI grouped by feature
+lib/          Auth, Supabase, analytics, and server-side course operations
+types/        Shared TypeScript domain models
+tests/        Unit tests
+e2e/          Playwright tests
+docs/         Architecture, application API, and database references
+*.sql         Idempotent Supabase schema and policy scripts
+proxy.ts      Session refresh and route-level access control
+```
+
+## Documentation
+
+- [Architecture](docs/ARCHITECTURE.md)
+- [Application API](docs/API.md)
+- [Database Schema](docs/DATABASE.md)
+- [Contributor Guide](CONTRIBUTING.md)
+
+## Security Model
+
+The browser uses the public Supabase anon key. Authorization is enforced by:
+
+1. `proxy.ts` for authentication and admin route redirects
+2. Server-side guards for role-sensitive pages
+3. Postgres RLS policies as the final data access boundary
+4. Ownership checks for teacher and student records
+
+Never place the Supabase service-role key in a `NEXT_PUBLIC_*` variable or
+client-side code.
