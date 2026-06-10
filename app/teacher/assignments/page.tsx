@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import AssignmentWorkspace from "@/components/assignments/AssignmentWorkspace";
+import type { AssignmentSummary } from "@/types/assignment";
 
 export const dynamic = "force-dynamic";
 
@@ -10,8 +11,58 @@ type AssignmentRelation = {
   deadline: string;
   max_grade: number;
   course_id: string | null;
-  courses?: { id: string; title: string } | null;
+  courses?: { id: string; title: string }[] | { id: string; title: string } | null;
 };
+
+type SubmissionRelationRow = {
+  id: string;
+  assignment_id: string;
+  student_id: string;
+  file_url: string;
+  file_path: string;
+  status: "submitted" | "reviewed";
+  grade: number | null;
+  feedback: string | null;
+  submitted_at: string;
+  reviewed_at: string | null;
+  assignments?: AssignmentSummary | AssignmentSummary[] | null;
+  profiles?: { id: string; full_name: string | null; email: string | null } | null;
+};
+
+function normalizeAssignment(row: {
+  id: string;
+  teacher_id: string;
+  course_id: string | null;
+  title: string;
+  instructions: string;
+  deadline: string;
+  max_grade: number;
+  created_at: string;
+  courses?: { id: string; title: string }[] | { id: string; title: string } | null;
+}) {
+  return {
+    ...row,
+    courses: Array.isArray(row.courses) ? row.courses[0] ?? null : row.courses ?? null,
+  };
+}
+
+function normalizeSubmission(row: SubmissionRelationRow) {
+  const assignment = Array.isArray(row.assignments) ? row.assignments[0] ?? null : row.assignments ?? null;
+
+  return {
+    ...row,
+    assignments: assignment
+      ? {
+          id: assignment.id,
+          title: assignment.title,
+          deadline: assignment.deadline,
+          max_grade: assignment.max_grade,
+          course_id: assignment.course_id,
+          courses: Array.isArray(assignment.courses) ? assignment.courses[0] ?? null : assignment.courses ?? null,
+        }
+      : null,
+  };
+}
 
 export default async function TeacherAssignmentsPage() {
   const supabase = await createClient();
@@ -42,7 +93,7 @@ export default async function TeacherAssignmentsPage() {
       .order("deadline", { ascending: true }),
   ]);
 
-  const assignments = (assignmentsResult.data ?? []) as Array<{
+  const assignments = ((assignmentsResult.data ?? []) as Array<{
     id: string;
     teacher_id: string;
     course_id: string | null;
@@ -51,8 +102,8 @@ export default async function TeacherAssignmentsPage() {
     deadline: string;
     max_grade: number;
     created_at: string;
-    courses?: { id: string; title: string } | null;
-  }>;
+    courses?: { id: string; title: string }[] | { id: string; title: string } | null;
+  }>).map(normalizeAssignment);
 
   const assignmentIds = assignments.map((assignment) => assignment.id);
   const submissionsResult = assignmentIds.length > 0
@@ -72,20 +123,7 @@ export default async function TeacherAssignmentsPage() {
       currentUserName={teacherName}
       courses={(coursesResult.data ?? []) as Array<{ id: string; title: string }>}
       assignments={assignments}
-      submissions={(submissionsResult.data ?? []) as Array<{
-        id: string;
-        assignment_id: string;
-        student_id: string;
-        file_url: string;
-        file_path: string;
-        status: "submitted" | "reviewed";
-        grade: number | null;
-        feedback: string | null;
-        submitted_at: string;
-        reviewed_at: string | null;
-        assignments?: AssignmentRelation | null;
-        profiles?: { id: string; full_name: string | null; email: string | null } | null;
-      }>}
+      submissions={((submissionsResult.data ?? []) as unknown as SubmissionRelationRow[]).map(normalizeSubmission)}
     />
   );
 }

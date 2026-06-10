@@ -14,6 +14,19 @@ export interface Quiz {
   } | null;
 }
 
+export interface QuizSummary {
+  id: string;
+  title: string;
+  description: string | null;
+  course_id: string | null;
+  is_published: boolean;
+  created_at: string;
+  courses?: {
+    id: string;
+    title: string;
+  } | null;
+}
+
 export interface QuizQuestion {
   id: string;
   quiz_id: string;
@@ -35,7 +48,7 @@ export interface QuizAttempt {
   total_score: number;
   status: "completed";
   submitted_at: string;
-  quizzes?: Quiz | null;
+  quizzes?: QuizSummary | null;
   profiles?: {
     id: string;
     full_name: string | null;

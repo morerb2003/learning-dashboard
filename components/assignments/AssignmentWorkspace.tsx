@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import type { Assignment, AssignmentSubmission } from "@/types/assignment";
+import type { Assignment, AssignmentSummary, AssignmentSubmission } from "@/types/assignment";
 import {
   ArrowRight,
   BookOpen,
@@ -30,7 +30,7 @@ type AssignmentWithMeta = Assignment & {
 };
 
 type SubmissionWithMeta = AssignmentSubmission & {
-  assignments?: (Assignment & { courses?: AssignmentCourse | null }) | null;
+  assignments?: AssignmentSummary | null;
   profiles?: {
     id: string;
     full_name: string | null;
@@ -70,13 +70,38 @@ function formatShortDate(value: string | null | undefined) {
   }).format(new Date(value));
 }
 
-function getAssignmentCourseTitle(assignment?: AssignmentWithMeta | null) {
+function getAssignmentCourseTitle(assignment?: { course_id: string | null; courses?: AssignmentCourse | null } | null) {
   if (!assignment) return "General assignment";
   return assignment.courses?.title || (assignment.course_id ? "Unassigned course" : "General assignment");
 }
 
 function getSubmissionAssignmentTitle(submission: SubmissionWithMeta) {
   return submission.assignments?.title || "Assignment";
+}
+
+function normalizeAssignmentWithMeta(row: AssignmentWithMeta): AssignmentWithMeta {
+  return {
+    ...row,
+    courses: Array.isArray(row.courses) ? row.courses[0] ?? null : row.courses ?? null,
+  };
+}
+
+function normalizeSubmissionWithMeta(row: SubmissionWithMeta): SubmissionWithMeta {
+  const assignment = row.assignments;
+
+  return {
+    ...row,
+    assignments: assignment
+      ? {
+          id: assignment.id,
+          title: assignment.title,
+          deadline: assignment.deadline,
+          max_grade: assignment.max_grade,
+          course_id: assignment.course_id,
+          courses: Array.isArray(assignment.courses) ? assignment.courses[0] ?? null : assignment.courses ?? null,
+        }
+      : null,
+  };
 }
 
 export default function AssignmentWorkspace({
@@ -221,7 +246,7 @@ export default function AssignmentWorkspace({
         throw error;
       }
 
-      setAssignmentRows((current) => [data as AssignmentWithMeta, ...current]);
+      setAssignmentRows((current) => [normalizeAssignmentWithMeta(data as unknown as AssignmentWithMeta), ...current]);
       setStatusMessage(`Assignment \"${title}\" created.`);
       event.currentTarget.reset();
     } catch (error) {
@@ -285,7 +310,7 @@ export default function AssignmentWorkspace({
         throw error;
       }
 
-      const nextSubmission = data as SubmissionWithMeta;
+      const nextSubmission = normalizeSubmissionWithMeta(data as unknown as SubmissionWithMeta);
       setSubmissionRows((current) => {
         const remaining = current.filter(
           (submission) => !(submission.assignment_id === assignmentId && submission.student_id === currentUserId)
@@ -343,7 +368,7 @@ export default function AssignmentWorkspace({
         throw error;
       }
 
-      const updatedSubmission = data as SubmissionWithMeta;
+      const updatedSubmission = normalizeSubmissionWithMeta(data as unknown as SubmissionWithMeta);
       setSubmissionRows((current) =>
         current.map((submission) => (submission.id === submissionId ? updatedSubmission : submission))
       );

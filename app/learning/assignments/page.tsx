@@ -2,17 +2,62 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import AssignmentWorkspace from "@/components/assignments/AssignmentWorkspace";
 import { getUserEnrollments } from "@/lib/course/enrollment";
+import type { Assignment, AssignmentSubmission, AssignmentSummary } from "@/types/assignment";
 
 export const dynamic = "force-dynamic";
 
-type AssignmentRelation = {
+function normalizeAssignment(row: {
+  id: string;
+  teacher_id: string;
+  course_id: string | null;
+  title: string;
+  instructions: string;
+  deadline: string;
+  max_grade: number;
+  created_at: string;
+  courses?: { id: string; title: string }[] | { id: string; title: string } | null;
+}) {
+  return {
+    ...row,
+    courses: Array.isArray(row.courses) ? row.courses[0] ?? null : row.courses ?? null,
+  };
+}
+
+function normalizeAssignmentSummary(row: {
   id: string;
   title: string;
   deadline: string;
   max_grade: number;
   course_id: string | null;
-  courses?: { id: string; title: string } | null;
-};
+  courses?: { id: string; title: string }[] | { id: string; title: string } | null;
+}) {
+  return {
+    ...row,
+    courses: Array.isArray(row.courses) ? row.courses[0] ?? null : row.courses ?? null,
+  };
+}
+
+function normalizeSubmission(row: {
+  id: string;
+  assignment_id: string;
+  student_id: string;
+  file_url: string;
+  file_path: string;
+  status: "submitted" | "reviewed";
+  grade: number | null;
+  feedback: string | null;
+  submitted_at: string;
+  reviewed_at: string | null;
+  assignments?: AssignmentSummary | AssignmentSummary[] | null;
+  profiles?: { id: string; full_name: string | null; email: string | null } | null;
+}) {
+  const assignment = Array.isArray(row.assignments) ? row.assignments[0] ?? null : row.assignments ?? null;
+
+  return {
+    ...row,
+    assignments: assignment ? normalizeAssignmentSummary(assignment) : null,
+  };
+}
 
 export default async function LearningAssignmentsPage() {
   const supabase = await createClient();
@@ -53,8 +98,8 @@ export default async function LearningAssignmentsPage() {
     deadline: string;
     max_grade: number;
     created_at: string;
-    courses?: { id: string; title: string } | null;
-  }>).filter((assignment) => {
+    courses?: { id: string; title: string }[] | { id: string; title: string } | null;
+  }>).map(normalizeAssignment).filter((assignment) => {
     if (!assignment.course_id) return true;
     return enrolledCourseIds.includes(assignment.course_id);
   });
@@ -68,7 +113,7 @@ export default async function LearningAssignmentsPage() {
       currentUserName={studentName}
       courses={enrollments.map((enrollment) => enrollment.course)}
       assignments={assignments}
-      submissions={(submissionsResult.data ?? []) as Array<{
+      submissions={((submissionsResult.data ?? []) as unknown as Array<{
         id: string;
         assignment_id: string;
         student_id: string;
@@ -79,9 +124,9 @@ export default async function LearningAssignmentsPage() {
         feedback: string | null;
         submitted_at: string;
         reviewed_at: string | null;
-        assignments?: AssignmentRelation | null;
+        assignments?: AssignmentSummary | AssignmentSummary[] | null;
         profiles?: { id: string; full_name: string | null; email: string | null } | null;
-      }>}
+      }>).map(normalizeSubmission) as Array<AssignmentSubmission & { assignments?: AssignmentSummary | null }>}
       enrolledCourseIds={enrolledCourseIds}
     />
   );

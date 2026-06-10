@@ -13,6 +13,18 @@ export interface Assignment {
   } | null;
 }
 
+export interface AssignmentSummary {
+  id: string;
+  title: string;
+  deadline: string;
+  max_grade: number;
+  course_id: string | null;
+  courses?: {
+    id: string;
+    title: string;
+  } | null;
+}
+
 export interface AssignmentSubmission {
   id: string;
   assignment_id: string;
@@ -24,7 +36,7 @@ export interface AssignmentSubmission {
   feedback: string | null;
   submitted_at: string;
   reviewed_at: string | null;
-  assignments?: Assignment | null;
+  assignments?: AssignmentSummary | null;
   profiles?: {
     id: string;
     full_name: string | null;

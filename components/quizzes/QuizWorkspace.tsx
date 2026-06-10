@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import type { Quiz, QuizAttempt, QuizQuestion, QuestionType } from "@/types/quiz";
+import type { Quiz, QuizAttempt, QuizQuestion, QuestionType, QuizSummary } from "@/types/quiz";
 import {
   ArrowRight,
   BookOpen,
@@ -27,7 +27,7 @@ type QuizWithMeta = Quiz & {
 };
 
 type AttemptWithMeta = QuizAttempt & {
-  quizzes?: QuizWithMeta | null;
+  quizzes?: QuizSummary | null;
   profiles?: { id: string; full_name: string | null; email: string | null } | null;
 };
 
@@ -61,6 +61,32 @@ const initialDraftQuestion = (): DraftQuestion => ({
 
 function getQuizCourseTitle(quiz: QuizWithMeta) {
   return quiz.courses?.title || (quiz.course_id ? "Unassigned course" : "General quiz");
+}
+
+function normalizeQuizWithMeta(row: QuizWithMeta): QuizWithMeta {
+  return {
+    ...row,
+    courses: Array.isArray(row.courses) ? row.courses[0] ?? null : row.courses ?? null,
+  };
+}
+
+function normalizeAttemptWithMeta(row: AttemptWithMeta): AttemptWithMeta {
+  const quiz = row.quizzes;
+
+  return {
+    ...row,
+    quizzes: quiz
+      ? {
+          id: quiz.id,
+          title: quiz.title,
+          description: quiz.description,
+          course_id: quiz.course_id,
+          is_published: quiz.is_published,
+          created_at: quiz.created_at,
+          courses: Array.isArray(quiz.courses) ? quiz.courses[0] ?? null : quiz.courses ?? null,
+        }
+      : null,
+  };
 }
 
 function formatDate(value: string | null | undefined) {
@@ -216,7 +242,7 @@ export default function QuizWorkspace({
         throw quizError;
       }
 
-      const quiz = quizData as QuizWithMeta;
+      const quiz = normalizeQuizWithMeta(quizData as unknown as QuizWithMeta);
       if (preparedQuestions.length > 0) {
         const { error: questionError } = await supabase.from("questions").insert(
           preparedQuestions.map((question) => ({
@@ -294,7 +320,7 @@ export default function QuizWorkspace({
         throw error;
       }
 
-      const attempt = data as AttemptWithMeta;
+      const attempt = normalizeAttemptWithMeta(data as unknown as AttemptWithMeta);
       setAttemptRows((current) => {
         const remaining = current.filter(
           (row) => !(row.quiz_id === selectedQuiz.id && row.student_id === currentUserId)
