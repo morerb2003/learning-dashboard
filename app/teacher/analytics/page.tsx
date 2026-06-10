@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import TeacherAnalyticsChart from "@/components/teacher/TeacherAnalyticsChart";
 import { BarChart3, TrendingUp, Users, BookOpen } from "lucide-react";
+import CsvDownloadButton from "@/components/teacher/CsvDownloadButton";
 
 export const dynamic = "force-dynamic";
 
@@ -106,14 +107,38 @@ export default async function TeacherAnalyticsPage() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div>
-        <h2 className="text-lg font-black text-white flex items-center gap-2">
-          <BarChart3 className="h-5 w-5 text-orange-400" />
-          Analytics
-        </h2>
-        <p className="mt-1 text-xs font-medium text-zinc-500">
-          Track course performance, enrollment trends, and student engagement.
-        </p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h2 className="text-lg font-black text-white flex items-center gap-2">
+            <BarChart3 className="h-5 w-5 text-orange-400" />
+            Analytics
+          </h2>
+          <p className="mt-1 text-xs font-medium text-zinc-500">
+            Track course performance, enrollment trends, and student engagement.
+          </p>
+        </div>
+        <CsvDownloadButton
+          filename="aura-course-performance.csv"
+          label="Export Report"
+          rows={courses.map((course) => {
+            const courseEnrollments = enrollments.filter((row) => row.course_id === course.id);
+            return {
+              course: course.title,
+              category: course.category ?? "General",
+              level: course.level ?? "Unspecified",
+              enrollments: courseEnrollments.length,
+              average_completion:
+                courseEnrollments.length > 0
+                  ? Math.round(
+                      courseEnrollments.reduce((sum, row) => sum + (row.progress ?? 0), 0) /
+                        courseEnrollments.length
+                    )
+                  : 0,
+              lessons: lessonMap[course.id] ?? 0,
+              published: course.is_published !== false,
+            };
+          })}
+        />
       </div>
 
       {/* Summary KPIs */}

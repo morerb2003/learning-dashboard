@@ -97,3 +97,37 @@ npm run dev
 # Run a production typecheck and build validation
 npm run build
 ```
+
+### Automated Tests
+
+Run unit tests:
+
+```bash
+npm test
+```
+
+Install Chromium and run Playwright E2E tests:
+
+```bash
+npm run test:e2e:install
+npm run test:e2e
+```
+
+Anonymous authentication tests work without test accounts. Add these variables
+to `.env.local` to enable authenticated workflows:
+
+```text
+E2E_STUDENT_EMAIL=
+E2E_STUDENT_PASSWORD=
+E2E_TEACHER_EMAIL=
+E2E_TEACHER_PASSWORD=
+E2E_ADMIN_EMAIL=
+E2E_ADMIN_PASSWORD=
+```
+
+The student account should have an enrolled course with an assignment and a
+published quiz. The messaging test requires an available teacher or admin
+contact. Tests skip clearly when required credentials or seeded records are
+missing.
+
+Set `E2E_BASE_URL` to run the suite against a deployed environment.

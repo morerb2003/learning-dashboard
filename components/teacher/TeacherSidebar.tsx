@@ -11,6 +11,7 @@ import {
   GraduationCap,
   LayoutDashboard,
   LogOut,
+  MessagesSquare,
   Plus,
   Users,
 } from "lucide-react";
@@ -37,6 +38,7 @@ const navItems = [
   { href: "/teacher/assignments", label: "Assignments", icon: ClipboardList },
   { href: "/teacher/students", label: "Students", icon: Users },
   { href: "/teacher/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/community", label: "Community", icon: MessagesSquare },
 ] as const;
 
 export default function TeacherSidebar({ teacherProfile, isMobile = false }: TeacherSidebarProps) {

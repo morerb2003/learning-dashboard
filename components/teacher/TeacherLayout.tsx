@@ -5,6 +5,7 @@ import { Menu, X, GraduationCap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import TeacherSidebar from "./TeacherSidebar";
 import NotificationBell from "@/components/notifications/NotificationBell";
+import RealtimeRefresh from "@/components/realtime/RealtimeRefresh";
 
 interface TeacherProfile {
   id: string;
@@ -24,6 +25,10 @@ export default function TeacherLayout({ children, profile }: TeacherLayoutProps)
 
   return (
     <div className="flex min-h-screen bg-zinc-950 text-zinc-100 font-sans">
+      <RealtimeRefresh
+        channelName="teacher-dashboard-live"
+        tables={["courses", "lessons", "enrollments", "lesson_progress", "attempts", "submissions"]}
+      />
       {/* Ambient background glows */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-emerald-900/10 blur-[120px]" />

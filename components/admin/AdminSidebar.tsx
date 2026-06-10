@@ -11,6 +11,9 @@ import {
   Settings,
   ShieldCheck,
   Users,
+  Activity,
+  Megaphone,
+  ScanSearch,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -32,6 +35,9 @@ const navItems = [
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/courses", label: "Courses", icon: BookOpen },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/admin/activity", label: "Activity Logs", icon: Activity },
+  { href: "/admin/moderation", label: "Moderation", icon: ScanSearch },
+  { href: "/admin/announcements", label: "Announcements", icon: Megaphone },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ] as const;
 
