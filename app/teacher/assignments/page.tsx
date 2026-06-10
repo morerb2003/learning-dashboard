@@ -5,15 +5,6 @@ import type { AssignmentSummary } from "@/types/assignment";
 
 export const dynamic = "force-dynamic";
 
-type AssignmentRelation = {
-  id: string;
-  title: string;
-  deadline: string;
-  max_grade: number;
-  course_id: string | null;
-  courses?: { id: string; title: string }[] | { id: string; title: string } | null;
-};
-
 type SubmissionRelationRow = {
   id: string;
   assignment_id: string;

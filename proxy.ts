@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getSafeRedirectPath } from "@/lib/auth/redirects";
 import { getSupabaseUrl } from "@/lib/supabase/url";
 
-const protectedRoutes = ["/", "/admin", "/course", "/learning", "/reset-password"];
+const protectedRoutes = ["/", "/admin", "/community", "/course", "/learning", "/reset-password"];
 const authRoutes = ["/login", "/register"];
 
 function isProtectedRoute(pathname: string) {

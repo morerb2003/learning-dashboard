@@ -10,7 +10,6 @@ import {
   GraduationCap,
   ArrowUpRight,
   Search,
-  Filter,
   User,
   Shield,
   Bell,
@@ -22,6 +21,8 @@ import ActivityChart from "./ActivityChart";
 import CourseCard from "./CourseCard";
 import NotesView from "./NotesView";
 import LogoutButton from "@/components/auth/LogoutButton";
+import NotificationBell from "@/components/notifications/NotificationBell";
+import RealtimeRefresh from "@/components/realtime/RealtimeRefresh";
 
 export interface Profile {
   full_name: string;
@@ -35,11 +36,29 @@ interface DashboardProps {
   initialNotes: Note[];
   profile: Profile;
   totalCompletedLessons?: number;
+  analytics: {
+    averageCourseProgress: number;
+    averageQuizScore: number;
+    assignmentCompletion: number;
+    streakDays: number;
+    activeWeekdays: number[];
+    weeklyActivity: Array<{ day: string; modules: number }>;
+  };
 }
 
-export default function Dashboard({ initialCourses, initialNotes, profile, totalCompletedLessons = 0 }: DashboardProps) {
+export default function Dashboard({
+  initialCourses,
+  initialNotes,
+  profile,
+  totalCompletedLessons = 0,
+  analytics,
+}: DashboardProps) {
   const [activeTab, setActiveTab] = useState<TabId>("dashboard");
   const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [levelFilter, setLevelFilter] = useState("all");
+  const [instructorFilter, setInstructorFilter] = useState("all");
+  const [courseSort, setCourseSort] = useState("newest");
 
   const [fullName, setFullName] = useState(profile.full_name || "");
   const [email, setEmail] = useState(profile.email || "");
@@ -116,44 +135,49 @@ export default function Dashboard({ initialCourses, initialNotes, profile, total
     }
   };
 
-  // Clean data fallback for client display
-  const courses = initialCourses.length > 0 ? initialCourses : [
-    {
-      id: "1",
-      title: "Advanced React Patterns",
-      progress: 75,
-      icon_name: "Atom",
-      created_at: "2026-05-25T12:00:00.000Z"
-    },
-    {
-      id: "2",
-      title: "Next.js App Router Architecture",
-      progress: 40,
-      icon_name: "Network",
-      created_at: "2026-05-25T12:00:00.000Z"
-    },
-    {
-      id: "3",
-      title: "Framer Motion Animations",
-      progress: 90,
-      icon_name: "Sparkles",
-      created_at: "2026-05-25T12:00:00.000Z"
-    },
-    {
-      id: "4",
-      title: "Supabase & Postgres Masterclass",
-      progress: 15,
-      icon_name: "Database",
-      created_at: "2026-05-25T12:00:00.000Z"
-    }
-  ];
+  const courses = initialCourses;
 
-  const filteredCourses = courses.filter(course => 
-    course.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const categories = Array.from(
+    new Set(courses.map((course) => course.category).filter(Boolean))
+  ) as string[];
+  const levels = Array.from(
+    new Set(courses.map((course) => course.level).filter(Boolean))
+  ) as string[];
+  const instructors = Array.from(
+    new Set(courses.map((course) => course.teacher_name).filter(Boolean))
+  ) as string[];
+  const filteredCourses = courses
+    .filter((course) => {
+      const query = searchQuery.trim().toLowerCase();
+      const matchesSearch =
+        !query ||
+        `${course.title} ${course.description ?? ""} ${course.category ?? ""} ${
+          course.teacher_name ?? ""
+        }`
+          .toLowerCase()
+          .includes(query);
+      return (
+        matchesSearch &&
+        (categoryFilter === "all" || course.category === categoryFilter) &&
+        (levelFilter === "all" || course.level === levelFilter) &&
+        (instructorFilter === "all" || course.teacher_name === instructorFilter)
+      );
+    })
+    .sort((a, b) => {
+      if (courseSort === "progress") return (b.progress ?? 0) - (a.progress ?? 0);
+      if (courseSort === "title") return a.title.localeCompare(b.title);
+      if (courseSort === "oldest") {
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      }
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
 
   return (
     <div className="flex min-h-screen bg-zinc-950/20 text-zinc-100">
+      <RealtimeRefresh
+        channelName="student-dashboard-live"
+        tables={["courses", "enrollments", "lesson_progress", "attempts", "submissions"]}
+      />
       {/* Sidebar Navigation */}
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} profile={{ ...profile, full_name: displayName }} />
 
@@ -171,6 +195,7 @@ export default function Dashboard({ initialCourses, initialNotes, profile, total
             </span>
           </div>
           <div className="flex items-center gap-3">
+            <NotificationBell />
             <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-500 flex items-center justify-center text-[10px] font-bold text-white">
               {displayName.charAt(0).toUpperCase()}
             </div>
@@ -187,6 +212,7 @@ export default function Dashboard({ initialCourses, initialNotes, profile, total
             <p className="text-[11px] text-zinc-500 font-medium">AURA Student Portal &bull; Term 2</p>
           </div>
           <div className="flex items-center gap-4">
+            <NotificationBell />
             <span className="text-xs text-zinc-400 bg-white/5 border border-white/5 px-3 py-1.5 rounded-full font-semibold">
               Live Connection
             </span>
@@ -199,27 +225,63 @@ export default function Dashboard({ initialCourses, initialNotes, profile, total
           
           {/* 1. Dashboard View */}
           {activeTab === "dashboard" && (
-            <BentoGrid courses={initialCourses} fullName={profile.full_name} totalCompletedLessons={totalCompletedLessons} />
+            <BentoGrid
+              courses={initialCourses}
+              fullName={profile.full_name}
+              totalCompletedLessons={totalCompletedLessons}
+              analytics={analytics}
+            />
           )}
 
           {/* 2. Courses View */}
           {activeTab === "courses" && (
             <div className="max-w-7xl mx-auto space-y-6">
               {/* Search and filter bar */}
-              <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-zinc-900/30 backdrop-blur-xl border border-white/5 p-4 rounded-3xl">
+              <div className="grid gap-3 bg-zinc-900/30 backdrop-blur-xl border border-white/5 p-4 rounded-3xl md:grid-cols-2 xl:grid-cols-5">
                 <div className="relative w-full sm:w-80">
                   <Search className="w-4 h-4 text-zinc-500 absolute left-4 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
-                    placeholder="Search enrolled courses..."
+                    placeholder="Search course catalog..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full bg-zinc-950/40 border border-white/5 rounded-2xl py-2 pl-11 pr-4 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-violet-500/50 transition-colors"
                   />
                 </div>
-                <button className="flex items-center gap-2 px-4 py-2 border border-white/5 rounded-2xl text-xs font-semibold text-zinc-400 hover:text-white bg-zinc-950/20 hover:bg-zinc-900/50 transition-colors cursor-pointer w-full sm:w-auto justify-center">
-                  <Filter className="w-3.5 h-3.5" /> Filter Modules
-                </button>
+                <select
+                  value={categoryFilter}
+                  onChange={(event) => setCategoryFilter(event.target.value)}
+                  className="rounded-2xl border border-white/5 bg-zinc-950/40 px-4 py-2 text-xs font-semibold text-zinc-300 outline-none"
+                >
+                  <option value="all">All categories</option>
+                  {categories.map((value) => <option key={value}>{value}</option>)}
+                </select>
+                <select
+                  value={levelFilter}
+                  onChange={(event) => setLevelFilter(event.target.value)}
+                  className="rounded-2xl border border-white/5 bg-zinc-950/40 px-4 py-2 text-xs font-semibold text-zinc-300 outline-none"
+                >
+                  <option value="all">All difficulties</option>
+                  {levels.map((value) => <option key={value}>{value}</option>)}
+                </select>
+                <select
+                  value={instructorFilter}
+                  onChange={(event) => setInstructorFilter(event.target.value)}
+                  className="rounded-2xl border border-white/5 bg-zinc-950/40 px-4 py-2 text-xs font-semibold text-zinc-300 outline-none"
+                >
+                  <option value="all">All instructors</option>
+                  {instructors.map((value) => <option key={value}>{value}</option>)}
+                </select>
+                <select
+                  value={courseSort}
+                  onChange={(event) => setCourseSort(event.target.value)}
+                  className="rounded-2xl border border-white/5 bg-zinc-950/40 px-4 py-2 text-xs font-semibold text-zinc-300 outline-none"
+                >
+                  <option value="newest">Newest first</option>
+                  <option value="oldest">Oldest first</option>
+                  <option value="progress">Highest progress</option>
+                  <option value="title">Title A-Z</option>
+                </select>
               </div>
 
               {/* Course Grid */}
@@ -244,7 +306,7 @@ export default function Dashboard({ initialCourses, initialNotes, profile, total
               <div className="lg:col-span-2 glass-card p-6 rounded-3xl relative overflow-hidden flex flex-col justify-between min-h-[300px]">
                 <div className="absolute inset-0 bg-mesh-violet opacity-65 pointer-events-none" />
                 <div className="grain-overlay" />
-                <ActivityChart />
+                <ActivityChart data={analytics.weeklyActivity} />
               </div>
 
               {/* Sidebar stats panel */}
@@ -255,15 +317,15 @@ export default function Dashboard({ initialCourses, initialNotes, profile, total
                   <div className="space-y-4">
                     <div className="flex justify-between items-center py-2 border-b border-white/5">
                       <span className="text-xs text-zinc-400">Average Course Progress</span>
-                      <span className="text-sm font-bold text-cyan-400">55%</span>
+                      <span className="text-sm font-bold text-cyan-400">{analytics.averageCourseProgress}%</span>
                     </div>
                     <div className="flex justify-between items-center py-2 border-b border-white/5">
                       <span className="text-xs text-zinc-400">Total Study Modules</span>
-                      <span className="text-sm font-bold text-white">16</span>
+                      <span className="text-sm font-bold text-white">{totalCompletedLessons}</span>
                     </div>
                     <div className="flex justify-between items-center py-2 border-b border-white/5">
                       <span className="text-xs text-zinc-400">Streak Attendance Rate</span>
-                      <span className="text-sm font-bold text-emerald-400">98%</span>
+                      <span className="text-sm font-bold text-emerald-400">{analytics.averageQuizScore}%</span>
                     </div>
                   </div>
                 </div>
@@ -273,11 +335,11 @@ export default function Dashboard({ initialCourses, initialNotes, profile, total
                   <h3 className="text-sm font-bold text-white mb-3">Goal Completion</h3>
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-full border-4 border-violet-500 border-r-transparent flex items-center justify-center text-xs font-bold text-violet-400">
-                      75%
+                      {analytics.assignmentCompletion}%
                     </div>
                     <div>
-                      <p className="text-xs font-semibold text-white">Daily targets reached</p>
-                      <p className="text-[10px] text-zinc-500 mt-0.5">3/4 goals completed today</p>
+                      <p className="text-xs font-semibold text-white">Assignments submitted</p>
+                      <p className="text-[10px] text-zinc-500 mt-0.5">{analytics.streakDays}-day learning streak</p>
                     </div>
                   </div>
                 </div>

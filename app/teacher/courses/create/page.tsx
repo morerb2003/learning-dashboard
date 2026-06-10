@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Sparkles, BookOpen, ChevronLeft, UploadCloud, Image as ImageIcon } from "lucide-react";
@@ -201,9 +202,16 @@ export default function CreateCoursePage() {
               Thumbnail
             </label>
             <div className="grid gap-3 sm:grid-cols-[128px_1fr] sm:items-center">
-              <div className="flex aspect-video w-32 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/60 text-zinc-600">
+              <div className="relative flex aspect-video w-32 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/60 text-zinc-600">
                 {thumbnailPreview ? (
-                  <img src={thumbnailPreview} alt="" className="h-full w-full object-cover" />
+                  <Image
+                    src={thumbnailPreview}
+                    alt=""
+                    fill
+                    sizes="128px"
+                    unoptimized
+                    className="object-cover"
+                  />
                 ) : (
                   <ImageIcon className="h-5 w-5" />
                 )}

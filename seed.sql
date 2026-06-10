@@ -6,11 +6,23 @@ CREATE TABLE IF NOT EXISTS public.courses (
     progress INTEGER NOT NULL CHECK (progress >= 0 AND progress <= 100),
     icon_name TEXT NOT NULL,
     thumbnail_url TEXT,
+    description TEXT,
+    category TEXT,
+    level TEXT,
+    teacher_name TEXT,
+    color TEXT DEFAULT 'violet',
+    is_published BOOLEAN NOT NULL DEFAULT true,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 ALTER TABLE public.courses ADD COLUMN IF NOT EXISTS teacher_id UUID;
 ALTER TABLE public.courses ADD COLUMN IF NOT EXISTS thumbnail_url TEXT;
+ALTER TABLE public.courses ADD COLUMN IF NOT EXISTS description TEXT;
+ALTER TABLE public.courses ADD COLUMN IF NOT EXISTS category TEXT;
+ALTER TABLE public.courses ADD COLUMN IF NOT EXISTS level TEXT;
+ALTER TABLE public.courses ADD COLUMN IF NOT EXISTS teacher_name TEXT;
+ALTER TABLE public.courses ADD COLUMN IF NOT EXISTS color TEXT DEFAULT 'violet';
+ALTER TABLE public.courses ADD COLUMN IF NOT EXISTS is_published BOOLEAN NOT NULL DEFAULT true;
 
 ALTER TABLE public.courses ENABLE ROW LEVEL SECURITY;
 
@@ -18,21 +30,27 @@ DROP POLICY IF EXISTS "Enable read access for all users" ON public.courses;
 CREATE POLICY "Enable read access for all users"
 ON public.courses
 FOR SELECT
-USING (true);
+USING (is_published = true);
 
-TRUNCATE TABLE public.courses CASCADE;
-
-INSERT INTO public.courses (title, progress, icon_name) VALUES
-('Advanced React Patterns', 75, 'Atom'),
-('Next.js App Router Architecture', 40, 'Network'),
-('Framer Motion Animations', 90, 'Sparkles'),
-('Supabase & Postgres Masterclass', 15, 'Database');
+INSERT INTO public.courses (title, progress, icon_name, category, level, color, is_published)
+SELECT seed.title, seed.progress, seed.icon_name, seed.category, seed.level, seed.color, true
+FROM (
+    VALUES
+      ('Advanced React Patterns', 75, 'Atom', 'Frontend', 'Advanced', 'violet'),
+      ('Next.js App Router Architecture', 40, 'Network', 'Frontend', 'Intermediate', 'cyan'),
+      ('Framer Motion Animations', 90, 'Sparkles', 'Design', 'Intermediate', 'emerald'),
+      ('Supabase & Postgres Masterclass', 15, 'Database', 'Backend', 'Beginner', 'orange')
+) AS seed(title, progress, icon_name, category, level, color)
+WHERE NOT EXISTS (
+    SELECT 1 FROM public.courses existing WHERE existing.title = seed.title
+);
 
 -- Profiles table
 CREATE TABLE IF NOT EXISTS public.profiles (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     full_name TEXT,
     email TEXT,
+    avatar_url TEXT,
     role TEXT NOT NULL DEFAULT 'student' CHECK (role IN ('student', 'pending_teacher', 'teacher', 'admin')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
@@ -40,6 +58,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS full_name TEXT;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS email TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS avatar_url TEXT;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS role TEXT NOT NULL DEFAULT 'student';
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL;

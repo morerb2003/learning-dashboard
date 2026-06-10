@@ -49,6 +49,16 @@ WITH CHECK (
     AND public.is_teacher()
 );
 
+DROP POLICY IF EXISTS "Teachers can view own courses" ON public.courses;
+CREATE POLICY "Teachers can view own courses"
+ON public.courses
+FOR SELECT
+TO authenticated
+USING (
+    teacher_id = auth.uid()
+    AND public.is_teacher()
+);
+
 DROP POLICY IF EXISTS "Teachers can update own courses" ON public.courses;
 CREATE POLICY "Teachers can update own courses"
 ON public.courses

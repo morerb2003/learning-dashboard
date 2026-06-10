@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { Users, BookOpen, TrendingUp, Calendar } from "lucide-react";
+import CsvDownloadButton from "@/components/teacher/CsvDownloadButton";
 
 export const dynamic = "force-dynamic";
 
@@ -50,13 +51,29 @@ export default async function TeacherStudentsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-lg font-black text-white flex items-center gap-2">
-          <Users className="h-5 w-5 text-cyan-400" />
-          Students
-        </h2>
-        <p className="mt-1 text-xs font-medium text-zinc-500">
-          View all enrolled students and their course activity.
-        </p>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 className="text-lg font-black text-white flex items-center gap-2">
+              <Users className="h-5 w-5 text-cyan-400" />
+              Students
+            </h2>
+            <p className="mt-1 text-xs font-medium text-zinc-500">
+              View all enrolled students and their course activity.
+            </p>
+          </div>
+          <CsvDownloadButton
+            filename="aura-students.csv"
+            label="Export Students"
+            rows={students.map((student) => ({
+              name: student.full_name || "Unnamed",
+              email: student.email || "",
+              courses: (studentEnrollments[student.id] ?? [])
+                .map((courseId) => courseMap[courseId] ?? "Unknown")
+                .join("; "),
+              joined: student.created_at,
+            }))}
+          />
+        </div>
       </div>
 
       {/* Summary Cards */}

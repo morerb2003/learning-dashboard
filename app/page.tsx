@@ -3,6 +3,12 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Course } from "@/types/course";
 import { Note } from "@/types/note";
+import {
+  average,
+  buildWeeklyActivity,
+  calculateStreak,
+  percentage,
+} from "@/lib/analytics/calculations";
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +16,14 @@ export default async function Home() {
   let courses: Course[] = [];
   let notes: Note[] = [];
   let totalCompletedLessons = 0;
+  let analytics = {
+    averageCourseProgress: 0,
+    averageQuizScore: 0,
+    assignmentCompletion: 0,
+    streakDays: 0,
+    activeWeekdays: [] as number[],
+    weeklyActivity: [] as Array<{ day: string; modules: number }>,
+  };
 
   const supabase = await createClient();
 
@@ -39,6 +53,7 @@ export default async function Home() {
     const { data: coursesData, error: coursesError } = await supabase
       .from("courses")
       .select("*")
+      .or("is_published.eq.true,is_published.is.null")
       .order("created_at", { ascending: true });
 
     if (coursesError) {
@@ -62,13 +77,30 @@ export default async function Home() {
 
     // ── Real lesson progress ──────────────────────────────────────────────
     // Fetch all lessons and all completed lesson_progress rows for this user
-    const [{ data: allLessons }, { data: progressRows }] = await Promise.all([
+    const [
+      { data: allLessons },
+      { data: progressRows },
+      { data: enrollments },
+      { data: attempts },
+      { data: assignments },
+      { data: submissions },
+    ] = await Promise.all([
       supabase.from("lessons").select("id, course_id"),
       supabase
         .from("lesson_progress")
-        .select("lesson_id")
+        .select("lesson_id, completed_at")
         .eq("user_id", user.id)
         .eq("completed", true),
+      supabase.from("enrollments").select("progress").eq("user_id", user.id),
+      supabase
+        .from("attempts")
+        .select("score, total_score, submitted_at")
+        .eq("student_id", user.id),
+      supabase.from("assignments").select("id"),
+      supabase
+        .from("submissions")
+        .select("assignment_id, submitted_at")
+        .eq("student_id", user.id),
     ]);
 
     if (allLessons && progressRows) {
@@ -99,6 +131,48 @@ export default async function Home() {
         return course;
       });
     }
+
+    const averageCourseProgress = average(
+      (enrollments ?? []).map((row) => row.progress ?? 0)
+    );
+    const averageQuizScore = average(
+      (attempts ?? []).map((row) =>
+        row.total_score > 0 ? (row.score / row.total_score) * 100 : 0
+      )
+    );
+    const assignmentCompletion = percentage(
+      submissions?.length ?? 0,
+      assignments?.length ?? 0
+    );
+
+    const activityDates = [
+      ...(progressRows ?? []).map((row) => row.completed_at),
+      ...(attempts ?? []).map((row) => row.submitted_at),
+      ...(submissions ?? []).map((row) => row.submitted_at),
+    ].filter((value): value is string => Boolean(value));
+    const activeDateKeys = new Set(
+      activityDates.map((value) => new Date(value).toISOString().slice(0, 10))
+    );
+    const today = new Date();
+    const streakDays = calculateStreak(activityDates, today);
+    const weeklyActivity = buildWeeklyActivity(activityDates, today);
+    const mondayIndex = (today.getDay() + 6) % 7;
+    const weekStart = new Date(today);
+    weekStart.setDate(today.getDate() - mondayIndex);
+    weekStart.setHours(0, 0, 0, 0);
+    const activeWeekdays = Array.from(activeDateKeys)
+      .map((key) => new Date(`${key}T00:00:00`))
+      .filter((date) => date >= weekStart)
+      .map((date) => (date.getDay() + 6) % 7);
+
+    analytics = {
+      averageCourseProgress,
+      averageQuizScore,
+      assignmentCompletion,
+      streakDays,
+      activeWeekdays: Array.from(new Set(activeWeekdays)),
+      weeklyActivity,
+    };
   } catch (err) {
     console.error("Database connection exception:", err);
   }
@@ -116,6 +190,7 @@ export default async function Home() {
       initialNotes={notes}
       profile={resolvedProfile}
       totalCompletedLessons={totalCompletedLessons}
+      analytics={analytics}
     />
   );
 }

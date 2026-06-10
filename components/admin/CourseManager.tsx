@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { Plus, Edit2, Trash2, X, Layers, Check, ShieldAlert, Sparkles, ListVideo, PlaySquare, UploadCloud, Image as ImageIcon } from "lucide-react";
+import Image from "next/image";
+import { Plus, Edit2, Trash2, X, Layers, Check, ShieldAlert, Sparkles, ListVideo, PlaySquare, UploadCloud, Image as ImageIcon, Copy, FileUp } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { Lesson } from "@/types/lesson";
 import type { Course } from "@/types/course";
@@ -41,6 +42,8 @@ export default function CourseManager({
   const [deletingLessonId, setDeletingLessonId] = useState<string | null>(null);
   const [showConfirmDelete, setShowConfirmDelete] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [cloningCourseId, setCloningCourseId] = useState<string | null>(null);
+  const [bulkImportStatus, setBulkImportStatus] = useState<string | null>(null);
 
   // Form states
   const [title, setTitle] = useState("");
@@ -149,7 +152,7 @@ export default function CourseManager({
     }
 
     const extension = thumbnailFile.name.split(".").pop()?.toLowerCase() || "jpg";
-    const safeName = `${Date.now()}-${crypto.randomUUID()}.${extension}`;
+    const safeName = `${crypto.randomUUID()}.${extension}`;
     const path = `${ownerId}/${safeName}`;
 
     const { error } = await supabase.storage
@@ -320,6 +323,122 @@ export default function CourseManager({
     setDeletingLessonId(null);
   };
 
+  const handleCloneCourse = async (course: Course) => {
+    setCloningCourseId(course.id);
+    setSaveError(null);
+    const { id, created_at, ...source } = course;
+    void id;
+    void created_at;
+
+    const { data: clonedCourse, error } = await supabase
+      .from("courses")
+      .insert({
+        ...source,
+        title: `${course.title} (Copy)`,
+        progress: 0,
+        is_published: false,
+        ...(mode === "teacher" && currentTeacherId
+          ? { teacher_id: currentTeacherId, teacher_name: currentTeacherName }
+          : {}),
+      })
+      .select()
+      .single();
+
+    if (error || !clonedCourse) {
+      setSaveError(error?.message ?? "Unable to clone course.");
+      setCloningCourseId(null);
+      return;
+    }
+
+    const sourceLessons = lessons.filter((lesson) => lesson.course_id === course.id);
+    if (sourceLessons.length > 0) {
+      const { data: clonedLessons, error: lessonError } = await supabase
+        .from("lessons")
+        .insert(
+          sourceLessons.map((lesson) => ({
+            course_id: clonedCourse.id,
+            title: lesson.title,
+            description: lesson.description,
+            video_url: lesson.video_url,
+            lesson_order: lesson.lesson_order,
+          }))
+        )
+        .select();
+
+      if (lessonError) {
+        setSaveError(`Course cloned, but lessons failed: ${lessonError.message}`);
+      } else {
+        setLessons((current) => [...current, ...((clonedLessons ?? []) as Lesson[])]);
+      }
+    }
+
+    setCourses((current) => [clonedCourse as Course, ...current]);
+    setSelectedCourseId(clonedCourse.id);
+    setCloningCourseId(null);
+  };
+
+  const parseCsvRow = (line: string) => {
+    const values: string[] = [];
+    let value = "";
+    let quoted = false;
+    for (let index = 0; index < line.length; index += 1) {
+      const character = line[index];
+      if (character === '"' && line[index + 1] === '"') {
+        value += '"';
+        index += 1;
+      } else if (character === '"') {
+        quoted = !quoted;
+      } else if (character === "," && !quoted) {
+        values.push(value.trim());
+        value = "";
+      } else {
+        value += character;
+      }
+    }
+    values.push(value.trim());
+    return values;
+  };
+
+  const handleBulkLessonImport = async (file: File | null) => {
+    if (!file || !selectedCourseId) return;
+    setBulkImportStatus("Importing...");
+    const lines = (await file.text())
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean);
+    if (lines.length < 2) {
+      setBulkImportStatus("CSV must include a header and at least one lesson.");
+      return;
+    }
+
+    const headers = parseCsvRow(lines[0]).map((header) => header.toLowerCase());
+    const required = ["title", "description", "video_url", "lesson_order"];
+    if (!required.every((header) => headers.includes(header))) {
+      setBulkImportStatus(`Required columns: ${required.join(", ")}`);
+      return;
+    }
+
+    const rows = lines.slice(1).map((line, index) => {
+      const values = parseCsvRow(line);
+      const row = Object.fromEntries(headers.map((header, column) => [header, values[column] ?? ""]));
+      return {
+        course_id: selectedCourseId,
+        title: row.title,
+        description: row.description || null,
+        video_url: row.video_url || null,
+        lesson_order: Number(row.lesson_order) || selectedCourseLessons.length + index + 1,
+      };
+    }).filter((row) => row.title);
+
+    const { data, error } = await supabase.from("lessons").insert(rows).select();
+    if (error) {
+      setBulkImportStatus(error.message);
+      return;
+    }
+    setLessons((current) => [...current, ...((data ?? []) as Lesson[])]);
+    setBulkImportStatus(`${data?.length ?? 0} lessons imported.`);
+  };
+
   const filteredCourses = courses.filter((course) =>
     course.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -367,12 +486,15 @@ export default function CourseManager({
                   <tr key={course.id} className="text-zinc-300 hover:bg-white/[0.01] transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-12 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-zinc-900/60 text-zinc-600">
+                        <div className="relative flex h-12 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-zinc-900/60 text-zinc-600">
                           {course.thumbnail_url ? (
-                            <img
+                            <Image
                               src={course.thumbnail_url}
                               alt=""
-                              className="h-full w-full object-cover"
+                              fill
+                              sizes="64px"
+                              unoptimized
+                              className="object-cover"
                             />
                           ) : (
                             <ImageIcon className="h-4 w-4" />
@@ -425,6 +547,14 @@ export default function CourseManager({
                         </div>
                       ) : (
                         <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => void handleCloneCourse(course)}
+                            disabled={cloningCourseId === course.id}
+                            className="p-2 rounded-xl bg-cyan-500/5 text-cyan-400 border border-cyan-500/10 hover:bg-cyan-500/15 transition-all disabled:opacity-50"
+                            title="Clone course and lessons"
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                          </button>
                           <button
                             onClick={() => openEditModal(course)}
                             className="p-2 rounded-xl bg-violet-500/5 text-violet-400 border border-violet-500/10 hover:bg-violet-500/15 hover:border-violet-500/25 transition-all cursor-pointer"
@@ -488,8 +618,26 @@ export default function CourseManager({
               <Plus className="h-4 w-4" />
               Add Lesson
             </button>
+            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-xs font-bold text-emerald-200 transition hover:bg-emerald-500/20">
+              <FileUp className="h-4 w-4" />
+              Import CSV
+              <input
+                type="file"
+                accept=".csv,text/csv"
+                className="hidden"
+                onChange={(event) => {
+                  void handleBulkLessonImport(event.target.files?.[0] ?? null);
+                  event.target.value = "";
+                }}
+              />
+            </label>
           </div>
         </div>
+        {bulkImportStatus && (
+          <div className="border-b border-white/5 px-5 py-3 text-xs text-emerald-300">
+            {bulkImportStatus}
+          </div>
+        )}
 
         <div className="overflow-x-auto">
           <table className="w-full min-w-[760px] text-left text-xs">
@@ -610,9 +758,16 @@ export default function CourseManager({
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Thumbnail</label>
                 <div className="grid gap-3 sm:grid-cols-[112px_1fr] sm:items-center">
-                  <div className="flex aspect-video w-28 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/60 text-zinc-600">
+                  <div className="relative flex aspect-video w-28 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/60 text-zinc-600">
                     {thumbnailPreview ? (
-                      <img src={thumbnailPreview} alt="" className="h-full w-full object-cover" />
+                      <Image
+                        src={thumbnailPreview}
+                        alt=""
+                        fill
+                        sizes="112px"
+                        unoptimized
+                        className="object-cover"
+                      />
                     ) : (
                       <ImageIcon className="h-5 w-5" />
                     )}

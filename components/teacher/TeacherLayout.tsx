@@ -4,6 +4,8 @@ import React, { useState } from "react";
 import { Menu, X, GraduationCap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import TeacherSidebar from "./TeacherSidebar";
+import NotificationBell from "@/components/notifications/NotificationBell";
+import RealtimeRefresh from "@/components/realtime/RealtimeRefresh";
 
 interface TeacherProfile {
   id: string;
@@ -23,6 +25,10 @@ export default function TeacherLayout({ children, profile }: TeacherLayoutProps)
 
   return (
     <div className="flex min-h-screen bg-zinc-950 text-zinc-100 font-sans">
+      <RealtimeRefresh
+        channelName="teacher-dashboard-live"
+        tables={["courses", "lessons", "enrollments", "lesson_progress", "attempts", "submissions"]}
+      />
       {/* Ambient background glows */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-emerald-900/10 blur-[120px]" />
@@ -113,6 +119,7 @@ export default function TeacherLayout({ children, profile }: TeacherLayoutProps)
           </div>
 
           <div className="flex items-center gap-3">
+            <NotificationBell />
             <div className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-emerald-300">
               Live Session
             </div>

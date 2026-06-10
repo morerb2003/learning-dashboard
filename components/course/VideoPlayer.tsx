@@ -133,7 +133,7 @@ export default function VideoPlayer({
 }: VideoPlayerProps) {
   const router = useRouter();
   const [isNavigating, setIsNavigating] = useState(false);
-  const [iframeLoaded, setIframeLoaded] = useState(false);
+  const [loadedLessonId, setLoadedLessonId] = useState<string | null>(null);
 
   const currentIndex = allLessons.findIndex((l) => l.id === lesson.id);
   const prevLesson = currentIndex > 0 ? allLessons[currentIndex - 1] : null;
@@ -141,11 +141,7 @@ export default function VideoPlayer({
     currentIndex < allLessons.length - 1 ? allLessons[currentIndex + 1] : null;
 
   const { type, embedUrl } = parseVideoUrl(lesson.video_url);
-
-  // Reset iframe loading state when lesson changes
-  useEffect(() => {
-    setIframeLoaded(false);
-  }, [lesson.id]);
+  const iframeLoaded = loadedLessonId === lesson.id;
 
   const navigate = useCallback(
     (targetLesson: VideoLesson) => {
@@ -194,7 +190,7 @@ export default function VideoPlayer({
               }`}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
               allowFullScreen
-              onLoad={() => setIframeLoaded(true)}
+              onLoad={() => setLoadedLessonId(lesson.id)}
             />
           </>
         ) : (
