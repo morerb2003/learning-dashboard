@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { Menu, X, ShieldCheck } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import AdminSidebar from "./AdminSidebar";
+import NotificationBell from "@/components/notifications/NotificationBell";
 
 interface AdminProfile {
   id: string;
@@ -112,6 +113,7 @@ export default function AdminLayout({ children, profile }: AdminLayoutProps) {
           </div>
 
           <div className="flex items-center gap-3">
+            <NotificationBell />
             <div className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-emerald-300">
               Live Connection
             </div>

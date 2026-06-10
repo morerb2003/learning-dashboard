@@ -22,6 +22,7 @@ import ActivityChart from "./ActivityChart";
 import CourseCard from "./CourseCard";
 import NotesView from "./NotesView";
 import LogoutButton from "@/components/auth/LogoutButton";
+import NotificationBell from "@/components/notifications/NotificationBell";
 
 export interface Profile {
   full_name: string;
@@ -35,9 +36,23 @@ interface DashboardProps {
   initialNotes: Note[];
   profile: Profile;
   totalCompletedLessons?: number;
+  analytics: {
+    averageCourseProgress: number;
+    averageQuizScore: number;
+    assignmentCompletion: number;
+    streakDays: number;
+    activeWeekdays: number[];
+    weeklyActivity: Array<{ day: string; modules: number }>;
+  };
 }
 
-export default function Dashboard({ initialCourses, initialNotes, profile, totalCompletedLessons = 0 }: DashboardProps) {
+export default function Dashboard({
+  initialCourses,
+  initialNotes,
+  profile,
+  totalCompletedLessons = 0,
+  analytics,
+}: DashboardProps) {
   const [activeTab, setActiveTab] = useState<TabId>("dashboard");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -171,6 +186,7 @@ export default function Dashboard({ initialCourses, initialNotes, profile, total
             </span>
           </div>
           <div className="flex items-center gap-3">
+            <NotificationBell />
             <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-500 flex items-center justify-center text-[10px] font-bold text-white">
               {displayName.charAt(0).toUpperCase()}
             </div>
@@ -187,6 +203,7 @@ export default function Dashboard({ initialCourses, initialNotes, profile, total
             <p className="text-[11px] text-zinc-500 font-medium">AURA Student Portal &bull; Term 2</p>
           </div>
           <div className="flex items-center gap-4">
+            <NotificationBell />
             <span className="text-xs text-zinc-400 bg-white/5 border border-white/5 px-3 py-1.5 rounded-full font-semibold">
               Live Connection
             </span>
@@ -199,7 +216,12 @@ export default function Dashboard({ initialCourses, initialNotes, profile, total
           
           {/* 1. Dashboard View */}
           {activeTab === "dashboard" && (
-            <BentoGrid courses={initialCourses} fullName={profile.full_name} totalCompletedLessons={totalCompletedLessons} />
+            <BentoGrid
+              courses={initialCourses}
+              fullName={profile.full_name}
+              totalCompletedLessons={totalCompletedLessons}
+              analytics={analytics}
+            />
           )}
 
           {/* 2. Courses View */}
@@ -244,7 +266,7 @@ export default function Dashboard({ initialCourses, initialNotes, profile, total
               <div className="lg:col-span-2 glass-card p-6 rounded-3xl relative overflow-hidden flex flex-col justify-between min-h-[300px]">
                 <div className="absolute inset-0 bg-mesh-violet opacity-65 pointer-events-none" />
                 <div className="grain-overlay" />
-                <ActivityChart />
+                <ActivityChart data={analytics.weeklyActivity} />
               </div>
 
               {/* Sidebar stats panel */}
@@ -255,15 +277,15 @@ export default function Dashboard({ initialCourses, initialNotes, profile, total
                   <div className="space-y-4">
                     <div className="flex justify-between items-center py-2 border-b border-white/5">
                       <span className="text-xs text-zinc-400">Average Course Progress</span>
-                      <span className="text-sm font-bold text-cyan-400">55%</span>
+                      <span className="text-sm font-bold text-cyan-400">{analytics.averageCourseProgress}%</span>
                     </div>
                     <div className="flex justify-between items-center py-2 border-b border-white/5">
                       <span className="text-xs text-zinc-400">Total Study Modules</span>
-                      <span className="text-sm font-bold text-white">16</span>
+                      <span className="text-sm font-bold text-white">{totalCompletedLessons}</span>
                     </div>
                     <div className="flex justify-between items-center py-2 border-b border-white/5">
                       <span className="text-xs text-zinc-400">Streak Attendance Rate</span>
-                      <span className="text-sm font-bold text-emerald-400">98%</span>
+                      <span className="text-sm font-bold text-emerald-400">{analytics.averageQuizScore}%</span>
                     </div>
                   </div>
                 </div>
@@ -273,11 +295,11 @@ export default function Dashboard({ initialCourses, initialNotes, profile, total
                   <h3 className="text-sm font-bold text-white mb-3">Goal Completion</h3>
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-full border-4 border-violet-500 border-r-transparent flex items-center justify-center text-xs font-bold text-violet-400">
-                      75%
+                      {analytics.assignmentCompletion}%
                     </div>
                     <div>
-                      <p className="text-xs font-semibold text-white">Daily targets reached</p>
-                      <p className="text-[10px] text-zinc-500 mt-0.5">3/4 goals completed today</p>
+                      <p className="text-xs font-semibold text-white">Assignments submitted</p>
+                      <p className="text-[10px] text-zinc-500 mt-0.5">{analytics.streakDays}-day learning streak</p>
                     </div>
                   </div>
                 </div>

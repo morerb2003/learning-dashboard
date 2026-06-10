@@ -11,20 +11,9 @@ import {
   CartesianGrid 
 } from "recharts";
 
-// Mock study data
-const studyData = [
-  { day: "Mon", hours: 2.5, modules: 2 },
-  { day: "Tue", hours: 4.2, modules: 4 },
-  { day: "Wed", hours: 3.0, modules: 1 },
-  { day: "Thu", hours: 5.5, modules: 5 },
-  { day: "Fri", hours: 2.0, modules: 2 },
-  { day: "Sat", hours: 6.8, modules: 6 },
-  { day: "Sun", hours: 4.8, modules: 3 },
-];
-
 interface TooltipPayloadEntry {
   value: number;
-  payload: { day: string; hours: number; modules: number };
+  payload: { day: string; modules: number };
 }
 
 interface CustomTooltipProps {
@@ -40,11 +29,11 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
         <p className="text-xs font-bold text-violet-400 uppercase tracking-widest">{payload[0].payload.day}</p>
         <div className="mt-1 space-y-0.5">
           <p className="text-sm font-bold text-white flex items-center gap-1.5">
-            <span>{payload[0].value} hrs</span>
-            <span className="text-zinc-500 font-normal">focused</span>
+            <span>{payload[0].value}</span>
+            <span className="text-zinc-500 font-normal">activities</span>
           </p>
           <p className="text-[10px] text-zinc-400">
-            Completed {payload[0].payload.modules} modules
+            Verified learning events
           </p>
         </div>
       </div>
@@ -53,19 +42,23 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
   return null;
 }
 
-export default function ActivityChart() {
+export default function ActivityChart({
+  data,
+}: {
+  data: Array<{ day: string; modules: number }>;
+}) {
 
   return (
     <div className="w-full h-full min-h-[220px] flex flex-col justify-between" suppressHydrationWarning>
       <div className="flex items-center justify-between mb-4">
         <div>
-          <span className="text-[10px] uppercase font-bold tracking-widest text-violet-400">Study Velocity</span>
-          <h4 className="text-sm font-bold text-white tracking-wide mt-0.5">Focus Hours</h4>
+          <span className="text-[10px] uppercase font-bold tracking-widest text-violet-400">Learning Activity</span>
+          <h4 className="text-sm font-bold text-white tracking-wide mt-0.5">Verified Events</h4>
         </div>
         <div className="flex items-center gap-4 text-[10px] font-semibold text-zinc-400">
           <div className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-violet-500 shadow-sm shadow-violet-500/50" />
-            <span>Target (3h/day)</span>
+            <span>Lessons, quizzes, assignments</span>
           </div>
         </div>
       </div>
@@ -73,7 +66,7 @@ export default function ActivityChart() {
       <div className="flex-1 w-full h-[180px] min-h-[180px] relative">
         <ResponsiveContainer width="100%" height={180}>
           <AreaChart
-            data={studyData}
+            data={data}
             margin={{ top: 5, right: 5, left: -25, bottom: 0 }}
           >
             <defs>
@@ -113,7 +106,7 @@ export default function ActivityChart() {
 
             <Area
               type="monotone"
-              dataKey="hours"
+              dataKey="modules"
               stroke="#8b5cf6"
               strokeWidth={2}
               fillOpacity={1}

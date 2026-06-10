@@ -21,6 +21,14 @@ interface BentoGridProps {
   courses: Course[];
   fullName?: string;
   totalCompletedLessons?: number;
+  analytics: {
+    averageCourseProgress: number;
+    averageQuizScore: number;
+    assignmentCompletion: number;
+    streakDays: number;
+    activeWeekdays: number[];
+    weeklyActivity: Array<{ day: string; modules: number }>;
+  };
 }
 
 // Framer Motion variants for staggered entrance
@@ -60,7 +68,12 @@ const hoverTransition = {
   damping: 20
 };
 
-export default function BentoGrid({ courses, fullName, totalCompletedLessons = 0 }: BentoGridProps) {
+export default function BentoGrid({
+  courses,
+  fullName,
+  totalCompletedLessons = 0,
+  analytics,
+}: BentoGridProps) {
   const [streakClicked, setStreakClicked] = useState(false);
 
   // Fallback courses if database returns empty
@@ -140,7 +153,7 @@ export default function BentoGrid({ courses, fullName, totalCompletedLessons = 0
             Welcome back, <span className="bg-clip-text text-transparent bg-gradient-to-r from-violet-400 via-indigo-200 to-cyan-300">{fullName || "Student"}</span>!
           </h2>
           <p className="text-zinc-400 text-xs md:text-sm mt-2 max-w-md font-medium leading-relaxed">
-            You&apos;re making incredible progress this week. Your learning velocity is up 12% compared to last week. Let&apos;s finish today&apos;s checklist!
+            Your dashboard now reflects verified lesson, quiz, assignment, and enrollment activity.
           </p>
         </div>
 
@@ -152,15 +165,15 @@ export default function BentoGrid({ courses, fullName, totalCompletedLessons = 0
             </span>
           </div>
           <div className="flex flex-col">
-            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Study Time</span>
+            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Course Progress</span>
             <span className="text-lg md:text-xl font-bold text-white mt-0.5 flex items-baseline gap-1">
-              28.7 <span className="text-xs font-normal text-zinc-500">hrs</span>
+              {analytics.averageCourseProgress}<span className="text-xs font-normal text-zinc-500">%</span>
             </span>
           </div>
           <div className="flex flex-col">
-            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Skill Level</span>
+            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Quiz Average</span>
             <span className="text-lg md:text-xl font-bold text-violet-400 mt-0.5 flex items-center gap-1">
-              Lvl 4 <Trophy className="w-3.5 h-3.5 text-violet-400" />
+              {analytics.averageQuizScore}% <Trophy className="w-3.5 h-3.5 text-violet-400" />
             </span>
           </div>
         </div>
@@ -194,7 +207,7 @@ export default function BentoGrid({ courses, fullName, totalCompletedLessons = 0
 
         <div className="relative z-10 my-4 text-center">
           <span className="text-5xl font-black bg-clip-text text-transparent bg-gradient-to-b from-orange-400 to-red-600 tracking-tight filter drop-shadow-[0_4px_12px_rgba(249,115,22,0.15)]">
-            7
+            {analytics.streakDays}
           </span>
           <span className="text-base font-extrabold text-orange-400 ml-1">Days</span>
           <p className="text-[10px] text-zinc-400 mt-1 font-medium">Click the flame to boost your energy!</p>
@@ -203,8 +216,7 @@ export default function BentoGrid({ courses, fullName, totalCompletedLessons = 0
         {/* Mini Calendar tracker */}
         <div className="relative z-10 flex justify-between gap-1 mt-2">
           {["M", "T", "W", "T", "F", "S", "S"].map((day, idx) => {
-            // Monday to Sunday, assume Mon-Sun are completed (7 days streak)
-            const completed = idx <= 6;
+            const completed = analytics.activeWeekdays.includes(idx);
             return (
               <div key={idx} className="flex flex-col items-center gap-1.5 flex-1">
                 <span className="text-[9px] font-bold text-zinc-500">{day}</span>
@@ -248,7 +260,7 @@ export default function BentoGrid({ courses, fullName, totalCompletedLessons = 0
         <div className="absolute inset-0 rounded-3xl border border-violet-500/20 opacity-0 hover:opacity-100 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
         
         <div className="relative z-10 w-full h-full">
-          <ActivityChart />
+          <ActivityChart data={analytics.weeklyActivity} />
         </div>
       </motion.article>
 
@@ -274,9 +286,9 @@ export default function BentoGrid({ courses, fullName, totalCompletedLessons = 0
         </div>
 
         <div className="relative z-10 flex items-baseline gap-1.5 my-4">
-          <span className="text-4xl font-extrabold text-white tracking-tight">85%</span>
+          <span className="text-4xl font-extrabold text-white tracking-tight">{analytics.assignmentCompletion}%</span>
           <span className="text-xs text-cyan-400 font-semibold flex items-center gap-0.5">
-            <TrendingUp className="w-3.5 h-3.5" /> +5% this week
+            <TrendingUp className="w-3.5 h-3.5" /> assignments submitted
           </span>
         </div>
 
@@ -286,9 +298,9 @@ export default function BentoGrid({ courses, fullName, totalCompletedLessons = 0
               <Clock className="w-3 h-3 text-cyan-400" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-white truncate">Study 4 hours daily</p>
+              <p className="text-xs font-semibold text-white truncate">Average course completion</p>
               <div className="w-full bg-white/5 h-1 rounded-full mt-1.5 overflow-hidden">
-                <div className="bg-cyan-400 h-full rounded-full" style={{ width: "80%" }} />
+                <div className="bg-cyan-400 h-full rounded-full" style={{ width: `${analytics.averageCourseProgress}%` }} />
               </div>
             </div>
           </div>
@@ -298,9 +310,9 @@ export default function BentoGrid({ courses, fullName, totalCompletedLessons = 0
               <Calendar className="w-3 h-3 text-emerald-400" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-white truncate">Maintain 7-day streak</p>
+              <p className="text-xs font-semibold text-white truncate">Maintain a 7-day streak</p>
               <div className="w-full bg-white/5 h-1 rounded-full mt-1.5 overflow-hidden">
-                <div className="bg-emerald-400 h-full rounded-full" style={{ width: "100%" }} />
+                <div className="bg-emerald-400 h-full rounded-full" style={{ width: `${Math.min((analytics.streakDays / 7) * 100, 100)}%` }} />
               </div>
             </div>
           </div>

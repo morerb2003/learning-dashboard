@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 import { Plus, Edit2, Trash2, X, Layers, Check, ShieldAlert, Sparkles, ListVideo, PlaySquare, UploadCloud, Image as ImageIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { Lesson } from "@/types/lesson";
@@ -149,7 +150,7 @@ export default function CourseManager({
     }
 
     const extension = thumbnailFile.name.split(".").pop()?.toLowerCase() || "jpg";
-    const safeName = `${Date.now()}-${crypto.randomUUID()}.${extension}`;
+    const safeName = `${crypto.randomUUID()}.${extension}`;
     const path = `${ownerId}/${safeName}`;
 
     const { error } = await supabase.storage
@@ -367,12 +368,15 @@ export default function CourseManager({
                   <tr key={course.id} className="text-zinc-300 hover:bg-white/[0.01] transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-12 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-zinc-900/60 text-zinc-600">
+                        <div className="relative flex h-12 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-zinc-900/60 text-zinc-600">
                           {course.thumbnail_url ? (
-                            <img
+                            <Image
                               src={course.thumbnail_url}
                               alt=""
-                              className="h-full w-full object-cover"
+                              fill
+                              sizes="64px"
+                              unoptimized
+                              className="object-cover"
                             />
                           ) : (
                             <ImageIcon className="h-4 w-4" />
@@ -610,9 +614,16 @@ export default function CourseManager({
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Thumbnail</label>
                 <div className="grid gap-3 sm:grid-cols-[112px_1fr] sm:items-center">
-                  <div className="flex aspect-video w-28 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/60 text-zinc-600">
+                  <div className="relative flex aspect-video w-28 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/60 text-zinc-600">
                     {thumbnailPreview ? (
-                      <img src={thumbnailPreview} alt="" className="h-full w-full object-cover" />
+                      <Image
+                        src={thumbnailPreview}
+                        alt=""
+                        fill
+                        sizes="112px"
+                        unoptimized
+                        className="object-cover"
+                      />
                     ) : (
                       <ImageIcon className="h-5 w-5" />
                     )}

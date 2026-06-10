@@ -71,14 +71,6 @@ export default async function TeacherDashboardPage() {
     enrollmentMap[enrollment.course_id] = (enrollmentMap[enrollment.course_id] ?? 0) + 1;
   }
 
-  function formatDate(value: string) {
-    return new Intl.DateTimeFormat("en", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    }).format(new Date(value));
-  }
-
   const menuItems = [
     {
       href: "/teacher/courses",

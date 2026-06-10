@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import AssignmentWorkspace from "@/components/assignments/AssignmentWorkspace";
 import { getUserEnrollments } from "@/lib/course/enrollment";
-import type { Assignment, AssignmentSubmission, AssignmentSummary } from "@/types/assignment";
+import type { AssignmentSubmission, AssignmentSummary } from "@/types/assignment";
 
 export const dynamic = "force-dynamic";
 

@@ -24,7 +24,10 @@ import {
   UserPlus,
   BookmarkCheck,
   LogOut,
+  Medal,
 } from "lucide-react";
+import CourseReviews from "@/components/course/CourseReviews";
+import type { CourseReview } from "@/types/review";
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
 interface CatalogueLesson {
@@ -243,7 +246,6 @@ export default async function CourseDetailPage({
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  const isAdmin = user.role === "admin";
   const supabase = await createClient();
   const { id } = await params;
 
@@ -262,6 +264,13 @@ export default async function CourseDetailPage({
     .order("lesson_order", { ascending: true });
 
   const isEnrolled = await isUserEnrolled(course.id);
+  const { data: reviewRows } = await supabase
+    .from("course_reviews")
+    .select(
+      "id, course_id, student_id, rating, review, created_at, updated_at, profiles(full_name, avatar_url)"
+    )
+    .eq("course_id", course.id)
+    .order("updated_at", { ascending: false });
 
   // ── Real lesson progress ──────────────────────────────────────────────────
   const progressRows = await getLessonProgressForCourse(course.id);
@@ -397,6 +406,15 @@ export default async function CourseDetailPage({
                           Unenroll
                         </button>
                       </form>
+                      {realProgress === 100 && (
+                        <Link
+                          href={`/course/${course.id}/certificate`}
+                          className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-amber-300/30 bg-amber-300/10 px-5 text-xs font-black text-amber-200 transition hover:bg-amber-300/20"
+                        >
+                          <Medal className="h-4 w-4" />
+                          View Certificate
+                        </Link>
+                      )}
                     </>
                   ) : (
                     <form action={enrollUser}>
@@ -604,6 +622,13 @@ export default async function CourseDetailPage({
             </section>
           </div>
         </div>
+
+        <CourseReviews
+          courseId={course.id}
+          reviews={(reviewRows ?? []) as unknown as CourseReview[]}
+          currentUserId={user.id}
+          canReview={isEnrolled}
+        />
       </main>
     </div>
   );

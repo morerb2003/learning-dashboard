@@ -34,7 +34,11 @@ interface Course {
 interface AnalyticsChartProps {
   users: UserProfile[];
   courses: Course[];
-  totalNotes: number;
+  notes: Array<{ id: string; created_at: string }>;
+  enrollments: Array<{ id: string; enrolled_at: string }>;
+  lessonProgress: Array<{ id: string; completed_at: string | null }>;
+  attempts: Array<{ id: string; score: number; total_score: number; submitted_at: string }>;
+  submissions: Array<{ id: string; status: string; submitted_at: string; reviewed_at: string | null }>;
 }
 
 const roleColors: Record<string, string> = {
@@ -43,7 +47,15 @@ const roleColors: Record<string, string> = {
   admin: "#f87171",   // red-400
 };
 
-export default function AnalyticsChart({ users, courses, totalNotes }: AnalyticsChartProps) {
+export default function AnalyticsChart({
+  users,
+  courses,
+  notes,
+  enrollments,
+  lessonProgress,
+  attempts,
+  submissions,
+}: AnalyticsChartProps) {
   
   // 1. Role Distribution Data (Pie Chart)
   const roleData = useMemo(() => {
@@ -112,46 +124,36 @@ export default function AnalyticsChart({ users, courses, totalNotes }: Analytics
   }, [courses]);
 
   // 4. Daily Activity Graph (Area Chart)
-  // We can construct activity metrics by computing notes additions + users additions per day
   const dailyActivityData = useMemo(() => {
-    const activityCounts: Record<string, number> = {};
+    const activityCounts = new Map<string, number>();
     const today = new Date();
-    
-    // Initialize past 7 days with baseline activity
+
     for (let i = 6; i >= 0; i--) {
       const day = new Date(today);
       day.setDate(today.getDate() - i);
-      const dateString = day.toLocaleDateString("en", { weekday: "short" });
-      activityCounts[dateString] = 2; // baseline mock activity
+      activityCounts.set(day.toISOString().slice(0, 10), 0);
     }
 
-    // Add user registration activity
-    users.forEach((user) => {
-      const date = new Date(user.created_at);
-      const diffTime = Math.abs(today.getTime() - date.getTime());
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      
-      if (diffDays <= 7) {
-        const dateString = date.toLocaleDateString("en", { weekday: "short" });
-        if (activityCounts[dateString] !== undefined) {
-          activityCounts[dateString] += 5; // weight for registrations
-        }
+    const addActivity = (value: string | null | undefined) => {
+      if (!value) return;
+      const key = new Date(value).toISOString().slice(0, 10);
+      if (activityCounts.has(key)) {
+        activityCounts.set(key, (activityCounts.get(key) ?? 0) + 1);
       }
-    });
+    };
 
-    // Add note interaction weight
-    const notesActivityWeight = Math.min(totalNotes * 3, 20);
-    const keys = Object.keys(activityCounts);
-    keys.forEach((key, index) => {
-      // Distribute note weights slightly
-      activityCounts[key] += Math.round(notesActivityWeight * (0.5 + Math.sin(index) * 0.3));
-    });
+    users.forEach((row) => addActivity(row.created_at));
+    notes.forEach((row) => addActivity(row.created_at));
+    enrollments.forEach((row) => addActivity(row.enrolled_at));
+    lessonProgress.forEach((row) => addActivity(row.completed_at));
+    attempts.forEach((row) => addActivity(row.submitted_at));
+    submissions.forEach((row) => addActivity(row.submitted_at));
 
-    return keys.map((k) => ({
-      day: k,
-      activity: activityCounts[k],
+    return Array.from(activityCounts, ([date, activity]) => ({
+      day: new Date(`${date}T00:00:00`).toLocaleDateString("en", { weekday: "short" }),
+      activity,
     }));
-  }, [users, totalNotes]);
+  }, [attempts, enrollments, lessonProgress, notes, submissions, users]);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
