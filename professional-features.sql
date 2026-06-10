@@ -1,6 +1,14 @@
 -- Professional feature expansion for AURA LMS.
 -- Run once in the Supabase SQL Editor after the existing schema files.
 
+alter table public.courses add column if not exists description text;
+alter table public.courses add column if not exists category text;
+alter table public.courses add column if not exists level text;
+alter table public.courses add column if not exists teacher_name text;
+alter table public.courses add column if not exists color text default 'violet';
+alter table public.courses add column if not exists is_published boolean not null default true;
+alter table public.profiles add column if not exists avatar_url text;
+
 create table if not exists public.course_reviews (
   id uuid primary key default gen_random_uuid(),
   course_id uuid not null references public.courses(id) on delete cascade,

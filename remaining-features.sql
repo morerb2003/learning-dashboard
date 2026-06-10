@@ -359,7 +359,10 @@ begin
          else jsonb_build_object('old', to_jsonb(old), 'new', to_jsonb(new))
     end
   );
-  return coalesce(new, old);
+  if tg_op = 'DELETE' then
+    return old;
+  end if;
+  return new;
 end;
 $$;
 
@@ -389,7 +392,8 @@ declare
 begin
   foreach table_name in array array[
     'direct_messages', 'course_discussions', 'discussion_replies',
-    'platform_announcements', 'enrollments', 'lesson_progress'
+    'platform_announcements', 'profiles', 'courses', 'lessons',
+    'enrollments', 'lesson_progress', 'attempts', 'submissions', 'audit_logs'
   ]
   loop
     if not exists (

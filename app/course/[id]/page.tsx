@@ -11,15 +11,9 @@ import {
   Lock,
   CheckCircle2,
   BookOpen,
-  FileText,
-  Code2,
-  Download,
-  Clock,
   BarChart3,
   Users,
   Award,
-  ChevronRight,
-  Play,
   Circle,
   UserPlus,
   BookmarkCheck,
@@ -231,12 +225,6 @@ const colorMap: Record<string, { badge: string; progress: string; icon: string; 
 };
 
 // ─── Resource icon helper ─────────────────────────────────────────────────────
-const ResourceIcon = ({ type }: { type: string }) => {
-  if (type === "github") return <Code2 className="w-4 h-4" />;
-  if (type === "zip") return <Download className="w-4 h-4" />;
-  return <FileText className="w-4 h-4" />;
-};
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default async function CourseDetailPage({
   params,
@@ -256,6 +244,9 @@ export default async function CourseDetailPage({
     .single();
 
   if (error || !course) notFound();
+  const canPreviewDraft =
+    user.role === "admin" || (user.role === "teacher" && course.teacher_id === user.id);
+  if (course.is_published === false && !canPreviewDraft) notFound();
 
   const { data: dbLessons } = await supabase
     .from("lessons")
@@ -264,6 +255,10 @@ export default async function CourseDetailPage({
     .order("lesson_order", { ascending: true });
 
   const isEnrolled = await isUserEnrolled(course.id);
+  const { count: enrollmentCount } = await supabase
+    .from("enrollments")
+    .select("id", { count: "exact", head: true })
+    .eq("course_id", course.id);
   const { data: reviewRows } = await supabase
     .from("course_reviews")
     .select(
@@ -280,45 +275,26 @@ export default async function CourseDetailPage({
   const content = getCourseContent(course.title);
   const colors = colorMap[content.color] ?? colorMap.violet;
 
-  const courseLessons =
-    dbLessons && dbLessons.length > 0
-      ? (dbLessons as DbLesson[]).map((lesson) => ({
-          id: lesson.id,
-          title: lesson.title,
-          duration: "Lesson",
-          description: lesson.description,
-          videoUrl: lesson.video_url,
-          order: lesson.lesson_order,
-          isDatabaseLesson: true,
-        }))
-      : content.lessons.map((lesson) => ({
-          id: String(lesson.id),
-          title: lesson.title,
-          duration: lesson.duration,
-          description: null,
-          videoUrl: null,
-          order: lesson.id,
-          isDatabaseLesson: false,
-        }));
+  const courseLessons = ((dbLessons ?? []) as DbLesson[]).map((lesson) => ({
+    id: lesson.id,
+    title: lesson.title,
+    duration: "Lesson",
+    description: lesson.description,
+    videoUrl: lesson.video_url,
+    order: lesson.lesson_order,
+  }));
 
   const totalLessons = courseLessons.length;
 
-  // Real completed count (fallback to estimate from course.progress for non-DB lessons)
-  const completedCount =
-    dbLessons && dbLessons.length > 0
-      ? completedLessonIds.size
-      : Math.round((course.progress / 100) * totalLessons);
+  const completedCount = completedLessonIds.size;
 
   const realProgress =
     totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
 
   const lessons = courseLessons.map((lesson) => ({
     ...lesson,
-    completed:
-      dbLessons && dbLessons.length > 0
-        ? completedLessonIds.has(lesson.id)
-        : false,
-    locked: false, // all DB lessons are accessible; only non-DB fallback locks
+    completed: completedLessonIds.has(lesson.id),
+    locked: false,
   }));
 
   // Active lesson: first incomplete, or last lesson
@@ -358,23 +334,23 @@ export default async function CourseDetailPage({
               <div className="space-y-3 flex-1">
                 <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[10px] font-bold uppercase tracking-widest ${colors.badge}`}>
                   <Award className="w-3 h-3" />
-                  {content.level}
+                  {course.level || "All levels"}
                 </span>
                 <h1 className="text-2xl md:text-4xl font-extrabold text-white tracking-tight leading-tight">
                   {course.title}
                 </h1>
                 <p className="text-zinc-400 text-sm md:text-base leading-relaxed max-w-2xl">
-                  {content.description}
+                  {course.description || "No course description has been added yet."}
                 </p>
 
                 <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pt-2">
                   <div className="flex items-center gap-1.5 text-xs text-zinc-400">
-                    <Clock className="w-3.5 h-3.5 text-zinc-500" />
-                    {content.duration} total
+                    <BarChart3 className="w-3.5 h-3.5 text-zinc-500" />
+                    {course.category || "General"}
                   </div>
                   <div className="flex items-center gap-1.5 text-xs text-zinc-400">
                     <Users className="w-3.5 h-3.5 text-zinc-500" />
-                    {content.students} enrolled
+                    {enrollmentCount ?? 0} enrolled
                   </div>
                   <div className="flex items-center gap-1.5 text-xs text-zinc-400">
                     <BookOpen className="w-3.5 h-3.5 text-zinc-500" />
@@ -382,7 +358,7 @@ export default async function CourseDetailPage({
                   </div>
                   <div className="flex items-center gap-1.5 text-xs text-zinc-400">
                     <Award className="w-3.5 h-3.5 text-zinc-500" />
-                    {content.instructor}
+                    {course.teacher_name || "Instructor unassigned"}
                   </div>
                 </div>
 
@@ -478,65 +454,44 @@ export default async function CourseDetailPage({
 
         {/* ── Main Grid ──────────────────────────────────────────────── */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left: Video Player + Resources */}
+          {/* Left: Current lesson */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Video Player */}
             <section className="relative glass-card rounded-3xl overflow-hidden">
               <div className="grain-overlay" />
-              <div className="relative w-full aspect-video bg-zinc-900/80 flex items-center justify-center group cursor-pointer">
-                <div className={`absolute inset-0 ${colors.glow} opacity-40`} />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-16 h-16 md:w-24 md:h-24 rounded-full bg-white/10 border border-white/20 backdrop-blur-sm flex items-center justify-center group-hover:bg-white/20 transition-all duration-300 group-hover:scale-110">
-                    <Play className="w-7 h-7 md:w-10 md:h-10 text-white fill-white ml-1" />
-                  </div>
-                </div>
-                <div className="absolute top-4 left-4 flex items-center gap-2 bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-xl border border-white/10">
-                  <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                  <span className="text-[10px] font-bold text-white uppercase tracking-wider">Now Playing</span>
-                </div>
-                <div className="absolute bottom-4 right-4 text-xs font-bold text-zinc-400 bg-black/60 backdrop-blur-sm px-2.5 py-1 rounded-lg border border-white/10">
-                  Lesson {activeLesson.order} &bull; {activeLesson.duration}
-                </div>
-              </div>
-              <div className="p-5">
-                <h2 className="text-base font-bold text-white">
-                  Lesson {activeLesson.order}: {activeLesson.title}
-                </h2>
-                <p className="text-xs text-zinc-500 mt-1">{content.instructor} &bull; {activeLesson.duration}</p>
-              </div>
-            </section>
-
-            {/* Resources */}
-            <section className="relative glass-card rounded-3xl p-6 overflow-hidden">
-              <div className="grain-overlay" />
-              <div className="relative z-10">
-                <h2 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-violet-400" />
-                  Course Resources
-                </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {content.resources.map((resource) => (
-                    <a
-                      key={resource.id}
-                      href={resource.url}
-                      className="group flex items-center gap-3 p-4 rounded-2xl bg-white/[0.03] border border-white/5 hover:border-violet-500/30 hover:bg-violet-500/5 transition-all duration-200"
+              {activeLesson ? (
+                <div className="relative z-10 p-8 md:p-12">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-violet-300">
+                    Next lesson
+                  </span>
+                  <h2 className="mt-3 text-2xl font-black text-white">
+                    Lesson {activeLesson.order}: {activeLesson.title}
+                  </h2>
+                  <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
+                    {activeLesson.description || "No lesson description has been added yet."}
+                  </p>
+                  {isEnrolled ? (
+                    <Link
+                      href={`/course/${course.id}/lesson/${activeLesson.id}`}
+                      className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-white px-5 py-3 text-xs font-black text-zinc-950"
                     >
-                      <div className={`p-2.5 rounded-xl border ${colors.icon} shrink-0`}>
-                        <ResourceIcon type={resource.type} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-white group-hover:text-violet-300 transition-colors truncate">
-                          {resource.title}
-                        </p>
-                        {resource.size && (
-                          <p className="text-[10px] text-zinc-600 mt-0.5">{resource.size}</p>
-                        )}
-                      </div>
-                      <ChevronRight className="w-3.5 h-3.5 text-zinc-600 group-hover:text-violet-400 group-hover:translate-x-0.5 transition-all shrink-0" />
-                    </a>
-                  ))}
+                      <PlayCircle className="h-4 w-4" />
+                      Open Lesson
+                    </Link>
+                  ) : (
+                    <p className="mt-6 text-xs font-semibold text-zinc-500">
+                      Enroll in this course to open its lessons.
+                    </p>
+                  )}
                 </div>
-              </div>
+              ) : (
+                <div className="relative z-10 p-10 text-center">
+                  <BookOpen className="mx-auto h-8 w-8 text-zinc-600" />
+                  <h2 className="mt-4 text-base font-bold text-white">No lessons published</h2>
+                  <p className="mt-2 text-sm text-zinc-500">
+                    The instructor has not added course lessons yet.
+                  </p>
+                </div>
+              )}
             </section>
           </div>
 
@@ -555,7 +510,7 @@ export default async function CourseDetailPage({
               </div>
               <ul className="relative z-10 divide-y divide-white/[0.04] max-h-[520px] overflow-y-auto no-scrollbar">
                 {lessons.map((lesson) => {
-                  const isActive = lesson.id === activeLesson.id;
+                  const isActive = lesson.id === activeLesson?.id;
                   const lessonBody = (
                     <>
                       {/* Status Icon */}
@@ -591,7 +546,7 @@ export default async function CourseDetailPage({
 
                   return (
                     <li key={lesson.id}>
-                      {lesson.isDatabaseLesson && isEnrolled && !lesson.locked ? (
+                      {isEnrolled && !lesson.locked ? (
                         <Link
                           href={`/course/${course.id}/lesson/${lesson.id}`}
                           className={`flex items-center gap-3 px-5 py-4 transition-colors duration-150 ${
@@ -618,6 +573,11 @@ export default async function CourseDetailPage({
                     </li>
                   );
                 })}
+                {lessons.length === 0 && (
+                  <li className="px-5 py-10 text-center text-xs text-zinc-500">
+                    No lessons available.
+                  </li>
+                )}
               </ul>
             </section>
           </div>

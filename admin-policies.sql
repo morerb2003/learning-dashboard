@@ -71,6 +71,13 @@ for insert
 to authenticated
 with check (teacher_id = auth.uid() and public.is_teacher());
 
+drop policy if exists "Teachers can view own courses" on public.courses;
+create policy "Teachers can view own courses"
+on public.courses
+for select
+to authenticated
+using (teacher_id = auth.uid() and public.is_teacher());
+
 drop policy if exists "Teachers can update own courses" on public.courses;
 create policy "Teachers can update own courses"
 on public.courses
@@ -214,6 +221,7 @@ ON public.courses(teacher_id);
 -- 2. Ensure profiles table has updated_at
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS full_name TEXT;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS email TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS avatar_url TEXT;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS role TEXT NOT NULL DEFAULT 'student';
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL;

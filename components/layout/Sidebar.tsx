@@ -42,7 +42,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { id: "courses", label: "My Courses", icon: BookOpen, href: "/learning" },
+  { id: "courses", label: "Catalog", icon: BookOpen },
   { id: "analytics", label: "Analytics", icon: BarChart3 },
   { id: "notes", label: "Notes", icon: StickyNote },
   { id: "assignments", label: "Community", icon: MessagesSquare, href: "/community" },
@@ -57,7 +57,7 @@ export default function Sidebar({ activeTab, setActiveTab, profile }: SidebarPro
     if (role === "teacher") {
       return [
         { id: "dashboard" as TabId, label: "Dashboard", icon: LayoutDashboard },
-        { id: "courses" as TabId, label: "My Courses", icon: BookOpen, href: "/learning" },
+        { id: "courses" as TabId, label: "Catalog", icon: BookOpen },
         { id: "assignments" as TabId, label: "Assignments", icon: ClipboardList, href: "/teacher/assignments" },
         { id: "notes" as TabId, label: "Lessons", icon: StickyNote },
         { id: "settings" as TabId, label: "Settings", icon: Settings },
@@ -66,14 +66,14 @@ export default function Sidebar({ activeTab, setActiveTab, profile }: SidebarPro
     if (role === "admin") {
       return [
         { id: "dashboard" as TabId, label: "Dashboard", icon: LayoutDashboard },
-        { id: "courses" as TabId, label: "My Courses", icon: BookOpen, href: "/learning" },
+        { id: "courses" as TabId, label: "Catalog", icon: BookOpen },
         { id: "notes" as TabId, label: "Notes", icon: StickyNote },
       ];
     }
     // Student (default)
     return [
       { id: "dashboard" as TabId, label: "Dashboard", icon: LayoutDashboard },
-      { id: "courses" as TabId, label: "My Courses", icon: BookOpen, href: "/learning" },
+      { id: "courses" as TabId, label: "Catalog", icon: BookOpen },
       { id: "notes" as TabId, label: "Notes", icon: StickyNote },
       { id: "assignments" as TabId, label: "Community", icon: MessagesSquare, href: "/community" },
       { id: "settings" as TabId, label: "Settings", icon: Settings },

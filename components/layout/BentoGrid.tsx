@@ -76,39 +76,8 @@ export default function BentoGrid({
 }: BentoGridProps) {
   const [streakClicked, setStreakClicked] = useState(false);
 
-  // Fallback courses if database returns empty
-  const displayCourses = courses.length > 0 ? courses : [
-    {
-      id: "1",
-      title: "Advanced React Patterns",
-      progress: 75,
-      icon_name: "Atom",
-      created_at: "2026-05-25T12:00:00.000Z"
-    },
-    {
-      id: "2",
-      title: "Next.js App Router Architecture",
-      progress: 40,
-      icon_name: "Network",
-      created_at: "2026-05-25T12:00:00.000Z"
-    },
-    {
-      id: "3",
-      title: "Framer Motion Animations",
-      progress: 90,
-      icon_name: "Sparkles",
-      created_at: "2026-05-25T12:00:00.000Z"
-    },
-    {
-      id: "4",
-      title: "Supabase & Postgres Masterclass",
-      progress: 15,
-      icon_name: "Database",
-      created_at: "2026-05-25T12:00:00.000Z"
-    }
-  ];
-
-  const dbConnectionFailed = courses.length === 0;
+  const displayCourses = courses;
+  const hasNoCourses = courses.length === 0;
 
   return (
     <motion.section
@@ -117,7 +86,7 @@ export default function BentoGrid({
       animate="show"
       className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto p-4 md:p-6 pb-24 md:pb-6"
     >
-      {dbConnectionFailed && (
+      {hasNoCourses && (
         <motion.div 
           variants={cardVariants}
           className="col-span-1 md:col-span-2 lg:col-span-3 glass-card px-6 py-3 rounded-2xl border border-amber-500/20 bg-amber-500/5 text-amber-300 text-xs flex items-center gap-3 relative overflow-hidden"
@@ -125,7 +94,7 @@ export default function BentoGrid({
           <div className="absolute inset-0 bg-mesh-orange opacity-10 pointer-events-none" />
           <AlertCircle className="w-4 h-4 shrink-0 text-amber-400" />
           <p className="relative z-10 leading-relaxed font-medium">
-            <span className="font-bold">Supabase Status:</span> Connection established, but 0 active rows found (or RLS restricts public seeding). Loaded beautifully optimized fallback data to keep the prototype interactive.
+            <span className="font-bold">Course catalog:</span> No published courses are available yet.
           </p>
         </motion.div>
       )}

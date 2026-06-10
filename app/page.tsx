@@ -53,6 +53,7 @@ export default async function Home() {
     const { data: coursesData, error: coursesError } = await supabase
       .from("courses")
       .select("*")
+      .or("is_published.eq.true,is_published.is.null")
       .order("created_at", { ascending: true });
 
     if (coursesError) {

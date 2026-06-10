@@ -135,37 +135,7 @@ export default function Dashboard({
     }
   };
 
-  // Clean data fallback for client display
-  const courses = initialCourses.length > 0 ? initialCourses : [
-    {
-      id: "1",
-      title: "Advanced React Patterns",
-      progress: 75,
-      icon_name: "Atom",
-      created_at: "2026-05-25T12:00:00.000Z"
-    },
-    {
-      id: "2",
-      title: "Next.js App Router Architecture",
-      progress: 40,
-      icon_name: "Network",
-      created_at: "2026-05-25T12:00:00.000Z"
-    },
-    {
-      id: "3",
-      title: "Framer Motion Animations",
-      progress: 90,
-      icon_name: "Sparkles",
-      created_at: "2026-05-25T12:00:00.000Z"
-    },
-    {
-      id: "4",
-      title: "Supabase & Postgres Masterclass",
-      progress: 15,
-      icon_name: "Database",
-      created_at: "2026-05-25T12:00:00.000Z"
-    }
-  ];
+  const courses = initialCourses;
 
   const categories = Array.from(
     new Set(courses.map((course) => course.category).filter(Boolean))
@@ -272,7 +242,7 @@ export default function Dashboard({
                   <Search className="w-4 h-4 text-zinc-500 absolute left-4 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
-                    placeholder="Search enrolled courses..."
+                    placeholder="Search course catalog..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full bg-zinc-950/40 border border-white/5 rounded-2xl py-2 pl-11 pr-4 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-violet-500/50 transition-colors"
