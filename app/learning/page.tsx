@@ -7,6 +7,7 @@ import {
   Clock,
   ClipboardList,
   GraduationCap,
+  HelpCircle,
   PlayCircle,
   Search,
   Trash2,
@@ -85,6 +86,13 @@ export default async function LearningPage() {
             >
               <ClipboardList className="h-4 w-4" />
               View Assignments
+            </Link>
+            <Link
+              href="/learning/quizzes"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/4 px-5 text-xs font-bold text-zinc-300 transition hover:border-cyan-400/30 hover:bg-cyan-500/10 hover:text-white"
+            >
+              <HelpCircle className="h-4 w-4" />
+              View Quizzes
             </Link>
           </div>
         </section>
