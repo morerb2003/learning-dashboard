@@ -13,8 +13,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AURA | Student Learning Portal",
-  description: "A premium student dashboard for course management and analytics.",
+  title: {
+    default: "AURA | Modern Learning Platform",
+    template: "%s | AURA",
+  },
+  description:
+    "A modern learning platform for courses, quizzes, assignments, certificates, analytics, and community collaboration.",
 };
 
 export default function RootLayout({

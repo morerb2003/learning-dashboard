@@ -49,7 +49,7 @@ export default async function LearningPage() {
 
       <nav className="sticky top-0 z-50 glass-card border-b border-white/5 px-4 md:px-8 h-16 flex items-center justify-between">
         <Link
-          href="/"
+          href="/dashboard"
           className="flex items-center gap-2 text-sm font-semibold text-zinc-400 hover:text-white transition-colors group"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
@@ -79,7 +79,7 @@ export default async function LearningPage() {
             </div>
 
             <Link
-              href="/"
+              href="/dashboard"
               className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/4 px-5 text-xs font-bold text-zinc-300 transition hover:border-violet-400/30 hover:bg-violet-500/10 hover:text-white"
             >
               <Search className="h-4 w-4" />

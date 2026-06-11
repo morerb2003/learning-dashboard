@@ -82,7 +82,7 @@ export default function RegisterForm() {
     }
 
     if (data.session) {
-      router.replace("/");
+      router.replace(role === "teacher" ? "/teacher" : "/learning");
       router.refresh();
       return;
     }
