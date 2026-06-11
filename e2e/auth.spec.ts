@@ -2,12 +2,30 @@ import { expect, test } from "@playwright/test";
 import { credentialsFor, loginAs } from "./helpers";
 
 test.describe("authentication", () => {
+  test("anonymous users see the public landing page", async ({ page }) => {
+    await page.goto("/");
+    await expect(
+      page.getByRole("heading", { name: "Learn smarter. Teach better." })
+    ).toBeVisible();
+    await expect(page.getByRole("link", { name: "Get started" })).toHaveAttribute(
+      "href",
+      "/register"
+    );
+    await expect(page.getByRole("link", { name: "Log in" })).toHaveAttribute(
+      "href",
+      "/login"
+    );
+  });
+
   test("protected routes redirect anonymous users to login", async ({ page }) => {
     await page.goto("/learning");
     await expect(page).toHaveURL(/\/login\?next=%2Flearning|\/login\?next=\/learning/);
     await expect(
       page.getByRole("heading", { name: "Continue your learning" })
     ).toBeVisible();
+
+    await page.goto("/teacher");
+    await expect(page).toHaveURL(/\/login\?next=%2Fteacher|\/login\?next=\/teacher/);
   });
 
   test("invalid password shows an authentication error", async ({ page }) => {
@@ -25,7 +43,7 @@ test.describe("authentication", () => {
     );
 
     await loginAs(page, "student");
-    await expect(page.getByText(/Welcome back,/i).first()).toBeVisible();
+    await expect(page.getByRole("heading", { name: "My Courses" })).toBeVisible();
   });
 
   test("teacher account can access the teacher workspace", async ({ page }) => {

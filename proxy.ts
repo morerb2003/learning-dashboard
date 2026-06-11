@@ -3,7 +3,15 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getSafeRedirectPath } from "@/lib/auth/redirects";
 import { getSupabaseUrl } from "@/lib/supabase/url";
 
-const protectedRoutes = ["/", "/admin", "/community", "/course", "/learning", "/reset-password"];
+const protectedRoutes = [
+  "/admin",
+  "/community",
+  "/course",
+  "/dashboard",
+  "/learning",
+  "/reset-password",
+  "/teacher",
+];
 const authRoutes = ["/login", "/register"];
 
 function isProtectedRoute(pathname: string) {
@@ -56,26 +64,41 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  if (user && pathname.startsWith("/admin")) {
+  if (
+    user &&
+    (pathname.startsWith("/admin") ||
+      pathname.startsWith("/teacher") ||
+      isAuthRoute(pathname))
+  ) {
     const { data: profile } = await supabase
       .from("profiles")
       .select("role")
       .eq("id", user.id)
       .single();
 
-    if (profile?.role !== "admin") {
+    const canAccessAdmin = pathname.startsWith("/admin") && profile?.role === "admin";
+    const canAccessTeacher =
+      pathname.startsWith("/teacher") &&
+      (profile?.role === "teacher" || profile?.role === "admin");
+
+    if (isAuthRoute(pathname)) {
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.pathname =
+        profile?.role === "admin"
+          ? "/admin"
+          : profile?.role === "teacher"
+            ? "/teacher"
+            : "/learning";
+      redirectUrl.search = "";
+      return NextResponse.redirect(redirectUrl);
+    }
+
+    if (!canAccessAdmin && !canAccessTeacher) {
       const redirectUrl = request.nextUrl.clone();
       redirectUrl.pathname = "/";
       redirectUrl.search = "";
       return NextResponse.redirect(redirectUrl);
     }
-  }
-
-  if (user && isAuthRoute(pathname)) {
-    const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = "/";
-    redirectUrl.search = "";
-    return NextResponse.redirect(redirectUrl);
   }
 
   return response;
