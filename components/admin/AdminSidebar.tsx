@@ -14,6 +14,7 @@ import {
   Activity,
   Megaphone,
   ScanSearch,
+  DollarSign,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -35,6 +36,7 @@ const navItems = [
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/courses", label: "Courses", icon: BookOpen },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/admin/analytics/revenue", label: "Revenue", icon: DollarSign },
   { href: "/admin/activity", label: "Activity Logs", icon: Activity },
   { href: "/admin/moderation", label: "Moderation", icon: ScanSearch },
   { href: "/admin/announcements", label: "Announcements", icon: Megaphone },
@@ -87,6 +89,8 @@ export default function AdminSidebar({ adminProfile, isMobile = false }: AdminSi
             const isActive =
               item.href === "/admin"
                 ? pathname === "/admin"
+                : item.href === "/admin/analytics"
+                ? pathname === "/admin/analytics"
                 : pathname.startsWith(item.href);
 
             return (

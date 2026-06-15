@@ -12,4 +12,6 @@ export interface Course {
   teacher_name?: string | null;
   color?: string | null;
   is_published?: boolean | null;
+  price?: number | null;
+  is_premium?: boolean | null;
 }

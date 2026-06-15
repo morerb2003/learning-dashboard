@@ -45,6 +45,20 @@ export default function CourseCard({ course, index }: CourseCardProps) {
   ];
   const meshClass = meshClasses[index % meshClasses.length];
 
+  const getLevelBadgeStyles = (level: string | null | undefined) => {
+    const lvl = level?.toLowerCase();
+    if (lvl === "beginner") {
+      return "border-emerald-400/20 bg-emerald-500/10 text-emerald-300";
+    }
+    if (lvl === "intermediate") {
+      return "border-cyan-400/20 bg-cyan-500/10 text-cyan-300";
+    }
+    if (lvl === "advanced") {
+      return "border-rose-400/20 bg-rose-500/10 text-rose-300";
+    }
+    return "border-white/10 bg-white/5 text-zinc-300";
+  };
+
   return (
     <Link href={`/course/${course.id}`} className="block">
       <motion.article
@@ -69,9 +83,16 @@ export default function CourseCard({ course, index }: CourseCardProps) {
       <div className="absolute inset-0 rounded-3xl border border-violet-500/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-10" />
 
       {/* Card Content */}
-      <div className="relative z-10 flex items-start justify-between">
-        <div className="p-3 rounded-2xl bg-white/5 border border-white/5 shadow-inner transition-colors duration-300 group-hover:bg-violet-500/10 group-hover:border-violet-500/20">
-          <IconComponent className="w-6 h-6 text-zinc-300 group-hover:text-violet-400 transition-colors duration-300" />
+      <div className="relative z-10 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-3 rounded-2xl bg-white/5 border border-white/5 shadow-inner transition-colors duration-300 group-hover:bg-violet-500/10 group-hover:border-violet-500/20">
+            <IconComponent className="w-6 h-6 text-zinc-300 group-hover:text-violet-400 transition-colors duration-300" />
+          </div>
+          {course.level && (
+            <span className={`rounded-full border px-2.5 py-1 text-[9px] font-black uppercase tracking-widest ${getLevelBadgeStyles(course.level)}`}>
+              {course.level}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-1.5 text-xs text-zinc-500 font-medium opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
           <span className="text-violet-400">Continue</span>
@@ -81,10 +102,15 @@ export default function CourseCard({ course, index }: CourseCardProps) {
 
       <div className="relative z-10 mt-auto space-y-4">
         <div>
-          <span className="text-[10px] uppercase font-bold tracking-widest text-violet-400/80">Active Module</span>
+          <span className="text-[10px] uppercase font-bold tracking-widest text-violet-400/80">
+            {course.category || "General"}
+          </span>
           <h3 className="text-base font-bold text-white tracking-wide mt-0.5 line-clamp-1 group-hover:text-violet-200 transition-colors duration-200">
             {course.title}
           </h3>
+          <p className="text-[10px] text-zinc-500 font-medium mt-0.5">
+            Instructor: {course.teacher_name || "Staff"}
+          </p>
         </div>
 
         <div className="space-y-2">

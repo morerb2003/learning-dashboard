@@ -14,7 +14,10 @@ import {
   Shield,
   Bell,
   Save,
-  X
+  X,
+  Crown,
+  CheckCircle,
+  Zap,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import ActivityChart from "./ActivityChart";
@@ -23,12 +26,14 @@ import NotesView from "./NotesView";
 import LogoutButton from "@/components/auth/LogoutButton";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import RealtimeRefresh from "@/components/realtime/RealtimeRefresh";
+import CheckoutModal from "@/components/course/CheckoutModal";
 
 export interface Profile {
   full_name: string;
   email: string;
   role: string;
   avatar_url?: string | null;
+  subscription_tier?: string | null;
 }
 
 interface DashboardProps {
@@ -44,6 +49,7 @@ interface DashboardProps {
     activeWeekdays: number[];
     weeklyActivity: Array<{ day: string; modules: number }>;
   };
+  defaultTab?: TabId;
 }
 
 export default function Dashboard({
@@ -52,8 +58,9 @@ export default function Dashboard({
   profile,
   totalCompletedLessons = 0,
   analytics,
+  defaultTab = "dashboard",
 }: DashboardProps) {
-  const [activeTab, setActiveTab] = useState<TabId>("dashboard");
+  const [activeTab, setActiveTab] = useState<TabId>(defaultTab);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [levelFilter, setLevelFilter] = useState("all");
@@ -64,6 +71,8 @@ export default function Dashboard({
   const [email, setEmail] = useState(profile.email || "");
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [profileStatus, setProfileStatus] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [isProModalOpen, setIsProModalOpen] = useState(false);
+  const isPro = profile.subscription_tier === "pro";
 
   const displayName = fullName || profile.email.split("@")[0] || "Student";
 
@@ -477,6 +486,79 @@ export default function Dashboard({
                     </button>
                   </div>
                 </section>
+
+                {/* Pro Membership Section */}
+                <section className="space-y-4">
+                  <h3 className="text-sm font-bold text-white border-b border-white/5 pb-2 flex items-center gap-2">
+                    <Crown className="w-4 h-4 text-amber-400" /> Membership Plan
+                  </h3>
+
+                  {isPro ? (
+                    <div className="flex items-center gap-4 rounded-2xl border border-amber-400/20 bg-gradient-to-r from-amber-500/10 to-orange-500/5 p-5">
+                      <div className="w-10 h-10 rounded-xl bg-amber-400/10 border border-amber-400/20 flex items-center justify-center shrink-0">
+                        <Crown className="w-5 h-5 text-amber-300" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-black text-amber-200">AURA Pro — Active</p>
+                        <p className="text-[10px] text-zinc-500 mt-0.5">Unlimited premium course access, priority support & early features.</p>
+                      </div>
+                      <span className="shrink-0 text-[9px] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-1 rounded-full uppercase tracking-wider">Active</span>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {/* Plan comparison */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Free plan */}
+                        <div className="rounded-2xl border border-white/5 bg-zinc-950/30 p-4 space-y-3">
+                          <p className="text-xs font-black text-white">Free Plan</p>
+                          <p className="text-2xl font-black text-white">$0<span className="text-xs font-normal text-zinc-500">/mo</span></p>
+                          <ul className="space-y-1.5">
+                            {["Access to free courses","Community discussions","Progress tracking"].map((f) => (
+                              <li key={f} className="flex items-center gap-2 text-[10px] text-zinc-400">
+                                <CheckCircle className="w-3 h-3 text-zinc-600 shrink-0" />{f}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+
+                        {/* Pro plan */}
+                        <div className="relative rounded-2xl border border-amber-400/30 bg-gradient-to-b from-amber-500/10 to-transparent p-4 space-y-3">
+                          <span className="absolute top-3 right-3 text-[9px] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full uppercase tracking-wider">Recommended</span>
+                          <p className="text-xs font-black text-amber-200">Pro Plan</p>
+                          <p className="text-2xl font-black text-white">$19.99<span className="text-xs font-normal text-zinc-500">/mo</span></p>
+                          <ul className="space-y-1.5">
+                            {["Everything in Free","All premium courses","Certificate generation","Priority support","Early feature access"].map((f) => (
+                              <li key={f} className="flex items-center gap-2 text-[10px] text-zinc-300">
+                                <CheckCircle className="w-3 h-3 text-amber-400 shrink-0" />{f}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setIsProModalOpen(true)}
+                        className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-gradient-to-r from-amber-400 via-orange-400 to-rose-400 text-xs font-black text-zinc-950 shadow-lg shadow-amber-500/20 hover:brightness-110 transition cursor-pointer"
+                      >
+                        <Zap className="w-4 h-4" />
+                        Upgrade to Pro &mdash; $19.99/mo
+                      </button>
+                    </div>
+                  )}
+                </section>
+
+                {/* Pro checkout modal */}
+                <CheckoutModal
+                  isOpen={isProModalOpen}
+                  onClose={() => setIsProModalOpen(false)}
+                  onSuccess={() => {
+                    setIsProModalOpen(false);
+                    window.location.reload();
+                  }}
+                  title="AURA Pro Membership"
+                  price={19.99}
+                />
               </div>
             </div>
           )}

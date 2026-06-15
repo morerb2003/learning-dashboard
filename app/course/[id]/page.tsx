@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import CourseReviews from "@/components/course/CourseReviews";
 import type { CourseReview } from "@/types/review";
+import PremiumEnrollButton from "@/components/course/PremiumEnrollButton";
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
 interface CatalogueLesson {
@@ -392,6 +393,12 @@ export default async function CourseDetailPage({
                         </Link>
                       )}
                     </>
+                  ) : course.is_premium && (course.price ?? 0) > 0 ? (
+                    <PremiumEnrollButton
+                      courseId={course.id}
+                      courseTitle={course.title}
+                      price={Number(course.price)}
+                    />
                   ) : (
                     <form action={enrollUser}>
                       <input type="hidden" name="courseId" value={course.id} />
@@ -400,7 +407,7 @@ export default async function CourseDetailPage({
                         className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-300 via-sky-300 to-violet-300 px-5 text-xs font-black text-zinc-950 shadow-xl shadow-cyan-500/20 transition hover:brightness-110 sm:w-auto"
                       >
                         <UserPlus className="h-4 w-4" />
-                        Enroll Now
+                        Enroll Free
                       </button>
                     </form>
                   )}

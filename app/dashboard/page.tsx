@@ -1,4 +1,5 @@
 import Dashboard from "@/components/dashboard/Dashboard";
+import type { TabId } from "@/components/layout/Sidebar";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Course } from "@/types/course";
@@ -12,7 +13,14 @@ import {
 
 export const dynamic = "force-dynamic";
 
-export default async function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>;
+}) {
+  const resolvedSearchParams = await searchParams;
+  const tab = resolvedSearchParams.tab;
+
   let courses: Course[] = [];
   let notes: Note[] = [];
   let totalCompletedLessons = 0;
@@ -182,15 +190,24 @@ export default async function Home() {
     full_name: user.user_metadata?.full_name || user.email?.split("@")[0] || "Student",
     email: user.email || "student@aura.edu",
     role: "student",
+    subscription_tier: "free",
   };
 
   return (
     <Dashboard
+      key={(tab as string) || "dashboard"}
       initialCourses={courses}
       initialNotes={notes}
-      profile={resolvedProfile}
+      profile={{
+        full_name: resolvedProfile.full_name,
+        email: resolvedProfile.email,
+        role: resolvedProfile.role,
+        avatar_url: resolvedProfile.avatar_url ?? null,
+        subscription_tier: resolvedProfile.subscription_tier ?? "free",
+      }}
       totalCompletedLessons={totalCompletedLessons}
       analytics={analytics}
+      defaultTab={((tab as string) || "dashboard") as TabId}
     />
   );
 }

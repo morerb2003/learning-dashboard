@@ -79,7 +79,7 @@ export default async function LearningPage() {
             </div>
 
             <Link
-              href="/dashboard"
+              href="/dashboard?tab=courses"
               className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/4 px-5 text-xs font-bold text-zinc-300 transition hover:border-violet-400/30 hover:bg-violet-500/10 hover:text-white"
             >
               <Search className="h-4 w-4" />
@@ -193,7 +193,7 @@ export default async function LearningPage() {
                 Browse the dashboard course catalog, open a course, and enroll to build your learning list.
               </p>
               <Link
-                href="/"
+                href="/dashboard?tab=courses"
                 className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-linear-to-r from-cyan-300 via-sky-300 to-violet-300 px-5 text-xs font-black text-zinc-950 shadow-xl shadow-cyan-500/20 transition hover:brightness-110"
               >
                 Explore Courses
