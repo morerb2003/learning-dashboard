@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import RevenueDashboard from "@/components/admin/RevenueDashboard";
+import type { Payment } from "@/components/admin/RevenueDashboard";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +14,14 @@ export default async function AdminRevenuePage() {
     )
     .order("created_at", { ascending: false });
 
+  const normalizedPayments: Payment[] = (payments ?? []).map(
+    ({ profiles, courses, ...payment }) => ({
+      ...payment,
+      profiles: profiles[0] ?? null,
+      courses: courses[0] ?? null,
+    })
+  );
+
   return (
     <div className="space-y-6">
       <div>
@@ -21,7 +30,7 @@ export default async function AdminRevenuePage() {
           Sales analytics, subscription revenue &amp; transaction history
         </p>
       </div>
-      <RevenueDashboard payments={payments ?? []} />
+      <RevenueDashboard payments={normalizedPayments} />
     </div>
   );
 }

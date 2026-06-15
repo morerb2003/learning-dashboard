@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 
 /* ─── Types ──────────────────────────────────────────────────────────────────── */
-interface Payment {
+export interface Payment {
   id: string;
   user_id: string;
   course_id: string | null;
@@ -25,8 +25,8 @@ interface Payment {
   transaction_id: string;
   created_at: string;
   coupon_id: string | null;
-  profiles?: { full_name: string | null; email: string | null } | null;
-  courses?: { title: string | null } | null;
+  profiles: { full_name: string | null; email: string | null } | null;
+  courses: { title: string | null } | null;
 }
 
 interface RevenueDashboardProps {
