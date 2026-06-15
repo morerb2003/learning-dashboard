@@ -72,7 +72,9 @@ export default function Dashboard({
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [profileStatus, setProfileStatus] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [isProModalOpen, setIsProModalOpen] = useState(false);
-  const isPro = profile.subscription_tier === "pro";
+  const isPro =
+    profile.subscription_tier === "pro" ||
+    profile.subscription_tier === "premium";
 
   const displayName = fullName || profile.email.split("@")[0] || "Student";
 

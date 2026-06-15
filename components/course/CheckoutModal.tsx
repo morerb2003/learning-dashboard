@@ -55,7 +55,7 @@ export default function CheckoutModal({
         setCouponError(res.error ?? "Invalid coupon code");
         setDiscountPercent(null);
       }
-    } catch (err) {
+    } catch {
       setCouponError("Unable to apply coupon");
     }
   };
@@ -86,7 +86,7 @@ export default function CheckoutModal({
         setPaymentError(result.error ?? "Transaction declined");
         setIsProcessing(false);
       }
-    } catch (err) {
+    } catch {
       setPaymentError("Payment failed due to an unexpected server issue.");
       setIsProcessing(false);
     }

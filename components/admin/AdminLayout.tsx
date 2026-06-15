@@ -27,7 +27,17 @@ export default function AdminLayout({ children, profile }: AdminLayoutProps) {
     <div className="flex min-h-screen bg-zinc-950 text-zinc-100 font-sans">
       <RealtimeRefresh
         channelName="admin-dashboard-live"
-        tables={["profiles", "courses", "lessons", "enrollments", "audit_logs"]}
+        tables={[
+          "profiles",
+          "courses",
+          "lessons",
+          "enrollments",
+          "audit_logs",
+          "payment_intents",
+          "payments",
+          "subscriptions",
+          "revenue_ledger",
+        ]}
       />
       {/* Ambient background glows */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">

@@ -8,7 +8,6 @@ import {
   Crown,
   Tag,
   Users,
-  ArrowUpRight,
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
@@ -31,11 +30,28 @@ export interface Payment {
 
 interface RevenueDashboardProps {
   payments: Payment[];
+  ledgerTotals: {
+    platform: number;
+    teachers: number;
+  };
 }
 
 /* ─── Helpers ─────────────────────────────────────────────────────────────────── */
 function fmt(n: number) {
   return n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 });
+}
+
+function renderSortIcon(
+  field: "created_at" | "amount",
+  sortField: "created_at" | "amount",
+  sortDir: "asc" | "desc"
+) {
+  if (sortField !== field) return null;
+  return sortDir === "desc" ? (
+    <ChevronDown className="w-3 h-3" />
+  ) : (
+    <ChevronUp className="w-3 h-3" />
+  );
 }
 
 function buildMonthlySeries(payments: Payment[]) {
@@ -106,7 +122,10 @@ function StatCard({
 }
 
 /* ─── Main Component ──────────────────────────────────────────────────────────── */
-export default function RevenueDashboard({ payments }: RevenueDashboardProps) {
+export default function RevenueDashboard({
+  payments,
+  ledgerTotals,
+}: RevenueDashboardProps) {
   const [sortField, setSortField] = useState<"created_at" | "amount">("created_at");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [typeFilter, setTypeFilter] = useState<"all" | "course_purchase" | "subscription_pro">("all");
@@ -147,15 +166,10 @@ export default function RevenueDashboard({ payments }: RevenueDashboardProps) {
     }
   };
 
-  const SortIcon = ({ field }: { field: typeof sortField }) =>
-    sortField === field ? (
-      sortDir === "desc" ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />
-    ) : null;
-
   return (
     <div className="space-y-6">
       {/* Stat Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         <StatCard
           label="Total Revenue"
           value={fmt(totalRevenue)}
@@ -183,6 +197,20 @@ export default function RevenueDashboard({ payments }: RevenueDashboardProps) {
           icon={Users}
           color="bg-mesh-violet"
           sub={`${couponsUsed} coupon uses`}
+        />
+        <StatCard
+          label="Platform Earnings"
+          value={fmt(ledgerTotals.platform)}
+          icon={TrendingUp}
+          color="bg-mesh-cyan"
+          sub="After teacher share"
+        />
+        <StatCard
+          label="Teacher Earnings"
+          value={fmt(ledgerTotals.teachers)}
+          icon={Users}
+          color="bg-mesh-orange"
+          sub="Accrued instructor share"
         />
       </div>
 
@@ -286,14 +314,14 @@ export default function RevenueDashboard({ payments }: RevenueDashboardProps) {
                   <th className="text-left px-5 py-3 font-bold">User</th>
                   <th className="text-left px-3 py-3 font-bold">
                     <button onClick={() => toggleSort("created_at")} className="flex items-center gap-1 cursor-pointer hover:text-white transition-colors">
-                      Date <SortIcon field="created_at" />
+                      Date {renderSortIcon("created_at", sortField, sortDir)}
                     </button>
                   </th>
                   <th className="text-left px-3 py-3 font-bold">Type</th>
                   <th className="text-left px-3 py-3 font-bold">Course</th>
                   <th className="text-right px-3 py-3 font-bold">
                     <button onClick={() => toggleSort("amount")} className="flex items-center gap-1 ml-auto cursor-pointer hover:text-white transition-colors">
-                      Amount <SortIcon field="amount" />
+                      Amount {renderSortIcon("amount", sortField, sortDir)}
                     </button>
                   </th>
                   <th className="text-right px-5 py-3 font-bold">Status</th>
