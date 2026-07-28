@@ -186,7 +186,7 @@ export default function Sidebar({ activeTab, setActiveTab, profile }: SidebarPro
                 return (
                   <li key={item.id} className="relative">
                     {item.href ? (
-                      <Link href={item.href} className={itemClassName}>
+                      <Link href={item.href} prefetch={true} className={itemClassName}>
                         {itemContent}
                       </Link>
                     ) : (
@@ -221,6 +221,7 @@ export default function Sidebar({ activeTab, setActiveTab, profile }: SidebarPro
                       <li key={sub.href}>
                         <Link
                           href={sub.href}
+                          prefetch={true}
                           className={`
                             flex items-center gap-3 py-2 rounded-xl text-xs font-semibold transition-colors group relative
                             ${isCollapsed ? "justify-center px-0" : "px-4"}

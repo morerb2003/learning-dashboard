@@ -119,9 +119,14 @@ function roleDestination(role: string | null | undefined) {
 
 export default async function LandingPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+
+  const [
+    { data: { user } },
+    { data: publicCourses },
+  ] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase.from("courses").select("id, category, teacher_id").eq("is_published", true),
+  ]);
 
   if (user) {
     const { data: profile } = await supabase
@@ -132,11 +137,6 @@ export default async function LandingPage() {
 
     redirect(roleDestination(profile?.role));
   }
-
-  const { data: publicCourses } = await supabase
-    .from("courses")
-    .select("id, category, teacher_id")
-    .eq("is_published", true);
 
   const publishedCourses = publicCourses ?? [];
   const categoryCount = new Set(

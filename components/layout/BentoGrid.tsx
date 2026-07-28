@@ -15,7 +15,19 @@ import {
 } from "lucide-react";
 import { Course } from "@/types/course";
 import CourseCard from "@/components/dashboard/CourseCard";
-import ActivityChart from "@/components/dashboard/ActivityChart";
+import dynamic from "next/dynamic";
+
+const ActivityChart = dynamic(
+  () => import("@/components/dashboard/ActivityChart"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-full min-h-[220px] rounded-2xl bg-white/[0.02] border border-white/5 animate-pulse flex flex-col justify-center items-center p-6 text-xs font-semibold text-zinc-500">
+        Loading analytics visualization...
+      </div>
+    ),
+  }
+);
 
 interface BentoGridProps {
   courses: Course[];

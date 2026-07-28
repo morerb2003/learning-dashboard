@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import AnalyticsChart from "@/components/admin/AnalyticsChart";
+import AnalyticsChart from "@/components/admin/DynamicAnalyticsChart";
 
 export const dynamic = "force-dynamic";
 

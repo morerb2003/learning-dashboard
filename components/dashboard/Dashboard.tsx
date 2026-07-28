@@ -20,7 +20,17 @@ import {
   Zap,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import ActivityChart from "./ActivityChart";
+import dynamic from "next/dynamic";
+
+const ActivityChart = dynamic(() => import("./ActivityChart"), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full min-h-[220px] rounded-2xl bg-white/[0.02] border border-white/5 animate-pulse flex flex-col justify-center items-center p-6 text-xs font-semibold text-zinc-500">
+      Loading activity visualization...
+    </div>
+  ),
+});
+
 import CourseCard from "./CourseCard";
 import NotesView from "./NotesView";
 import LogoutButton from "@/components/auth/LogoutButton";

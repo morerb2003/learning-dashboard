@@ -6,19 +6,14 @@ export const dynamic = "force-dynamic";
 export default async function AdminCoursesPage() {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const [{ data: courses }, { data: lessons }] = await Promise.all([
-    supabase
-      .from("courses")
-      .select("*")
-      .order("created_at", { ascending: true }),
-    supabase
-      .from("lessons")
-      .select("*")
-      .order("lesson_order", { ascending: true }),
+  const [
+    { data: { user } },
+    { data: courses },
+    { data: lessons },
+  ] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase.from("courses").select("*").order("created_at", { ascending: true }),
+    supabase.from("lessons").select("*").order("lesson_order", { ascending: true }),
   ]);
 
   return (

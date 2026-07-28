@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import TeacherAnalyticsChart from "@/components/teacher/TeacherAnalyticsChart";
+import TeacherAnalyticsChart from "@/components/teacher/DynamicTeacherAnalyticsChart";
 import { BarChart3, TrendingUp, Users, BookOpen } from "lucide-react";
 import CsvDownloadButton from "@/components/teacher/CsvDownloadButton";
 

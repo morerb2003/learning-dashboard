@@ -46,53 +46,28 @@ export default async function Home({
   let profile = null;
 
   try {
-    // Fetch user profile
-    const { data: profileData, error: profileError } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .single();
-
-    if (!profileError) {
-      profile = profileData;
-    }
-
-    // Fetch courses
-    const { data: coursesData, error: coursesError } = await supabase
-      .from("courses")
-      .select("*")
-      .or("is_published.eq.true,is_published.is.null")
-      .order("created_at", { ascending: true });
-
-    if (coursesError) {
-      console.error("Error querying courses:", coursesError.message);
-    } else {
-      courses = coursesData || [];
-    }
-
-    // Fetch notes
-    const { data: notesData, error: notesError } = await supabase
-      .from("notes")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false });
-
-    if (notesError) {
-      console.error("Error querying notes:", notesError.message);
-    } else {
-      notes = notesData || [];
-    }
-
-    // ── Real lesson progress ──────────────────────────────────────────────
-    // Fetch all lessons and all completed lesson_progress rows for this user
     const [
-      { data: allLessons },
-      { data: progressRows },
-      { data: enrollments },
-      { data: attempts },
-      { data: assignments },
-      { data: submissions },
+      profileResult,
+      coursesResult,
+      notesResult,
+      lessonsResult,
+      progressResult,
+      enrollmentsResult,
+      attemptsResult,
+      assignmentsResult,
+      submissionsResult,
     ] = await Promise.all([
+      supabase.from("profiles").select("*").eq("id", user.id).single(),
+      supabase
+        .from("courses")
+        .select("*")
+        .or("is_published.eq.true,is_published.is.null")
+        .order("created_at", { ascending: true }),
+      supabase
+        .from("notes")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false }),
       supabase.from("lessons").select("id, course_id"),
       supabase
         .from("lesson_progress")
@@ -110,6 +85,29 @@ export default async function Home({
         .select("assignment_id, submitted_at")
         .eq("student_id", user.id),
     ]);
+
+    if (!profileResult.error) {
+      profile = profileResult.data;
+    }
+
+    if (coursesResult.error) {
+      console.error("Error querying courses:", coursesResult.error.message);
+    } else {
+      courses = coursesResult.data || [];
+    }
+
+    if (notesResult.error) {
+      console.error("Error querying notes:", notesResult.error.message);
+    } else {
+      notes = notesResult.data || [];
+    }
+
+    const allLessons = lessonsResult.data;
+    const progressRows = progressResult.data;
+    const enrollments = enrollmentsResult.data;
+    const attempts = attemptsResult.data;
+    const assignments = assignmentsResult.data;
+    const submissions = submissionsResult.data;
 
     if (allLessons && progressRows) {
       const completedIds = new Set(progressRows.map((p) => p.lesson_id));
