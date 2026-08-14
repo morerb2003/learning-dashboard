@@ -3,8 +3,17 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   allowedDevOrigins: ["127.0.0.1"],
   compress: true,
+  images: {
+    formats: ["image/avif", "image/webp"],
+  },
   experimental: {
-    optimizePackageImports: ["lucide-react", "recharts", "framer-motion"],
+    optimizePackageImports: [
+      "lucide-react",
+      "recharts",
+      "framer-motion",
+      "clsx",
+      "tailwind-merge",
+    ],
   },
   async headers() {
     return [

@@ -1,23 +1,20 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/auth/roles";
 import CommunityWorkspace from "@/components/community/CommunityWorkspace";
 
 export const dynamic = "force-dynamic";
 
 export default async function CommunityPage() {
+  const currentUser = await getCurrentUser();
+  if (!currentUser) redirect("/login?next=/community");
+
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) redirect("/login?next=/community");
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("id, full_name, role")
-    .eq("id", user.id)
-    .single();
-  if (!profile) redirect("/login");
+  const profile = {
+    id: currentUser.id,
+    full_name: currentUser.full_name,
+    role: currentUser.role,
+  };
 
   const { data: contactRows } = await supabase.rpc("get_communication_contacts");
   const contacts = contactRows ?? [];
@@ -30,14 +27,14 @@ export default async function CommunityPage() {
     const { data } = await supabase
       .from("courses")
       .select("id, title")
-      .eq("teacher_id", user.id)
+      .eq("teacher_id", currentUser.id)
       .order("title");
     courses = data ?? [];
   } else {
     const { data: enrollmentRows } = await supabase
       .from("enrollments")
       .select("course_id")
-      .eq("user_id", user.id);
+      .eq("user_id", currentUser.id);
     const courseIds = (enrollmentRows ?? []).map((row) => row.course_id);
     if (courseIds.length > 0) {
       const { data } = await supabase
@@ -54,7 +51,7 @@ export default async function CommunityPage() {
     supabase
       .from("direct_messages")
       .select("id, sender_id, recipient_id, body, read_at, created_at")
-      .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
+      .or(`sender_id.eq.${currentUser.id},recipient_id.eq.${currentUser.id}`)
       .order("created_at"),
     courseIds.length > 0
       ? supabase

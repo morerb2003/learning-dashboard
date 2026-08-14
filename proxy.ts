@@ -23,6 +23,15 @@ function isAuthRoute(pathname: string) {
 }
 
 export async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  const requiresAuthCheck = isProtectedRoute(pathname) || isAuthRoute(pathname);
+
+  // If this is a purely public route (e.g. landing page or public assets), bypass middleware auth overhead
+  if (!requiresAuthCheck) {
+    return NextResponse.next({ request });
+  }
+
   let response = NextResponse.next({
     request,
   });
@@ -51,8 +60,6 @@ export async function proxy(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
-  const { pathname } = request.nextUrl;
 
   if (!user && isProtectedRoute(pathname)) {
     const redirectUrl = request.nextUrl.clone();
@@ -106,6 +113,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff|woff2|ttf|css|js|map)$).*)",
   ],
 };

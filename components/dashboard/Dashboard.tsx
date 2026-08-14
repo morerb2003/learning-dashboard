@@ -31,12 +31,22 @@ const ActivityChart = dynamic(() => import("./ActivityChart"), {
   ),
 });
 
-import CourseCard from "./CourseCard";
-import NotesView from "./NotesView";
 import LogoutButton from "@/components/auth/LogoutButton";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import RealtimeRefresh from "@/components/realtime/RealtimeRefresh";
-import CheckoutModal from "@/components/course/CheckoutModal";
+import CourseCard from "./CourseCard";
+
+const NotesView = dynamic(() => import("./NotesView"), {
+  loading: () => (
+    <div className="w-full h-96 rounded-3xl bg-white/[0.02] border border-white/5 animate-pulse flex flex-col justify-center items-center text-xs font-semibold text-zinc-500">
+      Loading notes workspace...
+    </div>
+  ),
+});
+
+const CheckoutModal = dynamic(() => import("@/components/course/CheckoutModal"), {
+  ssr: false,
+});
 
 export interface Profile {
   full_name: string;

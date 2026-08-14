@@ -25,6 +25,7 @@ import {
   Users,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/auth/roles";
 
 export const dynamic = "force-dynamic";
 
@@ -120,22 +121,16 @@ function roleDestination(role: string | null | undefined) {
 export default async function LandingPage() {
   const supabase = await createClient();
 
-  const [
-    { data: { user } },
-    { data: publicCourses },
-  ] = await Promise.all([
-    supabase.auth.getUser(),
-    supabase.from("courses").select("id, category, teacher_id").eq("is_published", true),
+  const [currentUser, { data: publicCourses }] = await Promise.all([
+    getCurrentUser(),
+    supabase
+      .from("courses")
+      .select("id, category, teacher_id")
+      .eq("is_published", true),
   ]);
 
-  if (user) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    redirect(roleDestination(profile?.role));
+  if (currentUser) {
+    redirect(roleDestination(currentUser.role));
   }
 
   const publishedCourses = publicCourses ?? [];

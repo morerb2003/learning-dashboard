@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 
@@ -13,9 +14,10 @@ export interface AuthUser {
 
 /**
  * Fetches the currently authenticated user along with their profile role.
+ * Request-memoized using React cache() to avoid duplicate round-trips.
  * Returns null if not authenticated.
  */
-export async function getCurrentUser(): Promise<AuthUser | null> {
+export const getCurrentUser = cache(async (): Promise<AuthUser | null> => {
   const supabase = await createClient();
 
   const {
@@ -40,7 +42,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
     full_name: profile.full_name ?? null,
     avatar_url: profile.avatar_url ?? null,
   };
-}
+});
 
 /**
  * Returns the role of the currently authenticated user.

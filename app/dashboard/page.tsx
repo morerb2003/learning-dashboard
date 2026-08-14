@@ -50,36 +50,41 @@ export default async function Home({
       profileResult,
       coursesResult,
       notesResult,
-      lessonsResult,
       progressResult,
       enrollmentsResult,
       attemptsResult,
-      assignmentsResult,
+      assignmentsCountResult,
       submissionsResult,
     ] = await Promise.all([
-      supabase.from("profiles").select("*").eq("id", user.id).single(),
+      supabase
+        .from("profiles")
+        .select("id, full_name, email, role, avatar_url, subscription_tier")
+        .eq("id", user.id)
+        .single(),
       supabase
         .from("courses")
-        .select("*")
+        .select("id, title, description, category, level, duration, teacher_name, progress, is_published, icon_name, created_at, price_cents, is_pro")
         .or("is_published.eq.true,is_published.is.null")
         .order("created_at", { ascending: true }),
       supabase
         .from("notes")
-        .select("*")
+        .select("id, title, content, user_id, course_id, created_at, updated_at")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false }),
-      supabase.from("lessons").select("id, course_id"),
       supabase
         .from("lesson_progress")
         .select("lesson_id, completed_at")
         .eq("user_id", user.id)
         .eq("completed", true),
-      supabase.from("enrollments").select("progress").eq("user_id", user.id),
+      supabase
+        .from("enrollments")
+        .select("course_id, progress")
+        .eq("user_id", user.id),
       supabase
         .from("attempts")
         .select("score, total_score, submitted_at")
         .eq("student_id", user.id),
-      supabase.from("assignments").select("id"),
+      supabase.from("assignments").select("id", { count: "exact", head: true }),
       supabase
         .from("submissions")
         .select("assignment_id, submitted_at")
@@ -102,37 +107,27 @@ export default async function Home({
       notes = notesResult.data || [];
     }
 
-    const allLessons = lessonsResult.data;
-    const progressRows = progressResult.data;
-    const enrollments = enrollmentsResult.data;
-    const attempts = attemptsResult.data;
-    const assignments = assignmentsResult.data;
-    const submissions = submissionsResult.data;
+    const progressRows = progressResult.data ?? [];
+    const enrollments = enrollmentsResult.data ?? [];
+    const attempts = attemptsResult.data ?? [];
+    const submissions = submissionsResult.data ?? [];
+    const totalAssignments = assignmentsCountResult.count ?? 0;
 
-    if (allLessons && progressRows) {
-      const completedIds = new Set(progressRows.map((p) => p.lesson_id));
-      totalCompletedLessons = completedIds.size;
+    totalCompletedLessons = progressRows.length;
 
-      // Build a lookup: courseId -> { total, completed }
-      const courseStats: Record<string, { total: number; completed: number }> = {};
-      for (const lesson of allLessons) {
-        if (!courseStats[lesson.course_id]) {
-          courseStats[lesson.course_id] = { total: 0, completed: 0 };
-        }
-        courseStats[lesson.course_id].total++;
-        if (completedIds.has(lesson.id)) {
-          courseStats[lesson.course_id].completed++;
-        }
+    // Map enrolled course progress into courses list
+    const enrollmentMap = new Map<string, number>();
+    for (const enrollment of enrollments) {
+      if (enrollment.course_id && enrollment.progress != null) {
+        enrollmentMap.set(enrollment.course_id, enrollment.progress);
       }
+    }
 
-      // Override course.progress with real calculated percentage
+    if (enrollmentMap.size > 0) {
       courses = courses.map((course) => {
-        const stats = courseStats[course.id];
-        if (stats && stats.total > 0) {
-          return {
-            ...course,
-            progress: Math.round((stats.completed / stats.total) * 100),
-          };
+        const userCourseProgress = enrollmentMap.get(course.id);
+        if (userCourseProgress != null) {
+          return { ...course, progress: userCourseProgress };
         }
         return course;
       });
@@ -148,7 +143,7 @@ export default async function Home({
     );
     const assignmentCompletion = percentage(
       submissions?.length ?? 0,
-      assignments?.length ?? 0
+      totalAssignments
     );
 
     const activityDates = [
@@ -188,6 +183,7 @@ export default async function Home({
     full_name: user.user_metadata?.full_name || user.email?.split("@")[0] || "Student",
     email: user.email || "student@aura.edu",
     role: "student",
+    avatar_url: null,
     subscription_tier: "free",
   };
 
