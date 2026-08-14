@@ -30,17 +30,27 @@ interface VideoPlayerProps {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-type VideoType = "youtube" | "vimeo" | "iframe" | null;
+type VideoType = "youtube" | "vimeo" | "html5" | "iframe" | null;
 
 interface ParsedVideo {
   type: VideoType;
   embedUrl: string | null;
+  rawUrl: string | null;
 }
 
 function parseVideoUrl(raw: string | null): ParsedVideo {
-  if (!raw) return { type: null, embedUrl: null };
+  if (!raw) return { type: null, embedUrl: null, rawUrl: null };
 
   try {
+    // Direct video formats
+    if (/\.(mp4|webm|ogg|m4v)(\?.*)?$/i.test(raw)) {
+      return {
+        type: "html5",
+        embedUrl: null,
+        rawUrl: raw,
+      };
+    }
+
     const url = new URL(raw);
 
     // YouTube short-link: https://youtu.be/<id>
@@ -49,6 +59,7 @@ function parseVideoUrl(raw: string | null): ParsedVideo {
       return {
         type: "youtube",
         embedUrl: `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`,
+        rawUrl: raw,
       };
     }
 
@@ -59,11 +70,12 @@ function parseVideoUrl(raw: string | null): ParsedVideo {
         return {
           type: "youtube",
           embedUrl: `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`,
+          rawUrl: raw,
         };
       }
       // Already an embed URL
       if (url.pathname.startsWith("/embed/")) {
-        return { type: "youtube", embedUrl: raw };
+        return { type: "youtube", embedUrl: raw, rawUrl: raw };
       }
     }
 
@@ -74,17 +86,18 @@ function parseVideoUrl(raw: string | null): ParsedVideo {
         return {
           type: "vimeo",
           embedUrl: `https://player.vimeo.com/video/${videoId}?dnt=1&title=0&byline=0&portrait=0`,
+          rawUrl: raw,
         };
       }
     }
     if (url.hostname === "player.vimeo.com") {
-      return { type: "vimeo", embedUrl: raw };
+      return { type: "vimeo", embedUrl: raw, rawUrl: raw };
     }
 
     // Fallback: treat as a generic embeddable iframe
-    return { type: "iframe", embedUrl: raw };
+    return { type: "iframe", embedUrl: raw, rawUrl: raw };
   } catch {
-    return { type: null, embedUrl: null };
+    return { type: null, embedUrl: null, rawUrl: null };
   }
 }
 
@@ -96,12 +109,14 @@ function PlatformBadge({ type }: { type: VideoType }) {
   const styles: Record<NonNullable<VideoType>, string> = {
     youtube: "border-red-500/30 bg-red-500/10 text-red-300",
     vimeo: "border-sky-400/30 bg-sky-400/10 text-sky-300",
+    html5: "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
     iframe: "border-zinc-500/30 bg-zinc-500/10 text-zinc-300",
   };
 
   const labels: Record<NonNullable<VideoType>, string> = {
     youtube: "YouTube",
     vimeo: "Vimeo",
+    html5: "HTML5 Video",
     iframe: "External",
   };
 
@@ -112,11 +127,6 @@ function PlatformBadge({ type }: { type: VideoType }) {
       {type === "youtube" && (
         <svg viewBox="0 0 24 24" className="h-3 w-3 fill-current">
           <path d="M23.498 6.163a3.003 3.003 0 0 0-2.11-2.11C19.518 3.545 12 3.545 12 3.545s-7.518 0-9.388.508a3.003 3.003 0 0 0-2.11 2.11C0 8.033 0 12 0 12s0 3.967.502 5.837a3.003 3.003 0 0 0 2.11 2.11c1.87.508 9.388.508 9.388.508s7.518 0 9.388-.508a3.003 3.003 0 0 0 2.11-2.11C24 15.967 24 12 24 12s0-3.967-.502-5.837zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-        </svg>
-      )}
-      {type === "vimeo" && (
-        <svg viewBox="0 0 24 24" className="h-3 w-3 fill-current">
-          <path d="M23.977 6.416c-.105 2.338-1.739 5.543-4.894 9.609-3.268 4.247-6.026 6.37-8.29 6.37-1.409 0-2.578-1.294-3.553-3.881L5.322 11.4C4.603 8.816 3.834 7.522 3.01 7.522c-.179 0-.806.378-1.881 1.132L0 7.197a315.065 315.065 0 0 0 3.501-3.128C5.08 2.701 6.266 1.984 7.055 1.91c1.867-.18 3.016 1.1 3.447 3.838.465 2.953.787 4.789.968 5.507.537 2.45 1.13 3.674 1.783 3.674.502 0 1.256-.796 2.265-2.385 1.004-1.589 1.54-2.797 1.612-3.628.144-1.371-.395-2.061-1.614-2.061-.574 0-1.167.121-1.777.391 1.186-3.868 3.434-5.757 6.762-5.637 2.473.06 3.628 1.664 3.476 4.807z" />
         </svg>
       )}
       {labels[type]}
@@ -134,14 +144,40 @@ export default function VideoPlayer({
   const router = useRouter();
   const [isNavigating, setIsNavigating] = useState(false);
   const [loadedLessonId, setLoadedLessonId] = useState<string | null>(null);
+  const [lastPosition, setLastPosition] = useState<number | null>(null);
 
   const currentIndex = allLessons.findIndex((l) => l.id === lesson.id);
   const prevLesson = currentIndex > 0 ? allLessons[currentIndex - 1] : null;
   const nextLesson =
     currentIndex < allLessons.length - 1 ? allLessons[currentIndex + 1] : null;
 
-  const { type, embedUrl } = parseVideoUrl(lesson.video_url);
+  const { type, embedUrl, rawUrl } = parseVideoUrl(lesson.video_url);
   const iframeLoaded = loadedLessonId === lesson.id;
+
+  // Restore saved playback position
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(`aura_pos_${lesson.id}`);
+      if (saved) {
+        setLastPosition(parseFloat(saved));
+      } else {
+        setLastPosition(null);
+      }
+    } catch {
+      // Ignore localStorage errors
+    }
+  }, [lesson.id]);
+
+  const handleTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+    const currentTime = (e.target as HTMLVideoElement).currentTime;
+    if (currentTime > 5) {
+      try {
+        localStorage.setItem(`aura_pos_${lesson.id}`, currentTime.toString());
+      } catch {
+        // Ignore
+      }
+    }
+  };
 
   const navigate = useCallback(
     (targetLesson: VideoLesson) => {
@@ -170,7 +206,15 @@ export default function VideoPlayer({
         {/* Gradient overlay — only shows while loading or when no video */}
         <div className="absolute inset-0 bg-gradient-to-br from-violet-900/30 via-zinc-950/60 to-cyan-900/20 pointer-events-none" />
 
-        {embedUrl ? (
+        {type === "html5" && rawUrl ? (
+          <video
+            key={lesson.id}
+            src={rawUrl}
+            controls
+            onTimeUpdate={handleTimeUpdate}
+            className="absolute inset-0 h-full w-full object-contain"
+          />
+        ) : embedUrl ? (
           <>
             {/* Loading shimmer */}
             {!iframeLoaded && (
@@ -206,7 +250,7 @@ export default function VideoPlayer({
             <div>
               <p className="text-sm font-bold text-zinc-300">No video attached</p>
               <p className="mt-1 text-xs text-zinc-600">
-                Add a YouTube or Vimeo URL in the admin lesson editor.
+                Add a video URL (YouTube, Vimeo, or MP4) in the course editor.
               </p>
             </div>
           </div>

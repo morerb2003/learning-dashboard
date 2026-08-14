@@ -7,6 +7,7 @@ import {
   BarChart3,
   ClipboardList,
   BookOpen,
+  DollarSign,
   HelpCircle,
   GraduationCap,
   LayoutDashboard,
@@ -38,6 +39,7 @@ const navItems = [
   { href: "/teacher/assignments", label: "Assignments", icon: ClipboardList },
   { href: "/teacher/students", label: "Students", icon: Users },
   { href: "/teacher/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/teacher/earnings", label: "Earnings", icon: DollarSign },
   { href: "/community", label: "Community", icon: MessagesSquare },
 ] as const;
 
