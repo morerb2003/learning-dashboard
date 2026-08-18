@@ -21,54 +21,64 @@ export default async function TeacherDashboardPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [
-    coursesResult,
-    lessonsResult,
-    enrollmentsResult,
-  ] = await Promise.all([
-    supabase
-      .from("courses")
-      .select("id, title, category, level, is_published, created_at, progress", { count: "exact" })
-      .eq("teacher_id", user?.id ?? ""),
-    supabase.from("lessons").select("id, course_id"),
-    supabase.from("enrollments").select("id, course_id, user_id, enrolled_at", { count: "exact" }),
+  // 1. Fetch teacher's courses first (scoped)
+  const { data: coursesData, count: totalCourses } = await supabase
+    .from("courses")
+    .select("id, title, category, level, is_published, created_at", { count: "exact" })
+    .eq("teacher_id", user?.id ?? "");
+
+  const courses = coursesData ?? [];
+  const teacherCourseIds = courses.map((c) => c.id);
+  const teacherCourseIdSet = new Set(teacherCourseIds);
+
+  // 2. Scoped parallel fetches — both filtered to teacher courses at DB level
+  const [lessonsResult, enrollmentsResult] = await Promise.all([
+    teacherCourseIds.length > 0
+      ? supabase
+          .from("lessons")
+          .select("id, course_id")
+          .in("course_id", teacherCourseIds)
+      : Promise.resolve({ data: [] as { id: string; course_id: string }[] }),
+    teacherCourseIds.length > 0
+      ? supabase
+          .from("enrollments")
+          .select("id, course_id, user_id, enrolled_at, progress", { count: "exact" })
+          .in("course_id", teacherCourseIds)
+      : Promise.resolve({ data: [] as any[], count: 0 }),
   ]);
 
-  const courses = coursesResult.data ?? [];
-  const teacherCourseIds = new Set(courses.map((course) => course.id));
-  const totalCourses = coursesResult.count ?? 0;
-  const totalLessons = (lessonsResult.data ?? []).filter((lesson) =>
-    teacherCourseIds.has(lesson.course_id)
-  ).length;
-  const enrollments = (enrollmentsResult.data ?? []).filter((enrollment) =>
-    teacherCourseIds.has(enrollment.course_id)
-  );
-  const totalStudents = new Set(enrollments.map((enrollment) => enrollment.user_id)).size;
+  const totalLessons = (lessonsResult.data ?? []).length;
+  const enrollments = (enrollmentsResult.data ?? []);
+  const totalStudents = new Set(enrollments.map((e: any) => e.user_id)).size;
 
-  // Compute average completion rate from course progress field
+  // Compute avgCompletion from real enrollment.progress values (not static course.progress)
   const avgCompletion =
-    courses.length > 0
+    enrollments.length > 0
       ? Math.round(
-          courses.reduce((sum, c) => sum + (c.progress ?? 0), 0) / courses.length
+          enrollments.reduce((sum: number, e: any) => sum + (e.progress ?? 0), 0) /
+            enrollments.length
         )
       : 0;
 
   const stats: TeacherStats = {
-    totalCourses,
+    totalCourses: totalCourses ?? courses.length,
     totalStudents,
     totalLessons,
     avgCompletion,
   };
 
-  // Recent courses (last 5)
+  // Recent courses (last 5, sorted by created_at)
   const recentCourses = [...courses]
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     .slice(0, 5);
 
-  // Enrollment counts per course
+  // Enrollment counts + avg progress per course
   const enrollmentMap: Record<string, number> = {};
-  for (const enrollment of enrollments) {
-    enrollmentMap[enrollment.course_id] = (enrollmentMap[enrollment.course_id] ?? 0) + 1;
+  const progressMap: Record<string, number[]> = {};
+  for (const e of enrollments) {
+    enrollmentMap[e.course_id] = (enrollmentMap[e.course_id] ?? 0) + 1;
+    if (!progressMap[e.course_id]) progressMap[e.course_id] = [];
+    progressMap[e.course_id].push(e.progress ?? 0);
   }
 
   const menuItems = [
@@ -214,13 +224,17 @@ export default async function TeacherDashboardPage() {
                 {recentCourses.length > 0 ? (
                   recentCourses.map((course) => {
                     const enrolled = enrollmentMap[course.id] ?? 0;
-                    const progress = course.progress ?? 0;
+                    // Real avg completion from student enrollment.progress for this course
+                    const progs = progressMap[course.id] ?? [];
+                    const progress = progs.length > 0
+                      ? Math.round(progs.reduce((s, v) => s + v, 0) / progs.length)
+                      : 0;
                     return (
                       <tr key={course.id} className="text-zinc-300 hover:bg-white/1 transition-colors">
                         <td className="py-3 pr-4">
                           <p className="font-bold text-white">{course.title}</p>
                           <p className="text-[10px] text-zinc-500 mt-0.5">
-                            {course.category || "General"} - {course.level || "Beginner"}
+                            {course.category || "General"} — {course.level || "Beginner"}
                           </p>
                         </td>
                         <td className="py-3">
@@ -230,7 +244,7 @@ export default async function TeacherDashboardPage() {
                           <div className="flex items-center gap-2">
                             <div className="w-16 h-1.5 rounded-full bg-white/5 overflow-hidden">
                               <div
-                                className="h-full rounded-full bg-linear-to-r from-violet-500 to-indigo-500"
+                                className="h-full rounded-full bg-gradient-to-r from-violet-500 to-indigo-500"
                                 style={{ width: `${progress}%` }}
                               />
                             </div>
