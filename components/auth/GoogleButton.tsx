@@ -29,7 +29,9 @@ export default function GoogleButton({ mode = "login" }: GoogleButtonProps) {
     const supabase = createClient();
     const callbackUrl = new URL("/auth/callback", window.location.origin);
     const nextPath = new URLSearchParams(window.location.search).get("next");
-    callbackUrl.searchParams.set("next", getSafeRedirectPath(nextPath));
+    if (nextPath) {
+      callbackUrl.searchParams.set("next", getSafeRedirectPath(nextPath));
+    }
 
     const { error: authError } = await supabase.auth.signInWithOAuth({
       provider: "google",

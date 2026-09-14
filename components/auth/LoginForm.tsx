@@ -31,8 +31,12 @@ export default function LoginForm() {
         setEmail(rememberedEmail);
         setRememberEmail(true);
       }
-      if (callbackError === "auth_callback_failed") {
-        setError("Authentication failed. Please try signing in again.");
+      if (callbackError) {
+        setError(
+          callbackError === "auth_callback_failed"
+            ? "Authentication failed. Please try signing in again."
+            : decodeURIComponent(callbackError)
+        );
       }
       if (registered) {
         setMessage("Account created. Confirm your email if needed, then sign in.");

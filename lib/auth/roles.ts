@@ -33,7 +33,16 @@ export const getCurrentUser = cache(async (): Promise<AuthUser | null> => {
     .eq("id", user.id)
     .single();
 
-  if (!profile) return null;
+  if (!profile) {
+    const userMeta = (user.user_metadata as Record<string, any>) || {};
+    return {
+      id: user.id,
+      email: user.email ?? null,
+      role: "student",
+      full_name: (userMeta.full_name as string) || (userMeta.name as string) || null,
+      avatar_url: (userMeta.avatar_url as string) || (userMeta.picture as string) || null,
+    };
+  }
 
   return {
     id: profile.id,
