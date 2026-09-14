@@ -16,6 +16,7 @@ import {
   Plus,
   Users,
   User,
+  Settings,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -42,6 +43,7 @@ const navItems = [
   { href: "/teacher/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/teacher/earnings", label: "Earnings", icon: DollarSign },
   { href: "/profile", label: "My Profile", icon: User },
+  { href: "/settings", label: "Settings", icon: Settings },
   { href: "/community", label: "Community", icon: MessagesSquare },
 ] as const;
 

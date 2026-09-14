@@ -77,7 +77,7 @@ export default function Sidebar({ activeTab, setActiveTab, profile }: SidebarPro
       { id: "courses" as TabId, label: "Catalog", icon: BookOpen },
       { id: "notes" as TabId, label: "Notes", icon: StickyNote },
       { id: "assignments" as TabId, label: "Community", icon: MessagesSquare, href: "/community" },
-      { id: "settings" as TabId, label: "Settings", icon: Settings },
+      { id: "settings" as TabId, label: "Settings", icon: Settings, href: "/settings" },
       { id: "notes" as TabId, label: "My Profile", icon: User, href: "/profile" },
     ];
   }, [profile.role]);
