@@ -15,6 +15,7 @@ import {
   Megaphone,
   ScanSearch,
   DollarSign,
+  User,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -41,6 +42,7 @@ const navItems = [
   { href: "/admin/moderation", label: "Moderation", icon: ScanSearch },
   { href: "/admin/announcements", label: "Announcements", icon: Megaphone },
   { href: "/admin/settings", label: "Settings", icon: Settings },
+  { href: "/profile", label: "My Profile", icon: User },
 ] as const;
 
 export default function AdminSidebar({ adminProfile, isMobile = false }: AdminSidebarProps) {

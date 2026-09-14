@@ -17,7 +17,8 @@ import {
   Users,
   Plus,
   ClipboardList,
-  MessagesSquare
+  MessagesSquare,
+  User,
 } from "lucide-react";
 
 export type TabId = "dashboard" | "courses" | "analytics" | "notes" | "settings" | "assignments";
@@ -77,6 +78,7 @@ export default function Sidebar({ activeTab, setActiveTab, profile }: SidebarPro
       { id: "notes" as TabId, label: "Notes", icon: StickyNote },
       { id: "assignments" as TabId, label: "Community", icon: MessagesSquare, href: "/community" },
       { id: "settings" as TabId, label: "Settings", icon: Settings },
+      { id: "notes" as TabId, label: "My Profile", icon: User, href: "/profile" },
     ];
   }, [profile.role]);
 
@@ -288,20 +290,23 @@ export default function Sidebar({ activeTab, setActiveTab, profile }: SidebarPro
 
           {/* User profile section at the bottom */}
           <div className={`mt-auto space-y-3 border-t border-white/5 pt-4 ${isCollapsed ? "flex flex-col items-center" : "px-3"}`}>
-            <div className="flex items-center gap-3 overflow-hidden">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-500 shrink-0 flex items-center justify-center font-bold text-white text-xs shadow-md shadow-cyan-500/10">
+            <Link
+              href="/profile"
+              className="flex items-center gap-3 overflow-hidden p-1.5 rounded-2xl hover:bg-white/5 transition-colors group"
+            >
+              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-500 shrink-0 flex items-center justify-center font-bold text-white text-xs shadow-md shadow-cyan-500/10 group-hover:scale-105 transition-transform">
                 {profile.full_name.charAt(0).toUpperCase()}
               </div>
               {!isCollapsed && (
                 <div className="flex flex-col whitespace-nowrap overflow-hidden">
-                  <span className="text-xs font-semibold text-white truncate max-w-[130px]">{profile.full_name}</span>
+                  <span className="text-xs font-semibold text-white group-hover:text-cyan-300 transition-colors truncate max-w-[130px]">{profile.full_name}</span>
                   <span className="text-[10px] text-zinc-500 truncate max-w-[130px]">{profile.email}</span>
                   <span className="mt-1 w-fit rounded-full border border-cyan-500/20 bg-cyan-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-cyan-300">
                     {profile.role}
                   </span>
                 </div>
               )}
-            </div>
+            </Link>
           </div>
         </nav>
       </aside>
