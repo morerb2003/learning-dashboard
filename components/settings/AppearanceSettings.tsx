@@ -19,6 +19,27 @@ export default function AppearanceSettings({ settings }: AppearanceSettingsProps
   const [isSaving, setIsSaving] = useState(false);
   const [savedFeedback, setSavedFeedback] = useState(false);
 
+  React.useEffect(() => {
+    // Apply theme to document
+    if (typeof window !== "undefined") {
+      const root = document.documentElement;
+      if (theme === "light") {
+        root.classList.add("light");
+        root.classList.remove("dark");
+      } else if (theme === "dark") {
+        root.classList.add("dark");
+        root.classList.remove("light");
+      } else {
+        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        root.classList.toggle("dark", prefersDark);
+        root.classList.toggle("light", !prefersDark);
+      }
+      root.dataset.accent = accent;
+      localStorage.setItem("aura_theme", theme);
+      localStorage.setItem("aura_accent", accent);
+    }
+  }, [theme, accent]);
+
   const handleSave = async () => {
     setIsSaving(true);
     const res = await saveUserSettingsPartial({

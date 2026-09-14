@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { UserSettings } from "@/types/settings";
+import { sanitizeSettingsByRole } from "./defaults";
 
 export interface SettingsActionResult {
   success: boolean;
@@ -22,8 +23,21 @@ export async function saveUserSettingsPartial(
     return { success: false, message: "Unauthorized. Please sign in." };
   }
 
+  // Fetch user role for RBAC sanitization
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  const userRole = profile?.role?.toLowerCase() || "student";
+
+  // Prevent students and teachers from writing to privileged admin/teacher fields
+  const sanitized = sanitizeSettingsByRole(payload, userRole);
+
+
   const cleanPayload = {
-    ...payload,
+    ...sanitized,
     user_id: user.id,
     updated_at: new Date().toISOString(),
   };
