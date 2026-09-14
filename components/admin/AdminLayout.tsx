@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import AdminSidebar from "./AdminSidebar";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import RealtimeRefresh from "@/components/realtime/RealtimeRefresh";
+import DashboardFooter from "@/components/layout/DashboardFooter";
 
 interface AdminProfile {
   id: string;
@@ -89,10 +90,8 @@ export default function AdminLayout({ children, profile }: AdminLayoutProps) {
                 </button>
               </div>
 
-              {/* Sidebar Content (wrapped to close drawer when link clicked) */}
+              {/* Sidebar Content */}
               <div className="flex-1 flex flex-col" onClick={() => setIsMobileOpen(false)}>
-                {/* We can re-use AdminSidebar's inner UI here or render a custom list.
-                    Since AdminSidebar has responsive classes, we will render it natively in drawer without hidden class. */}
                 <div className="w-full h-full flex flex-col justify-between">
                   <AdminSidebar adminProfile={profile} isMobile />
                 </div>
@@ -139,6 +138,7 @@ export default function AdminLayout({ children, profile }: AdminLayoutProps) {
         <section className="flex-1 space-y-6 p-4 md:p-8 no-scrollbar">
           {children}
         </section>
+        <DashboardFooter />
       </main>
     </div>
   );

@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import TeacherSidebar from "./TeacherSidebar";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import RealtimeRefresh from "@/components/realtime/RealtimeRefresh";
+import DashboardFooter from "@/components/layout/DashboardFooter";
 
 interface TeacherProfile {
   id: string;
@@ -130,6 +131,7 @@ export default function TeacherLayout({ children, profile }: TeacherLayoutProps)
         <section className="flex-1 space-y-6 p-4 md:p-8 no-scrollbar">
           {children}
         </section>
+        <DashboardFooter />
       </main>
     </div>
   );

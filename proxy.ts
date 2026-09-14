@@ -9,7 +9,9 @@ const protectedRoutes = [
   "/course",
   "/dashboard",
   "/learning",
+  "/profile",
   "/reset-password",
+  "/settings",
   "/teacher",
 ];
 const authRoutes = ["/login", "/register"];
@@ -71,40 +73,49 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  if (
-    user &&
-    (pathname.startsWith("/admin") ||
+  if (user) {
+    const roleCheckNeeded =
+      pathname.startsWith("/admin") ||
       pathname.startsWith("/teacher") ||
-      isAuthRoute(pathname))
-  ) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
+      isAuthRoute(pathname);
 
-    const canAccessAdmin = pathname.startsWith("/admin") && profile?.role === "admin";
-    const canAccessTeacher =
-      pathname.startsWith("/teacher") &&
-      (profile?.role === "teacher" || profile?.role === "admin");
+    if (roleCheckNeeded) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
 
-    if (isAuthRoute(pathname)) {
-      const redirectUrl = request.nextUrl.clone();
-      redirectUrl.pathname =
-        profile?.role === "admin"
-          ? "/admin"
-          : profile?.role === "teacher"
-            ? "/teacher"
-            : "/learning";
-      redirectUrl.search = "";
-      return NextResponse.redirect(redirectUrl);
-    }
+      const userRole = profile?.role?.toLowerCase() || "student";
 
-    if (!canAccessAdmin && !canAccessTeacher) {
-      const redirectUrl = request.nextUrl.clone();
-      redirectUrl.pathname = "/";
-      redirectUrl.search = "";
-      return NextResponse.redirect(redirectUrl);
+      // If already logged in and visiting login/register, send to appropriate dashboard
+      if (isAuthRoute(pathname)) {
+        const redirectUrl = request.nextUrl.clone();
+        redirectUrl.pathname =
+          userRole === "admin"
+            ? "/admin"
+            : userRole === "teacher"
+              ? "/teacher"
+              : "/dashboard";
+        redirectUrl.search = "";
+        return NextResponse.redirect(redirectUrl);
+      }
+
+      // Block non-admins from /admin
+      if (pathname.startsWith("/admin") && userRole !== "admin") {
+        const redirectUrl = request.nextUrl.clone();
+        redirectUrl.pathname = userRole === "teacher" ? "/teacher" : "/dashboard";
+        redirectUrl.search = "";
+        return NextResponse.redirect(redirectUrl);
+      }
+
+      // Block students from /teacher (teachers and admins allowed)
+      if (pathname.startsWith("/teacher") && userRole !== "teacher" && userRole !== "admin") {
+        const redirectUrl = request.nextUrl.clone();
+        redirectUrl.pathname = "/dashboard";
+        redirectUrl.search = "";
+        return NextResponse.redirect(redirectUrl);
+      }
     }
   }
 

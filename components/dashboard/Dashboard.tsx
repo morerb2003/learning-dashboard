@@ -34,6 +34,7 @@ const ActivityChart = dynamic(() => import("./ActivityChart"), {
 import LogoutButton from "@/components/auth/LogoutButton";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import RealtimeRefresh from "@/components/realtime/RealtimeRefresh";
+import DashboardFooter from "@/components/layout/DashboardFooter";
 import CourseCard from "./CourseCard";
 
 const NotesView = dynamic(() => import("./NotesView"), {
@@ -586,6 +587,7 @@ export default function Dashboard({
           )}
 
         </section>
+        <DashboardFooter />
       </main>
     </div>
   );

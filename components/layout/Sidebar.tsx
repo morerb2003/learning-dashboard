@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -10,22 +11,33 @@ import {
   Settings, 
   ChevronLeft, 
   ChevronRight, 
-  GraduationCap,
-  Sparkles,
-  StickyNote,
-  ShieldCheck,
-  Users,
-  Plus,
-  ClipboardList,
-  MessagesSquare,
+  GraduationCap, 
+  Sparkles, 
+  StickyNote, 
+  ShieldCheck, 
+  Users, 
+  Plus, 
+  ClipboardList, 
+  MessagesSquare, 
   User,
+  CheckSquare,
 } from "lucide-react";
 
-export type TabId = "dashboard" | "courses" | "analytics" | "notes" | "settings" | "assignments";
+export type TabId = 
+  | "dashboard" 
+  | "courses" 
+  | "learning" 
+  | "quizzes" 
+  | "assignments" 
+  | "notes" 
+  | "community" 
+  | "profile" 
+  | "settings" 
+  | "analytics";
 
 interface SidebarProps {
-  activeTab: TabId;
-  setActiveTab: (tab: TabId) => void;
+  activeTab?: TabId;
+  setActiveTab?: (tab: TabId) => void;
   profile: {
     full_name: string;
     email: string;
@@ -41,46 +53,120 @@ interface NavItem {
   href?: string;
 }
 
-const navItems: NavItem[] = [
-  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { id: "courses", label: "Catalog", icon: BookOpen },
-  { id: "analytics", label: "Analytics", icon: BarChart3 },
-  { id: "notes", label: "Notes", icon: StickyNote },
-  { id: "assignments", label: "Community", icon: MessagesSquare, href: "/community" },
-  { id: "settings", label: "Settings", icon: Settings },
-];
+interface NavSection {
+  title: string;
+  items: NavItem[];
+}
 
 export default function Sidebar({ activeTab, setActiveTab, profile }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const pathname = usePathname();
 
-  const mainNavItems = React.useMemo(() => {
+  const navSections = React.useMemo<NavSection[]>(() => {
     const role = profile.role?.toLowerCase() || "student";
+
     if (role === "teacher") {
       return [
-        { id: "dashboard" as TabId, label: "Dashboard", icon: LayoutDashboard },
-        { id: "courses" as TabId, label: "Catalog", icon: BookOpen },
-        { id: "assignments" as TabId, label: "Assignments", icon: ClipboardList, href: "/teacher/assignments" },
-        { id: "notes" as TabId, label: "Lessons", icon: StickyNote },
-        { id: "settings" as TabId, label: "Settings", icon: Settings },
+        {
+          title: "OVERVIEW",
+          items: [
+            { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
+          ],
+        },
+        {
+          title: "TEACHING",
+          items: [
+            { id: "courses", label: "Catalog", icon: BookOpen, href: "/teacher/courses" },
+            { id: "assignments", label: "Assignments", icon: ClipboardList, href: "/teacher/assignments" },
+            { id: "notes", label: "Notes", icon: StickyNote },
+          ],
+        },
+        {
+          title: "ACCOUNT",
+          items: [
+            { id: "profile", label: "My Profile", icon: User, href: "/profile" },
+            { id: "settings", label: "Settings", icon: Settings, href: "/settings" },
+          ],
+        },
       ];
     }
+
     if (role === "admin") {
       return [
-        { id: "dashboard" as TabId, label: "Dashboard", icon: LayoutDashboard },
-        { id: "courses" as TabId, label: "Catalog", icon: BookOpen },
-        { id: "notes" as TabId, label: "Notes", icon: StickyNote },
+        {
+          title: "OVERVIEW",
+          items: [
+            { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
+          ],
+        },
+        {
+          title: "MANAGEMENT",
+          items: [
+            { id: "courses", label: "Catalog", icon: BookOpen, href: "/admin/courses" },
+            { id: "notes", label: "Notes", icon: StickyNote },
+          ],
+        },
+        {
+          title: "ACCOUNT",
+          items: [
+            { id: "profile", label: "My Profile", icon: User, href: "/profile" },
+            { id: "settings", label: "Settings", icon: Settings, href: "/settings" },
+          ],
+        },
       ];
     }
-    // Student (default)
+
+    // Default: Student
     return [
-      { id: "dashboard" as TabId, label: "Dashboard", icon: LayoutDashboard },
-      { id: "courses" as TabId, label: "Catalog", icon: BookOpen },
-      { id: "notes" as TabId, label: "Notes", icon: StickyNote },
-      { id: "assignments" as TabId, label: "Community", icon: MessagesSquare, href: "/community" },
-      { id: "settings" as TabId, label: "Settings", icon: Settings, href: "/settings" },
-      { id: "notes" as TabId, label: "My Profile", icon: User, href: "/profile" },
+      {
+        title: "OVERVIEW",
+        items: [
+          { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
+        ],
+      },
+      {
+        title: "LEARNING",
+        items: [
+          { id: "courses", label: "Catalog", icon: BookOpen },
+          { id: "learning", label: "My Learning", icon: GraduationCap, href: "/learning" },
+          { id: "quizzes", label: "Quizzes", icon: CheckSquare, href: "/learning/quizzes" },
+          { id: "assignments", label: "Assignments", icon: ClipboardList, href: "/learning/assignments" },
+          { id: "notes", label: "Notes", icon: StickyNote },
+        ],
+      },
+      {
+        title: "COMMUNITY",
+        items: [
+          { id: "community", label: "Community", icon: MessagesSquare, href: "/community" },
+        ],
+      },
+      {
+        title: "ACCOUNT",
+        items: [
+          { id: "profile", label: "My Profile", icon: User, href: "/profile" },
+          { id: "settings", label: "Settings", icon: Settings, href: "/settings" },
+        ],
+      },
     ];
   }, [profile.role]);
+
+  const mobileNavItems: NavItem[] = React.useMemo(() => [
+    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
+    { id: "courses", label: "Catalog", icon: BookOpen },
+    { id: "learning", label: "Learning", icon: GraduationCap, href: "/learning" },
+    { id: "community", label: "Community", icon: MessagesSquare, href: "/community" },
+    { id: "settings", label: "Settings", icon: Settings, href: "/settings" },
+  ], []);
+
+  const isItemActive = (item: NavItem) => {
+    if (item.href && pathname) {
+      if (item.href === "/dashboard") {
+        return pathname === "/dashboard" && (!activeTab || activeTab === "dashboard");
+      }
+      return pathname.startsWith(item.href);
+    }
+    return activeTab === item.id;
+  };
 
   return (
     <>
@@ -119,7 +205,7 @@ export default function Sidebar({ activeTab, setActiveTab, profile }: SidebarPro
             </AnimatePresence>
           </div>
 
-          {/* Collapse Button (Only visible on large screens where it can actually collapse) */}
+          {/* Collapse Button */}
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
             className="hidden lg:flex w-6 h-6 rounded-md border border-white/10 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white items-center justify-center transition-colors absolute -right-3 top-7 z-40 shadow-md cursor-pointer"
@@ -134,79 +220,90 @@ export default function Sidebar({ activeTab, setActiveTab, profile }: SidebarPro
         </div>
 
         {/* Sidebar Navigation Links */}
-        <nav className="flex-1 px-3 py-6 space-y-1.5 flex flex-col justify-between overflow-y-auto no-scrollbar">
+        <nav className="flex-1 px-3 py-4 space-y-4 flex flex-col justify-between overflow-y-auto no-scrollbar">
           <div className="space-y-4">
-            <ul className="space-y-1.5">
-              {mainNavItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = activeTab === item.id;
-                // On tablet (md:max-lg), force collapsed appearance
-                const displayCollapsed = isCollapsed;
-                const itemClassName = `
-                  w-full flex items-center gap-4 py-3 rounded-xl text-sm font-medium transition-colors relative group cursor-pointer
-                  ${displayCollapsed ? "justify-center px-0" : "px-4"}
-                  ${isActive ? "text-white" : "text-zinc-400 hover:text-white"}
-                `;
-                const itemContent = (
-                  <>
-                    {/* Active highlight background pill using layoutId */}
-                    {isActive && (
-                      <motion.div
-                        layoutId="activeTabGlow"
-                        className="absolute inset-0 bg-gradient-to-r from-violet-600/15 to-indigo-600/10 border-l-2 border-violet-500 rounded-xl"
-                        transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                      />
-                    )}
+            {navSections.map((section) => (
+              <div key={section.title} className="space-y-1">
+                {!isCollapsed && (
+                  <span className="text-[9px] font-bold uppercase tracking-widest text-zinc-500 px-4 mb-1 block">
+                    {section.title}
+                  </span>
+                )}
+                <ul className="space-y-1">
+                  {section.items.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = isItemActive(item);
+                    const displayCollapsed = isCollapsed;
+                    const itemClassName = `
+                      w-full flex items-center gap-3.5 py-2.5 rounded-xl text-xs lg:text-sm font-medium transition-colors relative group cursor-pointer
+                      ${displayCollapsed ? "justify-center px-0" : "px-4"}
+                      ${isActive ? "text-white" : "text-zinc-400 hover:text-white hover:bg-white/[0.03]"}
+                    `;
+                    const itemContent = (
+                      <>
+                        {isActive && (
+                          <motion.div
+                            layoutId="activeTabGlow"
+                            className="absolute inset-0 bg-gradient-to-r from-violet-600/15 to-indigo-600/10 border-l-2 border-violet-500 rounded-xl"
+                            transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                          />
+                        )}
 
-                    <div className="relative z-10">
-                      <Icon className={`w-5 h-5 transition-transform duration-300 group-hover:scale-110 ${isActive ? "text-violet-400" : "text-zinc-400 group-hover:text-white"}`} />
-                    </div>
+                        <div className="relative z-10">
+                          <Icon className={`w-4.5 h-4.5 transition-transform duration-300 group-hover:scale-110 ${isActive ? "text-violet-400" : "text-zinc-400 group-hover:text-white"}`} />
+                        </div>
 
-                    <AnimatePresence>
-                      {!displayCollapsed && (
-                        <motion.span
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: -10 }}
-                          transition={{ duration: 0.2 }}
-                          className="relative z-10 font-medium tracking-wide text-xs lg:text-sm whitespace-nowrap block"
-                        >
-                          {item.label}
-                        </motion.span>
-                      )}
-                    </AnimatePresence>
+                        <AnimatePresence>
+                          {!displayCollapsed && (
+                            <motion.span
+                              initial={{ opacity: 0, x: -10 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0, x: -10 }}
+                              transition={{ duration: 0.2 }}
+                              className="relative z-10 font-medium tracking-wide text-xs whitespace-nowrap block"
+                            >
+                              {item.label}
+                            </motion.span>
+                          )}
+                        </AnimatePresence>
 
-                    {/* Tooltip for collapsed states */}
-                    {displayCollapsed && (
-                      <div className="absolute left-20 bg-zinc-900 border border-white/10 text-white text-xs px-2.5 py-1.5 rounded-md opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 shadow-xl whitespace-nowrap z-50">
-                        {item.label}
-                      </div>
-                    )}
-                  </>
-                );
+                        {displayCollapsed && (
+                          <div className="absolute left-20 bg-zinc-900 border border-white/10 text-white text-xs px-2.5 py-1.5 rounded-md opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 shadow-xl whitespace-nowrap z-50">
+                            {item.label}
+                          </div>
+                        )}
+                      </>
+                    );
 
-                return (
-                  <li key={item.id} className="relative">
-                    {item.href ? (
-                      <Link href={item.href} prefetch={true} className={itemClassName}>
-                        {itemContent}
-                      </Link>
-                    ) : (
-                      <button onClick={() => setActiveTab(item.id)} className={itemClassName}>
-                        {itemContent}
-                      </button>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
+                    return (
+                      <li key={item.id} className="relative">
+                        {item.href ? (
+                          <Link href={item.href} prefetch={true} className={itemClassName}>
+                            {itemContent}
+                          </Link>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              if (setActiveTab) setActiveTab(item.id);
+                            }}
+                            className={itemClassName}
+                          >
+                            {itemContent}
+                          </button>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
 
             {/* Nested Teacher Tools (Visible only for teacher role) */}
             {profile.role === "teacher" && (
-              <div className="pt-4 border-t border-white/5 space-y-2">
+              <div className="pt-3 border-t border-white/5 space-y-1">
                 {!isCollapsed && (
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 px-4 block">
-                    Teacher Tools
+                  <span className="text-[9px] font-bold uppercase tracking-widest text-emerald-400/80 px-4 block">
+                    Teacher Portal
                   </span>
                 )}
                 <ul className="space-y-1">
@@ -232,11 +329,6 @@ export default function Sidebar({ activeTab, setActiveTab, profile }: SidebarPro
                         >
                           <SubIcon className="w-4 h-4 text-zinc-500 group-hover:text-emerald-400" />
                           {!isCollapsed && <span>{sub.label}</span>}
-                          {isCollapsed && (
-                            <div className="absolute left-20 bg-zinc-900 border border-white/10 text-white text-xs px-2.5 py-1.5 rounded-md opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 shadow-xl whitespace-nowrap z-50">
-                              {sub.label}
-                            </div>
-                          )}
                         </Link>
                       </li>
                     );
@@ -247,10 +339,10 @@ export default function Sidebar({ activeTab, setActiveTab, profile }: SidebarPro
 
             {/* Nested Admin Console Tools (Visible only for admin role) */}
             {profile.role === "admin" && (
-              <div className="pt-4 border-t border-white/5 space-y-2">
+              <div className="pt-3 border-t border-white/5 space-y-1">
                 {!isCollapsed && (
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 px-4 block">
-                    Admin Tools
+                  <span className="text-[9px] font-bold uppercase tracking-widest text-violet-400/80 px-4 block">
+                    Admin Portal
                   </span>
                 )}
                 <ul className="space-y-1">
@@ -274,11 +366,6 @@ export default function Sidebar({ activeTab, setActiveTab, profile }: SidebarPro
                         >
                           <SubIcon className="w-4 h-4 text-zinc-500 group-hover:text-violet-400" />
                           {!isCollapsed && <span>{sub.label}</span>}
-                          {isCollapsed && (
-                            <div className="absolute left-20 bg-zinc-900 border border-white/10 text-white text-xs px-2.5 py-1.5 rounded-md opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 shadow-xl whitespace-nowrap z-50">
-                              {sub.label}
-                            </div>
-                          )}
                         </Link>
                       </li>
                     );
@@ -295,7 +382,7 @@ export default function Sidebar({ activeTab, setActiveTab, profile }: SidebarPro
               className="flex items-center gap-3 overflow-hidden p-1.5 rounded-2xl hover:bg-white/5 transition-colors group"
             >
               <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-500 shrink-0 flex items-center justify-center font-bold text-white text-xs shadow-md shadow-cyan-500/10 group-hover:scale-105 transition-transform">
-                {profile.full_name.charAt(0).toUpperCase()}
+                {profile.full_name?.charAt(0)?.toUpperCase() || "U"}
               </div>
               {!isCollapsed && (
                 <div className="flex flex-col whitespace-nowrap overflow-hidden">
@@ -313,9 +400,9 @@ export default function Sidebar({ activeTab, setActiveTab, profile }: SidebarPro
 
       {/* Mobile Bottom Navigation Bar */}
       <nav className="fixed bottom-0 left-0 right-0 h-16 bg-zinc-950/80 backdrop-blur-lg border-t border-white/10 z-50 flex items-center justify-around md:hidden px-4">
-        {navItems.map((item) => {
+        {mobileNavItems.map((item) => {
           const Icon = item.icon;
-          const isActive = activeTab === item.id;
+          const isActive = isItemActive(item);
           const mobileContent = (
             <>
               {isActive && (
@@ -344,7 +431,9 @@ export default function Sidebar({ activeTab, setActiveTab, profile }: SidebarPro
           ) : (
             <button
               key={item.id}
-              onClick={() => setActiveTab(item.id)}
+              onClick={() => {
+                if (setActiveTab) setActiveTab(item.id);
+              }}
               className="flex flex-col items-center justify-center flex-1 h-full py-1 text-zinc-400 relative"
               aria-label={item.label}
             >
