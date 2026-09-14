@@ -26,6 +26,8 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth/roles";
+import PublicHeader from "@/components/layout/PublicHeader";
+import PublicFooter from "@/components/layout/PublicFooter";
 
 export const dynamic = "force-dynamic";
 
@@ -169,57 +171,8 @@ export default async function LandingPage() {
       <div className="pointer-events-none fixed inset-0 bg-mesh-violet opacity-40" />
       <div className="pointer-events-none fixed inset-0 bg-mesh-cyan opacity-20 mix-blend-screen" />
 
-      <header className="sticky top-0 z-50 border-b border-white/5 bg-[#030303]/75 backdrop-blur-2xl">
-        <nav
-          aria-label="Main navigation"
-          className="mx-auto flex h-18 max-w-7xl items-center justify-between px-5 lg:px-8"
-        >
-          <Link href="/" className="flex items-center gap-3" aria-label="AURA home">
-            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-linear-to-br from-violet-500 to-cyan-400 shadow-lg shadow-violet-500/20">
-              <GraduationCap className="h-5 w-5 text-white" />
-            </span>
-            <span>
-              <span className="block text-sm font-black tracking-[0.22em] text-white">
-                AURA
-              </span>
-              <span className="block text-[9px] font-bold uppercase tracking-[0.28em] text-zinc-500">
-                Learning OS
-              </span>
-            </span>
-          </Link>
+      <PublicHeader user={null} />
 
-          <div className="hidden items-center gap-7 text-xs font-bold text-zinc-400 md:flex">
-            <a href="#features" className="transition hover:text-white">
-              Features
-            </a>
-            <a href="#platform" className="transition hover:text-white">
-              Platform
-            </a>
-            <a href="#why-aura" className="transition hover:text-white">
-              Why AURA
-            </a>
-            <a href="#faq" className="transition hover:text-white">
-              FAQ
-            </a>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Link
-              href="/login"
-              className="hidden h-10 items-center justify-center rounded-xl px-4 text-xs font-bold text-zinc-300 transition hover:bg-white/5 hover:text-white sm:inline-flex"
-            >
-              Log in
-            </Link>
-            <Link
-              href="/register"
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-white px-4 text-xs font-black text-zinc-950 transition hover:bg-cyan-100"
-            >
-              Get started
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </div>
-        </nav>
-      </header>
 
       <section className="relative mx-auto grid min-h-[calc(100vh-4.5rem)] max-w-7xl items-center gap-14 px-5 py-20 lg:grid-cols-[1.02fr_0.98fr] lg:px-8 lg:py-24">
         <div className="relative z-10">
@@ -666,23 +619,8 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      <footer className="relative border-t border-white/5">
-        <div className="mx-auto flex max-w-7xl flex-col gap-6 px-5 py-8 text-xs text-zinc-600 sm:flex-row sm:items-center sm:justify-between lg:px-8">
-          <div className="flex items-center gap-2 font-black tracking-[0.18em] text-zinc-400">
-            <GraduationCap className="h-4 w-4 text-violet-300" />
-            AURA
-          </div>
-          <p>Modern learning for students, teachers, and teams.</p>
-          <div className="flex gap-5 font-bold">
-            <Link href="/login" className="transition hover:text-white">
-              Login
-            </Link>
-            <Link href="/register" className="transition hover:text-white">
-              Register
-            </Link>
-          </div>
-        </div>
-      </footer>
+      <PublicFooter />
     </main>
+
   );
 }
