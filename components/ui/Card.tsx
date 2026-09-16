@@ -13,9 +13,9 @@ export function Card({
   const variantStyles = {
     default: "bg-zinc-900 border border-white/10 rounded-2xl shadow-xl",
     glass:
-      "bg-white/[0.02] backdrop-blur-xl border border-white/10 rounded-2xl shadow-xl",
+      "glass-card rounded-2xl shadow-xl",
     interactive:
-      "bg-white/[0.02] backdrop-blur-xl border border-white/10 hover:border-violet-500/40 hover:bg-white/[0.04] transition-all duration-300 rounded-2xl shadow-xl group cursor-pointer",
+      "glass-card glass-card-hover rounded-2xl shadow-xl group cursor-pointer transition-all duration-300",
   };
 
   return (

@@ -25,21 +25,21 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const baseStyles =
-      "inline-flex items-center justify-center font-bold tracking-tight rounded-xl transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-zinc-950";
+      "inline-flex items-center justify-center font-bold tracking-tight rounded-xl transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-zinc-950 active:scale-[0.97]";
 
     const variantStyles = {
       primary:
-        "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg shadow-violet-600/25 hover:from-violet-500 hover:to-indigo-500 active:scale-[0.98] focus:ring-violet-500 border border-violet-400/20",
+        "btn-shimmer bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 text-white shadow-lg shadow-violet-600/30 hover:shadow-violet-600/50 hover:brightness-110 border border-violet-400/30",
       secondary:
-        "bg-white/[0.04] text-zinc-200 border border-white/10 hover:bg-white/[0.08] hover:text-white hover:border-white/20 active:scale-[0.98] focus:ring-zinc-400",
+        "bg-white/[0.05] text-zinc-200 border border-white/12 hover:bg-white/[0.09] hover:text-white hover:border-white/25 shadow-sm focus:ring-zinc-400",
       outline:
-        "bg-transparent text-zinc-300 border border-white/15 hover:bg-white/5 hover:text-white active:scale-[0.98] focus:ring-zinc-400",
+        "bg-transparent text-zinc-300 border border-white/15 hover:bg-white/5 hover:text-white hover:border-white/30 focus:ring-zinc-400",
       ghost:
-        "bg-transparent text-zinc-400 hover:text-white hover:bg-white/5 active:scale-[0.98] focus:ring-zinc-500",
+        "bg-transparent text-zinc-400 hover:text-white hover:bg-white/5 focus:ring-zinc-500",
       danger:
-        "bg-rose-500/10 text-rose-300 border border-rose-500/20 hover:bg-rose-500/20 hover:text-rose-200 active:scale-[0.98] focus:ring-rose-500",
+        "bg-rose-500/10 text-rose-300 border border-rose-500/25 hover:bg-rose-500/20 hover:text-rose-100 hover:border-rose-500/40 focus:ring-rose-500",
       success:
-        "bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 hover:bg-emerald-500/20 hover:text-emerald-200 active:scale-[0.98] focus:ring-emerald-500",
+        "bg-emerald-500/10 text-emerald-300 border border-emerald-500/25 hover:bg-emerald-500/20 hover:text-emerald-100 hover:border-emerald-500/40 focus:ring-emerald-500",
     };
 
     const sizeStyles = {
