@@ -17,45 +17,165 @@
 body {
   background-color: var(--color-background-base);
   background-image: 
-    radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.05) 0%, transparent 40%),
-    radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.05) 0%, transparent 40%),
-    radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.02) 0%, transparent 50%);
+    radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.06) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.06) 0%, transparent 40%),
+    radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.03) 0%, transparent 50%);
   background-attachment: fixed;
   color: #f4f4f5;
   font-family: var(--font-geist-sans), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   overflow-x: hidden;
 }
 
-/* Glassmorphism Card Style */
+/* Glassmorphism Card Style 2.0 with Specular Highlight */
 .glass-card {
-  background: rgba(10, 10, 12, 0.55);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--color-card-border);
+  background: rgba(10, 10, 14, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 
-    0 4px 30px rgba(0, 0, 0, 0.4),
-    inset 0 1px 1px rgba(255, 255, 255, 0.05);
+    0 8px 32px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.glass-card-hover {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.glass-card-hover:hover {
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow: 
+    0 14px 40px rgba(0, 0, 0, 0.6),
+    0 0 25px rgba(139, 92, 246, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+/* Specular border accent */
+.specular-glow {
+  position: relative;
+}
+.specular-glow::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), transparent 50%, rgba(255, 255, 255, 0.05));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* Shimmer Button Effect */
+.btn-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.btn-shimmer::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    60deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.25) 50%,
+    transparent 65%
+  );
+  transform: translateX(-100%);
+  transition: transform 0.75s ease;
+}
+.btn-shimmer:hover::after {
+  transform: translateX(100%);
+}
+
+/* Keyframe animations */
+@keyframes float-slow {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(1deg);
+  }
+}
+
+@keyframes float-reverse {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(8px) rotate(-1deg);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes aurora {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-float-slow {
+  animation: float-slow 6s ease-in-out infinite;
+}
+
+.animate-float-reverse {
+  animation: float-reverse 7s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 4s ease-in-out infinite;
+}
+
+.bg-aurora {
+  background-size: 200% 200%;
+  animation: aurora 12s ease infinite;
+}
+
+/* Subtle tech grid background pattern */
+.bg-grid-tech {
+  background-size: 32px 32px;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
 }
 
 /* Grainy gradient overlays */
 .bg-mesh-violet {
-  background: radial-gradient(circle at top right, rgba(139, 92, 246, 0.12) 0%, transparent 60%),
-              radial-gradient(circle at bottom left, rgba(99, 102, 241, 0.04) 0%, transparent 60%);
+  background: radial-gradient(circle at top right, rgba(139, 92, 246, 0.16) 0%, transparent 60%),
+              radial-gradient(circle at bottom left, rgba(99, 102, 241, 0.06) 0%, transparent 60%);
 }
 
 .bg-mesh-cyan {
-  background: radial-gradient(circle at top right, rgba(6, 182, 212, 0.12) 0%, transparent 60%),
-              radial-gradient(circle at bottom left, rgba(16, 185, 129, 0.04) 0%, transparent 60%);
+  background: radial-gradient(circle at top right, rgba(6, 182, 212, 0.16) 0%, transparent 60%),
+              radial-gradient(circle at bottom left, rgba(16, 185, 129, 0.06) 0%, transparent 60%);
 }
 
 .bg-mesh-emerald {
-  background: radial-gradient(circle at top right, rgba(16, 185, 129, 0.12) 0%, transparent 60%),
-              radial-gradient(circle at bottom left, rgba(6, 182, 212, 0.04) 0%, transparent 60%);
+  background: radial-gradient(circle at top right, rgba(16, 185, 129, 0.16) 0%, transparent 60%),
+              radial-gradient(circle at bottom left, rgba(6, 182, 212, 0.06) 0%, transparent 60%);
 }
 
 .bg-mesh-orange {
-  background: radial-gradient(circle at top right, rgba(249, 115, 22, 0.12) 0%, transparent 60%),
-              radial-gradient(circle at bottom left, rgba(239, 68, 68, 0.04) 0%, transparent 60%);
+  background: radial-gradient(circle at top right, rgba(249, 115, 22, 0.16) 0%, transparent 60%),
+              radial-gradient(circle at bottom left, rgba(239, 68, 68, 0.06) 0%, transparent 60%);
 }
 
 /* Grain texture overlay */
@@ -64,7 +184,7 @@ body {
   inset: 0;
   width: 100%;
   height: 100%;
-  opacity: 0.015;
+  opacity: 0.018;
   pointer-events: none;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
 }
@@ -80,12 +200,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.12);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.24);
 }
 
 /* Hide scrollbars for layouts but maintain functionality */
