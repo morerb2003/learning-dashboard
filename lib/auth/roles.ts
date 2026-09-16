@@ -18,39 +18,44 @@ export interface AuthUser {
  * Returns null if not authenticated.
  */
 export const getCurrentUser = cache(async (): Promise<AuthUser | null> => {
-  const supabase = await createClient();
+  try {
+    const supabase = await createClient();
 
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
-  if (authError || !user) return null;
+    if (authError || !user) return null;
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("id, full_name, email, role, avatar_url")
-    .eq("id", user.id)
-    .single();
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("id, full_name, email, role, avatar_url")
+      .eq("id", user.id)
+      .single();
 
-  if (!profile) {
-    const userMeta = (user.user_metadata as Record<string, any>) || {};
+    if (!profile) {
+      const userMeta = (user.user_metadata as Record<string, any>) || {};
+      return {
+        id: user.id,
+        email: user.email ?? null,
+        role: "student",
+        full_name: (userMeta.full_name as string) || (userMeta.name as string) || null,
+        avatar_url: (userMeta.avatar_url as string) || (userMeta.picture as string) || null,
+      };
+    }
+
     return {
-      id: user.id,
-      email: user.email ?? null,
-      role: "student",
-      full_name: (userMeta.full_name as string) || (userMeta.name as string) || null,
-      avatar_url: (userMeta.avatar_url as string) || (userMeta.picture as string) || null,
+      id: profile.id,
+      email: profile.email ?? user.email ?? null,
+      role: (profile.role as UserRole) ?? "student",
+      full_name: profile.full_name ?? null,
+      avatar_url: profile.avatar_url ?? null,
     };
+  } catch (error) {
+    console.warn("Failed to get current user session:", error);
+    return null;
   }
-
-  return {
-    id: profile.id,
-    email: profile.email ?? user.email ?? null,
-    role: (profile.role as UserRole) ?? "student",
-    full_name: profile.full_name ?? null,
-    avatar_url: profile.avatar_url ?? null,
-  };
 });
 
 /**

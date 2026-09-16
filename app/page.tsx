@@ -134,21 +134,33 @@ function roleDestination(role: string | null | undefined) {
 }
 
 export default async function LandingPage() {
-  const supabase = await createClient();
+  let currentUser = null;
+  let publishedCourses: Array<{ id: string; category?: string | null; teacher_id?: string | null }> = [];
 
-  const [currentUser, { data: publicCourses }] = await Promise.all([
-    getCurrentUser(),
-    supabase
-      .from("courses")
-      .select("id, category, teacher_id")
-      .eq("is_published", true),
-  ]);
+  try {
+    const supabase = await createClient();
+
+    const [userRes, coursesRes] = await Promise.allSettled([
+      getCurrentUser(),
+      supabase
+        .from("courses")
+        .select("id, category, teacher_id")
+        .eq("is_published", true),
+    ]);
+
+    if (userRes.status === "fulfilled") {
+      currentUser = userRes.value;
+    }
+    if (coursesRes.status === "fulfilled" && coursesRes.value.data) {
+      publishedCourses = coursesRes.value.data;
+    }
+  } catch (err) {
+    console.warn("Landing page data fetch fallback:", err);
+  }
 
   if (currentUser) {
     redirect(roleDestination(currentUser.role));
   }
-
-  const publishedCourses = publicCourses ?? [];
   const categoryCount = Math.max(
     1,
     new Set(publishedCourses.map((course) => course.category).filter(Boolean)).size
