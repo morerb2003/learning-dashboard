@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
   BarChart,
   Bar,
@@ -56,6 +56,11 @@ export default function AnalyticsChart({
   attempts,
   submissions,
 }: AnalyticsChartProps) {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
   
   // 1. Role Distribution Data (Pie Chart)
   const roleData = useMemo(() => {
@@ -101,6 +106,7 @@ export default function AnalyticsChart({
         { week: "Week 1", count: 0 },
         { week: "Week 2", count: 0 },
         { week: "Week 3", count: 0 },
+        { week: "Week 4", count: 0 },
       ];
     }
 
@@ -114,29 +120,32 @@ export default function AnalyticsChart({
   const courseProgressData = useMemo(() => {
     if (courses.length === 0) {
       return [
-        { name: "No Courses", progress: 0 }
+        { name: "Course A", progress: 0 },
+        { name: "Course B", progress: 0 },
       ];
     }
-    return courses.map((c) => ({
-      name: c.title.length > 15 ? c.title.substring(0, 15) + "..." : c.title,
-      progress: c.progress,
+
+    return courses.map((course) => ({
+      name: course.title.length > 12 ? `${course.title.slice(0, 12)}...` : course.title,
+      progress: course.progress || 0,
     }));
   }, [courses]);
 
-  // 4. Daily Activity Graph (Area Chart)
+  // 4. Daily Activity over last 7 days (Area Chart)
   const dailyActivityData = useMemo(() => {
     const activityCounts = new Map<string, number>();
-    const today = new Date();
 
+    // Generate the last 7 calendar days in order
     for (let i = 6; i >= 0; i--) {
-      const day = new Date(today);
-      day.setDate(today.getDate() - i);
-      activityCounts.set(day.toISOString().slice(0, 10), 0);
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().split("T")[0];
+      activityCounts.set(key, 0);
     }
 
-    const addActivity = (value: string | null | undefined) => {
-      if (!value) return;
-      const key = new Date(value).toISOString().slice(0, 10);
+    const addActivity = (timestamp: string | null | undefined) => {
+      if (!timestamp) return;
+      const key = new Date(timestamp).toISOString().split("T")[0];
       if (activityCounts.has(key)) {
         activityCounts.set(key, (activityCounts.get(key) ?? 0) + 1);
       }
@@ -162,19 +171,23 @@ export default function AnalyticsChart({
       <section className="relative overflow-hidden rounded-3xl border border-white/5 bg-white/[0.02] p-5">
         <h3 className="text-sm font-bold text-white mb-1">Users Joined</h3>
         <p className="text-[10px] font-semibold text-zinc-500 mb-4 uppercase tracking-wider">Registration rate grouped by week</p>
-        <div className="h-64">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={usersJoinedData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.06)" />
-              <XAxis dataKey="week" tickLine={false} axisLine={false} stroke="#71717a" fontSize={10} />
-              <YAxis allowDecimals={false} tickLine={false} axisLine={false} stroke="#71717a" fontSize={10} />
-              <Tooltip
-                contentStyle={{ background: "#09090b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12 }}
-                cursor={{ fill: "rgba(139, 92, 246, 0.05)" }}
-              />
-              <Bar dataKey="count" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+        <div className="w-full h-64 min-h-[256px] min-w-0 relative">
+          {isMounted ? (
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={240} debounce={50}>
+              <BarChart data={usersJoinedData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.06)" />
+                <XAxis dataKey="week" tickLine={false} axisLine={false} stroke="#71717a" fontSize={10} />
+                <YAxis allowDecimals={false} tickLine={false} axisLine={false} stroke="#71717a" fontSize={10} />
+                <Tooltip
+                  contentStyle={{ background: "#09090b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12 }}
+                  cursor={{ fill: "rgba(139, 92, 246, 0.05)" }}
+                />
+                <Bar dataKey="count" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="w-full h-full rounded-2xl bg-white/[0.02] border border-white/5 animate-pulse" />
+          )}
         </div>
       </section>
 
@@ -182,16 +195,20 @@ export default function AnalyticsChart({
       <section className="relative overflow-hidden rounded-3xl border border-white/5 bg-white/[0.02] p-5">
         <h3 className="text-sm font-bold text-white mb-1">Course Progress</h3>
         <p className="text-[10px] font-semibold text-zinc-500 mb-4 uppercase tracking-wider">Completion trends per learning module</p>
-        <div className="h-64">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={courseProgressData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.06)" />
-              <XAxis dataKey="name" tickLine={false} axisLine={false} stroke="#71717a" fontSize={8} />
-              <YAxis tickLine={false} axisLine={false} stroke="#71717a" fontSize={10} domain={[0, 100]} unit="%" />
-              <Tooltip contentStyle={{ background: "#09090b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12 }} />
-              <Line type="monotone" dataKey="progress" stroke="#3b82f6" strokeWidth={2.5} activeDot={{ r: 6 }} dot={{ r: 4 }} />
-            </LineChart>
-          </ResponsiveContainer>
+        <div className="w-full h-64 min-h-[256px] min-w-0 relative">
+          {isMounted ? (
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={240} debounce={50}>
+              <LineChart data={courseProgressData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.06)" />
+                <XAxis dataKey="name" tickLine={false} axisLine={false} stroke="#71717a" fontSize={8} />
+                <YAxis tickLine={false} axisLine={false} stroke="#71717a" fontSize={10} domain={[0, 100]} unit="%" />
+                <Tooltip contentStyle={{ background: "#09090b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12 }} />
+                <Line type="monotone" dataKey="progress" stroke="#3b82f6" strokeWidth={2.5} activeDot={{ r: 6 }} dot={{ r: 4 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="w-full h-full rounded-2xl bg-white/[0.02] border border-white/5 animate-pulse" />
+          )}
         </div>
       </section>
 
@@ -199,24 +216,28 @@ export default function AnalyticsChart({
       <section className="relative overflow-hidden rounded-3xl border border-white/5 bg-white/[0.02] p-5">
         <h3 className="text-sm font-bold text-white mb-1">Role Distribution</h3>
         <p className="text-[10px] font-semibold text-zinc-500 mb-4 uppercase tracking-wider">Account configurations inside Supabase</p>
-        <div className="h-64 flex items-center justify-center">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={roleData}
-                innerRadius={60}
-                outerRadius={80}
-                paddingAngle={5}
-                dataKey="value"
-              >
-                {roleData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={roleColors[entry.name.toLowerCase()] || "#71717a"} />
-                ))}
-              </Pie>
-              <Tooltip contentStyle={{ background: "#09090b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12 }} />
-              <Legend verticalAlign="bottom" height={36} iconType="circle" />
-            </PieChart>
-          </ResponsiveContainer>
+        <div className="w-full h-64 min-h-[256px] min-w-0 relative flex items-center justify-center">
+          {isMounted ? (
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={240} debounce={50}>
+              <PieChart>
+                <Pie
+                  data={roleData}
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={5}
+                  dataKey="value"
+                >
+                  {roleData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={roleColors[entry.name.toLowerCase()] || "#71717a"} />
+                  ))}
+                </Pie>
+                <Tooltip contentStyle={{ background: "#09090b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12 }} />
+                <Legend verticalAlign="bottom" height={36} iconType="circle" />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="w-full h-full rounded-2xl bg-white/[0.02] border border-white/5 animate-pulse" />
+          )}
         </div>
       </section>
 
@@ -224,22 +245,26 @@ export default function AnalyticsChart({
       <section className="relative overflow-hidden rounded-3xl border border-white/5 bg-white/[0.02] p-5">
         <h3 className="text-sm font-bold text-white mb-1">Daily Activity</h3>
         <p className="text-[10px] font-semibold text-zinc-500 mb-4 uppercase tracking-wider">Database interactions over the last 7 days</p>
-        <div className="h-64">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={dailyActivityData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-              <defs>
-                <linearGradient id="colorActivity" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.25}/>
-                  <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.06)" />
-              <XAxis dataKey="day" tickLine={false} axisLine={false} stroke="#71717a" fontSize={10} />
-              <YAxis tickLine={false} axisLine={false} stroke="#71717a" fontSize={10} />
-              <Tooltip contentStyle={{ background: "#09090b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12 }} />
-              <Area type="monotone" dataKey="activity" stroke="#10b981" strokeWidth={2.5} fillOpacity={1} fill="url(#colorActivity)" />
-            </AreaChart>
-          </ResponsiveContainer>
+        <div className="w-full h-64 min-h-[256px] min-w-0 relative">
+          {isMounted ? (
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={240} debounce={50}>
+              <AreaChart data={dailyActivityData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorActivity" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.25}/>
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.06)" />
+                <XAxis dataKey="day" tickLine={false} axisLine={false} stroke="#71717a" fontSize={10} />
+                <YAxis tickLine={false} axisLine={false} stroke="#71717a" fontSize={10} />
+                <Tooltip contentStyle={{ background: "#09090b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12 }} />
+                <Area type="monotone" dataKey="activity" stroke="#10b981" strokeWidth={2.5} fillOpacity={1} fill="url(#colorActivity)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="w-full h-full rounded-2xl bg-white/[0.02] border border-white/5 animate-pulse" />
+          )}
         </div>
       </section>
 

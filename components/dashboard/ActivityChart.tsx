@@ -47,6 +47,11 @@ export default function ActivityChart({
 }: {
   data: Array<{ day: string; modules: number }>;
 }) {
+  const [isMounted, setIsMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   return (
     <div className="w-full h-full min-h-[220px] flex flex-col justify-between" suppressHydrationWarning>
@@ -63,63 +68,67 @@ export default function ActivityChart({
         </div>
       </div>
 
-      <div className="flex-1 w-full h-[180px] min-h-[180px] relative">
-        <ResponsiveContainer width="100%" height={180}>
-          <AreaChart
-            data={data}
-            margin={{ top: 5, right: 5, left: -25, bottom: 0 }}
-          >
-            <defs>
-              <linearGradient id="colorHours" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.25} />
-                <stop offset="95%" stopColor="#6366f1" stopOpacity={0.0} />
-              </linearGradient>
-            </defs>
-            
-            <CartesianGrid 
-              strokeDasharray="3 3" 
-              vertical={false} 
-              stroke="rgba(255, 255, 255, 0.04)" 
-            />
+      <div className="flex-1 w-full h-[180px] min-h-[180px] min-w-0 relative">
+        {isMounted ? (
+          <ResponsiveContainer width="100%" height={180} minWidth={0} minHeight={180} debounce={50}>
+            <AreaChart
+              data={data}
+              margin={{ top: 5, right: 5, left: -25, bottom: 0 }}
+            >
+              <defs>
+                <linearGradient id="colorHours" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.25} />
+                  <stop offset="95%" stopColor="#6366f1" stopOpacity={0.0} />
+                </linearGradient>
+              </defs>
+              
+              <CartesianGrid 
+                strokeDasharray="3 3" 
+                vertical={false} 
+                stroke="rgba(255, 255, 255, 0.04)" 
+              />
 
-            <XAxis 
-              dataKey="day" 
-              stroke="#52525b" 
-              fontSize={10}
-              tickLine={false}
-              axisLine={false}
-              dy={8}
-            />
+              <XAxis 
+                dataKey="day" 
+                stroke="#52525b" 
+                fontSize={10}
+                tickLine={false}
+                axisLine={false}
+                dy={8}
+              />
 
-            <YAxis 
-              stroke="#52525b" 
-              fontSize={10}
-              tickLine={false}
-              axisLine={false}
-              dx={-8}
-            />
+              <YAxis 
+                stroke="#52525b" 
+                fontSize={10}
+                tickLine={false}
+                axisLine={false}
+                dx={-8}
+              />
 
-            <Tooltip 
-              content={<CustomTooltip />} 
-              cursor={{ stroke: 'rgba(139, 92, 246, 0.15)', strokeWidth: 1 }}
-            />
+              <Tooltip 
+                content={<CustomTooltip />} 
+                cursor={{ stroke: 'rgba(139, 92, 246, 0.15)', strokeWidth: 1 }}
+              />
 
-            <Area
-              type="monotone"
-              dataKey="modules"
-              stroke="#8b5cf6"
-              strokeWidth={2}
-              fillOpacity={1}
-              fill="url(#colorHours)"
-              activeDot={{ 
-                r: 4, 
-                stroke: '#8b5cf6', 
-                strokeWidth: 2, 
-                fill: '#030303' 
-              }}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
+              <Area
+                type="monotone"
+                dataKey="modules"
+                stroke="#8b5cf6"
+                strokeWidth={2}
+                fillOpacity={1}
+                fill="url(#colorHours)"
+                activeDot={{ 
+                  r: 4, 
+                  stroke: '#8b5cf6', 
+                  strokeWidth: 2, 
+                  fill: '#030303' 
+                }}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="w-full h-full rounded-2xl bg-white/[0.02] border border-white/5 animate-pulse" />
+        )}
       </div>
     </div>
   );
