@@ -48,7 +48,7 @@ export default function AuthLayout({ eyebrow, title, subtitle, children }: AuthL
           className="hidden border-r border-white/10 px-10 py-10 lg:flex lg:flex-col lg:justify-between xl:px-16"
         >
           <div>
-            <div className="inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/4 px-4 py-3 shadow-2xl shadow-cyan-500/5 backdrop-blur-xl">
+            <div className="inline-flex items-center gap-3 rounded-2xl border border-white/10 border-t-white/20 bg-white/4 px-4 py-3 shadow-2xl shadow-cyan-500/5 backdrop-blur-xl">
               <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-cyan-300 text-zinc-950">
                 <GraduationCap className="h-6 w-6" />
               </span>
@@ -58,18 +58,50 @@ export default function AuthLayout({ eyebrow, title, subtitle, children }: AuthL
               </div>
             </div>
 
-            <div className="mt-16 max-w-2xl">
-              <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.22em] text-cyan-200">
+            <motion.div
+              initial="hidden"
+              animate="show"
+              variants={{
+                hidden: { opacity: 0 },
+                show: {
+                  opacity: 1,
+                  transition: {
+                    staggerChildren: 0.1,
+                    delayChildren: 0.1,
+                  },
+                },
+              }}
+              className="mt-16 max-w-2xl"
+            >
+              <motion.p
+                variants={{
+                  hidden: { opacity: 0, y: 14 },
+                  show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: "easeOut" } },
+                }}
+                className="mb-4 inline-flex items-center gap-2 rounded-full border border-cyan-300/20 border-t-cyan-200/30 bg-cyan-300/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.22em] text-cyan-200"
+              >
                 <Sparkles className="h-3.5 w-3.5" />
                 Learn with momentum
-              </p>
-              <h1 className="text-5xl font-black leading-[1.02] tracking-tight text-white xl:text-6xl">
+              </motion.p>
+              <motion.h1
+                variants={{
+                  hidden: { opacity: 0, y: 16 },
+                  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
+                }}
+                className="text-[clamp(2.5rem,5.2vw,3.85rem)] font-black leading-[1.12] tracking-tight bg-gradient-to-br from-white via-white to-cyan-200 bg-clip-text text-transparent"
+              >
                 Build skills with a dashboard that keeps learning moving.
-              </h1>
-              <p className="mt-6 max-w-xl text-lg leading-8 text-zinc-300">
+              </motion.h1>
+              <motion.p
+                variants={{
+                  hidden: { opacity: 0, y: 14 },
+                  show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: "easeOut" } },
+                }}
+                className="mt-6 max-w-xl text-lg leading-8 text-zinc-300"
+              >
                 Track progress, manage courses, take notes, and earn certificates from one focused learning command center.
-              </p>
-            </div>
+              </motion.p>
+            </motion.div>
 
             <div className="mt-12 grid max-w-2xl grid-cols-2 gap-4">
               {features.map((feature, index) => {
@@ -80,8 +112,8 @@ export default function AuthLayout({ eyebrow, title, subtitle, children }: AuthL
                     key={feature.title}
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.12 + index * 0.06, duration: 0.45 }}
-                    className="rounded-2xl border border-white/10 bg-white/4.5 p-4 shadow-2xl shadow-black/20 backdrop-blur-xl"
+                    transition={{ delay: 0.22 + index * 0.06, duration: 0.45 }}
+                    className="rounded-2xl border border-white/10 border-t-white/20 bg-white/4.5 p-4 shadow-2xl shadow-black/20 backdrop-blur-xl"
                   >
                     <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-cyan-200">
                       <Icon className="h-5 w-5" />
@@ -94,10 +126,10 @@ export default function AuthLayout({ eyebrow, title, subtitle, children }: AuthL
             </div>
           </div>
 
-          <div className="relative mt-12 overflow-hidden rounded-4xl border border-white/10 bg-white/4 p-5 shadow-2xl shadow-cyan-500/10 backdrop-blur-xl">
+          <div className="relative mt-12 overflow-hidden rounded-4xl border border-white/10 border-t-white/20 bg-white/4 p-5 shadow-2xl shadow-cyan-500/10 backdrop-blur-xl">
             <div className="absolute right-6 top-6 h-24 w-24 rounded-full bg-cyan-300/20 blur-3xl" />
             <div className="grid grid-cols-[1fr_0.75fr] gap-4">
-              <div className="rounded-3xl border border-white/10 bg-zinc-950/70 p-5">
+              <div className="rounded-3xl border border-white/10 border-t-white/20 bg-zinc-950/70 p-5">
                 <div className="mb-5 flex items-center justify-between">
                   <div>
                     <p className="text-xs font-semibold text-zinc-500">Weekly progress</p>
@@ -112,11 +144,11 @@ export default function AuthLayout({ eyebrow, title, subtitle, children }: AuthL
                 </div>
               </div>
               <div className="space-y-4">
-                <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                <div className="rounded-3xl border border-white/10 border-t-white/15 bg-white/5 p-4">
                   <p className="text-xs font-semibold text-zinc-500">Certificates</p>
                   <p className="mt-2 text-2xl font-black">12</p>
                 </div>
-                <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                <div className="rounded-3xl border border-white/10 border-t-white/15 bg-white/5 p-4">
                   <p className="text-xs font-semibold text-zinc-500">Smart notes</p>
                   <p className="mt-2 text-2xl font-black">248</p>
                 </div>
@@ -142,7 +174,7 @@ export default function AuthLayout({ eyebrow, title, subtitle, children }: AuthL
               </div>
             </div>
 
-            <div className="rounded-4xl border border-white/10 bg-zinc-950/65 p-5 shadow-2xl shadow-black/40 backdrop-blur-2xl sm:p-8">
+            <div className="rounded-4xl border border-white/10 border-t-white/20 bg-zinc-950/65 p-5 shadow-2xl shadow-black/40 backdrop-blur-2xl sm:p-8">
               <div className="mb-8">
                 <p className="text-xs font-bold uppercase tracking-[0.22em] text-cyan-200">{eyebrow}</p>
                 <h2 className="mt-3 text-3xl font-black tracking-tight text-white sm:text-4xl">{title}</h2>

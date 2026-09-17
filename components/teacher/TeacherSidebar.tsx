@@ -64,7 +64,7 @@ export default function TeacherSidebar({ teacherProfile, isMobile = false }: Tea
       className={
         isMobile
           ? "flex flex-col h-full w-full justify-between"
-          : "hidden w-72 shrink-0 border-r border-white/10 bg-zinc-950/60 px-4 py-5 backdrop-blur-xl lg:flex lg:flex-col h-screen sticky top-0"
+          : "hidden w-72 shrink-0 vt-sidebar border-r border-white/10 bg-zinc-950/60 px-4 py-5 backdrop-blur-xl lg:flex lg:flex-col h-screen sticky top-0"
       }
     >
       <div>

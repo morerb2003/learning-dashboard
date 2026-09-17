@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { motion, Variants } from "framer-motion";
+import { motion, Variants, useReducedMotion } from "framer-motion";
 
 interface FadeInProps {
   children: React.ReactNode;
@@ -22,6 +22,8 @@ export function FadeIn({
   duration = 0.55,
   once = true,
 }: FadeInProps) {
+  const shouldReduceMotion = useReducedMotion();
+
   const directions = {
     up: { y: distance, x: 0 },
     down: { y: -distance, x: 0 },
@@ -30,10 +32,12 @@ export function FadeIn({
     none: { x: 0, y: 0 },
   };
 
-  const initial = {
-    opacity: 0,
-    ...directions[direction],
-  };
+  const initial = shouldReduceMotion
+    ? { opacity: 1, x: 0, y: 0 }
+    : {
+        opacity: 0,
+        ...directions[direction],
+      };
 
   return (
     <motion.div
@@ -44,11 +48,15 @@ export function FadeIn({
         y: 0,
       }}
       viewport={{ once, margin: "-40px" }}
-      transition={{
-        duration,
-        delay,
-        ease: [0.21, 0.47, 0.32, 0.98],
-      }}
+      transition={
+        shouldReduceMotion
+          ? { duration: 0 }
+          : {
+              duration,
+              delay,
+              ease: [0.21, 0.47, 0.32, 0.98],
+            }
+      }
       className={className}
     >
       {children}
@@ -69,14 +77,18 @@ export function Stagger({
   staggerDelay = 0.08,
   delayChildren = 0.1,
 }: StaggerProps) {
+  const shouldReduceMotion = useReducedMotion();
+
   const containerVariants: Variants = {
-    hidden: { opacity: 0 },
+    hidden: { opacity: shouldReduceMotion ? 1 : 0 },
     show: {
       opacity: 1,
-      transition: {
-        staggerChildren: staggerDelay,
-        delayChildren,
-      },
+      transition: shouldReduceMotion
+        ? { duration: 0 }
+        : {
+            staggerChildren: staggerDelay,
+            delayChildren,
+          },
     },
   };
 
@@ -100,16 +112,20 @@ export function StaggerItem({
   children: React.ReactNode;
   className?: string;
 }) {
+  const shouldReduceMotion = useReducedMotion();
+
   const itemVariants: Variants = {
-    hidden: { opacity: 0, y: 20 },
+    hidden: { opacity: shouldReduceMotion ? 1 : 0, y: shouldReduceMotion ? 0 : 20 },
     show: {
       opacity: 1,
       y: 0,
-      transition: {
-        type: "spring",
-        stiffness: 260,
-        damping: 24,
-      },
+      transition: shouldReduceMotion
+        ? { duration: 0 }
+        : {
+            type: "spring",
+            stiffness: 260,
+            damping: 24,
+          },
     },
   };
 
@@ -119,3 +135,4 @@ export function StaggerItem({
     </motion.div>
   );
 }
+

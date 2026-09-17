@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { getSafeRedirectPath } from "@/lib/auth/redirects";
+import MagneticButton from "@/components/motion/MagneticButton";
 
 const GoogleIcon = () => (
   <svg viewBox="0 0 24 24" className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -53,21 +54,23 @@ export default function GoogleButton({ mode = "login" }: GoogleButtonProps) {
           {error}
         </p>
       )}
-      <motion.button
-        type="button"
-        whileHover={{ y: -1 }}
-        whileTap={{ scale: 0.985 }}
-        onClick={handleGoogleAuth}
-        disabled={isLoading}
-        className="group relative flex h-12 w-full items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white px-5 text-sm font-bold text-zinc-950 shadow-xl shadow-white/5 outline-none transition hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-cyan-300/70 disabled:cursor-not-allowed disabled:opacity-70"
-      >
-        {isLoading ? (
-          <span className="h-5 w-5 rounded-full border-2 border-zinc-950/20 border-t-zinc-950 motion-safe:animate-spin" />
-        ) : (
-          <GoogleIcon />
-        )}
-        {isLoading ? "Connecting..." : mode === "register" ? "Sign up with Google" : "Continue with Google"}
-      </motion.button>
+      <MagneticButton strength={0.2}>
+        <motion.button
+          type="button"
+          whileHover={{ y: -1 }}
+          whileTap={{ scale: 0.985 }}
+          onClick={handleGoogleAuth}
+          disabled={isLoading}
+          className="group relative flex h-12 w-full items-center justify-center gap-3 rounded-2xl border border-white/10 border-t-white/40 bg-white px-5 text-sm font-bold text-zinc-950 shadow-xl shadow-white/5 outline-none transition hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 disabled:cursor-not-allowed disabled:opacity-70 cursor-pointer"
+        >
+          {isLoading ? (
+            <span className="h-5 w-5 rounded-full border-2 border-zinc-950/20 border-t-zinc-950 motion-safe:animate-spin" />
+          ) : (
+            <GoogleIcon />
+          )}
+          {isLoading ? "Connecting..." : mode === "register" ? "Sign up with Google" : "Continue with Google"}
+        </motion.button>
+      </MagneticButton>
     </div>
   );
 }

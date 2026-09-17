@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/client";
 import { getSafeRedirectPath } from "@/lib/auth/redirects";
 import GoogleButton from "@/components/auth/GoogleButton";
 import PasswordInput from "@/components/auth/PasswordInput";
+import MagneticButton from "@/components/motion/MagneticButton";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -134,7 +135,7 @@ export default function LoginForm() {
               onChange={(event) => setEmail(event.target.value)}
               autoComplete="email"
               required
-              className="h-12 w-full rounded-2xl border border-white/10 bg-white/[0.04] pl-11 pr-4 text-sm text-white shadow-inner shadow-black/10 outline-none transition-all duration-200 placeholder:text-zinc-600 focus:border-cyan-300/60 focus:bg-white/[0.07] focus:ring-4 focus:ring-cyan-300/10"
+              className="h-12 w-full rounded-2xl border border-white/10 bg-white/[0.04] pl-11 pr-4 text-sm text-white shadow-inner shadow-black/10 outline-none transition-all duration-200 placeholder:text-zinc-600 focus:border-cyan-300/60 focus:bg-white/[0.07] focus:ring-2 focus:ring-cyan-400/30 focus-visible:ring-2 focus-visible:ring-cyan-400"
               placeholder="you@example.com"
             />
           </span>
@@ -157,7 +158,7 @@ export default function LoginForm() {
               type="checkbox"
               checked={rememberEmail}
               onChange={(event) => setRememberEmail(event.target.checked)}
-              className="h-4 w-4 rounded border-white/10 bg-zinc-950 accent-cyan-300"
+              className="h-4 w-4 rounded border-white/10 bg-zinc-950 accent-cyan-300 focus-visible:ring-2 focus-visible:ring-cyan-400"
             />
             Remember me
           </label>
@@ -165,22 +166,24 @@ export default function LoginForm() {
             type="button"
             onClick={handlePasswordReset}
             disabled={isSendingReset}
-            className="rounded-lg text-sm font-bold text-cyan-200 outline-none transition hover:text-white focus-visible:ring-2 focus-visible:ring-cyan-300/60 disabled:opacity-60"
+            className="rounded-lg text-sm font-bold text-cyan-200 outline-none transition hover:text-white focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none disabled:opacity-60 cursor-pointer"
           >
             {isSendingReset ? "Sending..." : "Forgot password?"}
           </button>
         </div>
 
-        <motion.button
-          type="submit"
-          disabled={isSubmitting}
-          whileHover={{ y: -1 }}
-          whileTap={{ scale: 0.985 }}
-          className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-300 via-sky-300 to-violet-300 px-6 text-sm font-black text-zinc-950 shadow-xl shadow-cyan-500/20 outline-none transition focus-visible:ring-2 focus-visible:ring-cyan-200 disabled:cursor-not-allowed disabled:opacity-70"
-        >
-          {isSubmitting && <Loader2 className="h-4 w-4 motion-safe:animate-spin" />}
-          {isSubmitting ? "Signing in..." : "Login"}
-        </motion.button>
+        <MagneticButton strength={0.2}>
+          <motion.button
+            type="submit"
+            disabled={isSubmitting}
+            whileHover={{ y: -1 }}
+            whileTap={{ scale: 0.985 }}
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-300 via-sky-300 to-violet-300 px-6 text-sm font-black text-zinc-950 shadow-xl shadow-cyan-500/20 outline-none transition focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 disabled:cursor-not-allowed disabled:opacity-70 cursor-pointer"
+          >
+            {isSubmitting && <Loader2 className="h-4 w-4 motion-safe:animate-spin" />}
+            {isSubmitting ? "Signing in..." : "Login"}
+          </motion.button>
+        </MagneticButton>
       </form>
 
       <div className="flex items-center gap-3">
@@ -193,7 +196,7 @@ export default function LoginForm() {
 
       <p className="text-center text-sm font-medium text-zinc-500">
         Do not have an account?{" "}
-        <Link href="/register" className="font-bold text-cyan-200 outline-none transition hover:text-white focus-visible:ring-2 focus-visible:ring-cyan-300/60">
+        <Link href="/register" className="font-bold text-cyan-200 outline-none transition hover:text-white focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none rounded-md px-1 py-0.5">
           Register
         </Link>
       </p>

@@ -10,6 +10,7 @@ import { getSafeRedirectPath } from "@/lib/auth/redirects";
 import GoogleButton from "@/components/auth/GoogleButton";
 import PasswordInput from "@/components/auth/PasswordInput";
 import PasswordStrength, { getPasswordStrength } from "@/components/auth/PasswordStrength";
+import MagneticButton from "@/components/motion/MagneticButton";
 
 type SignupRole = "student" | "teacher";
 
@@ -231,26 +232,28 @@ export default function RegisterForm() {
             type="checkbox"
             checked={acceptedTerms}
             onChange={(event) => setAcceptedTerms(event.target.checked)}
-            className="mt-0.5 h-4 w-4 rounded border-white/10 bg-zinc-950 accent-cyan-300"
+            className="mt-0.5 h-4 w-4 rounded border-white/10 bg-zinc-950 accent-cyan-300 focus-visible:ring-2 focus-visible:ring-cyan-400"
           />
           <span>
             I agree to the{" "}
-            <Link href="#" className="font-bold text-cyan-200 outline-none transition hover:text-white focus-visible:ring-2 focus-visible:ring-cyan-300/60">
+            <Link href="#" className="font-bold text-cyan-200 outline-none transition hover:text-white focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none rounded-md px-1">
               Terms & Conditions
             </Link>
           </span>
         </label>
 
-        <motion.button
-          type="submit"
-          disabled={isSubmitting}
-          whileHover={{ y: -1 }}
-          whileTap={{ scale: 0.985 }}
-          className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-300 via-sky-300 to-violet-300 px-6 text-sm font-black text-zinc-950 shadow-xl shadow-cyan-500/20 outline-none transition focus-visible:ring-2 focus-visible:ring-cyan-200 disabled:cursor-not-allowed disabled:opacity-70"
-        >
-          {isSubmitting && <Loader2 className="h-4 w-4 motion-safe:animate-spin" />}
-          {isSubmitting ? "Creating account..." : "Create account"}
-        </motion.button>
+        <MagneticButton strength={0.2}>
+          <motion.button
+            type="submit"
+            disabled={isSubmitting}
+            whileHover={{ y: -1 }}
+            whileTap={{ scale: 0.985 }}
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-300 via-sky-300 to-violet-300 px-6 text-sm font-black text-zinc-950 shadow-xl shadow-cyan-500/20 outline-none transition focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 disabled:cursor-not-allowed disabled:opacity-70 cursor-pointer"
+          >
+            {isSubmitting && <Loader2 className="h-4 w-4 motion-safe:animate-spin" />}
+            {isSubmitting ? "Creating account..." : "Create account"}
+          </motion.button>
+        </MagneticButton>
       </form>
 
       <div className="flex items-center gap-3">
@@ -263,7 +266,7 @@ export default function RegisterForm() {
 
       <p className="text-center text-sm font-medium text-zinc-500">
         Already have an account?{" "}
-        <Link href="/login" className="font-bold text-cyan-200 outline-none transition hover:text-white focus-visible:ring-2 focus-visible:ring-cyan-300/60">
+        <Link href="/login" className="font-bold text-cyan-200 outline-none transition hover:text-white focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none rounded-md px-1 py-0.5">
           Login
         </Link>
       </p>

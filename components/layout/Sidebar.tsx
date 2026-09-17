@@ -173,7 +173,7 @@ export default function Sidebar({ activeTab, setActiveTab, profile }: SidebarPro
       {/* Desktop/Tablet Sidebar */}
       <aside 
         className={`
-          hidden md:flex flex-col shrink-0
+          hidden md:flex flex-col shrink-0 vt-sidebar
           bg-zinc-950/40 backdrop-blur-xl border-r border-white/10
           h-screen sticky top-0 transition-all duration-300 ease-in-out z-30
           ${isCollapsed ? "w-20" : "w-20 lg:w-64"}

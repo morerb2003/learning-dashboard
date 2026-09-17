@@ -6,4 +6,5 @@ export { default as AnimatedCounter } from "./AnimatedCounter";
 export { FadeIn, Stagger, StaggerItem } from "./FadeIn";
 export { default as TextReveal } from "./TextReveal";
 export { default as FloatingBadge } from "./FloatingBadge";
+export { default as MagneticButton } from "./MagneticButton";
 
