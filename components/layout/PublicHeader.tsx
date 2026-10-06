@@ -57,10 +57,11 @@ export default function PublicHeader({ user }: PublicHeaderProps) {
           {[
             { href: "/", label: "Home" },
             { href: "/dashboard", label: "Courses" },
+            { href: "/pricing", label: "Pricing & Pro" },
             { href: "/community", label: "Community" },
-            { href: "#features", label: "Features" },
-            { href: "#why-aura", label: "Why AURA" },
-            { href: "#faq", label: "FAQ" },
+            { href: "/#features", label: "Features" },
+            { href: "/#why-aura", label: "Why AURA" },
+            { href: "/#faq", label: "FAQ" },
           ].map((item) => (
             <Link
               key={item.label}
@@ -142,6 +143,13 @@ export default function PublicHeader({ user }: PublicHeaderProps) {
                 className="hover:text-white py-1"
               >
                 Courses
+              </Link>
+              <Link
+                href="/pricing"
+                onClick={() => setMobileMenuOpen(false)}
+                className="hover:text-white py-1 text-violet-400 font-bold"
+              >
+                Pricing &amp; Pro
               </Link>
               <Link
                 href="/community"

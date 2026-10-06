@@ -3,14 +3,15 @@ import { getCurrentUser } from "@/lib/auth/roles";
 import { redirect } from "next/navigation";
 import { DollarSign, TrendingUp, Percent, Wallet, ShoppingBag } from "lucide-react";
 import CsvDownloadButton from "@/components/teacher/CsvDownloadButton";
+import TeacherPayoutTrigger from "@/components/teacher/TeacherPayoutTrigger";
 
 export const dynamic = "force-dynamic";
 
 function fmt(cents: number) {
-  return (cents / 100).toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-  });
+  return `₹${(cents / 100).toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 }
 
 function formatDate(iso: string) {
@@ -179,13 +180,16 @@ export default async function TeacherEarningsPage() {
           </p>
         </div>
 
-        {csvRows.length > 0 && (
-          <CsvDownloadButton
-            filename={`teacher-earnings-${new Date().toISOString().slice(0, 10)}.csv`}
-            rows={csvRows}
-            label="Export Ledger CSV"
-          />
-        )}
+        <div className="flex items-center gap-3">
+          <TeacherPayoutTrigger availableBalanceCents={netEarningsCents} />
+          {csvRows.length > 0 && (
+            <CsvDownloadButton
+              filename={`teacher-earnings-${new Date().toISOString().slice(0, 10)}.csv`}
+              rows={csvRows}
+              label="Export Ledger CSV"
+            />
+          )}
+        </div>
       </div>
 
       {/* ── KPI Cards ──────────────────────────────────────────────────────── */}

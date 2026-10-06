@@ -38,7 +38,7 @@ interface RevenueDashboardProps {
 
 /* ─── Helpers ─────────────────────────────────────────────────────────────────── */
 function fmt(n: number) {
-  return n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 });
+  return `₹${n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 function renderSortIcon(

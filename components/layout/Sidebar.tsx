@@ -21,6 +21,9 @@ import {
   MessagesSquare, 
   User,
   CheckSquare,
+  DollarSign,
+  TrendingUp,
+  Zap,
 } from "lucide-react";
 
 export type TabId = 
@@ -78,6 +81,7 @@ export default function Sidebar({ activeTab, setActiveTab, profile }: SidebarPro
           items: [
             { id: "courses", label: "Catalog", icon: BookOpen, href: "/teacher/courses" },
             { id: "assignments", label: "Assignments", icon: ClipboardList, href: "/teacher/assignments" },
+            { id: "earnings" as any, label: "Earnings & Payouts", icon: DollarSign, href: "/teacher/earnings" },
             { id: "notes", label: "Notes", icon: StickyNote },
           ],
         },
@@ -103,6 +107,7 @@ export default function Sidebar({ activeTab, setActiveTab, profile }: SidebarPro
           title: "MANAGEMENT",
           items: [
             { id: "courses", label: "Catalog", icon: BookOpen, href: "/admin/courses" },
+            { id: "revenue" as any, label: "Revenue & Sales", icon: TrendingUp, href: "/admin/analytics/revenue" },
             { id: "notes", label: "Notes", icon: StickyNote },
           ],
         },
@@ -122,6 +127,7 @@ export default function Sidebar({ activeTab, setActiveTab, profile }: SidebarPro
         title: "OVERVIEW",
         items: [
           { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
+          { id: "pricing" as any, label: "Plans & Pro", icon: Zap, href: "/pricing" },
         ],
       },
       {

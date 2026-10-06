@@ -11,6 +11,8 @@ interface CheckoutModalProps {
   title: string;
   price: number;
   courseId?: string; // If undefined, it is a subscription purchase
+  planCode?: "pro" | "premium";
+  billingCycle?: "monthly" | "yearly";
 }
 
 interface RazorpayResponse {
@@ -70,6 +72,8 @@ export default function CheckoutModal({
   title,
   price,
   courseId,
+  planCode = "pro",
+  billingCycle = "monthly",
 }: CheckoutModalProps) {
   const [couponCode, setCouponCode] = useState("");
   const [discountPercent, setDiscountPercent] = useState<number | null>(null);
@@ -118,8 +122,8 @@ export default function CheckoutModal({
         body: JSON.stringify({
           purchaseType: courseId ? "course" : "subscription",
           courseId: courseId || undefined,
-          planCode: courseId ? undefined : "pro",
-          billingCycle: courseId ? undefined : "monthly",
+          planCode: courseId ? undefined : planCode,
+          billingCycle: courseId ? undefined : billingCycle,
           couponCode: couponCode.trim() || undefined,
           idempotencyKey: crypto.randomUUID(),
         }),

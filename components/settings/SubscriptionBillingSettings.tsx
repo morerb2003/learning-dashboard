@@ -38,21 +38,20 @@ export default function SubscriptionBillingSettings() {
           </div>
 
           <div className="text-right space-y-2 self-start md:self-auto">
-            <div className="text-2xl font-black text-white">$149<span className="text-xs font-normal text-zinc-400">/year</span></div>
+            <div className="text-2xl font-black text-white">₹4,990<span className="text-xs font-normal text-zinc-400">/year</span></div>
             <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => alert("Subscription upgrade options: Pro Plus ($249/yr) with 1-on-1 mentorship.")}
-                className="px-4 py-2 rounded-xl bg-cyan-400 text-zinc-950 text-xs font-bold hover:brightness-110 transition"
+              <a
+                href="/pricing"
+                className="px-4 py-2 rounded-xl bg-cyan-400 text-zinc-950 text-xs font-bold hover:brightness-110 transition inline-block text-center"
               >
                 Upgrade Plan
-              </button>
+              </a>
               <button
                 type="button"
-                onClick={() => alert("To cancel, please click 'Confirm Cancellation' in the confirmation prompt.")}
+                onClick={() => alert("Your subscription is active. If you wish to cancel renewal, please contact support@aura-lms.com.")}
                 className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white text-xs font-bold transition"
               >
-                Cancel
+                Manage
               </button>
             </div>
           </div>
