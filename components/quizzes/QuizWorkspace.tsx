@@ -328,6 +328,19 @@ export default function QuizWorkspace({
         );
         return [attempt, ...remaining];
       });
+
+      // Award XP, trigger live activity pulse and notifications in real time
+      void fetch("/api/quizzes/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          quizId: selectedQuiz.id,
+          quizTitle: selectedQuiz.title,
+          score,
+          totalScore,
+        }),
+      }).catch(() => {});
+
       setStatusMessage(`Score saved: ${score}/${totalScore}`);
       router.refresh();
     } catch (error) {

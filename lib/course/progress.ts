@@ -9,7 +9,7 @@ async function getCurrentUserId() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  return { supabase, userId: user?.id ?? null };
+  return { supabase, userId: user?.id ?? null, user };
 }
 
 /**
@@ -18,7 +18,7 @@ async function getCurrentUserId() {
  * the enrollment progress percentage for the given course.
  */
 export async function markLessonComplete(lessonId: string, courseId: string) {
-  const { supabase, userId } = await getCurrentUserId();
+  const { supabase, userId, user } = await getCurrentUserId();
   if (!userId) return { error: "Not authenticated" };
 
   // 1. Upsert the lesson_progress row
@@ -82,7 +82,61 @@ export async function markLessonComplete(lessonId: string, courseId: string) {
     return { error: enrollmentError.message };
   }
 
-  // 5. Revalidate all affected pages
+  // 5. Record learner XP & push live activity telemetry
+  try {
+    const { data: userProfile } = await supabase
+      .from("profiles")
+      .select("full_name, avatar_url")
+      .eq("id", userId)
+      .maybeSingle();
+
+    const userName =
+      userProfile?.full_name ||
+      user?.user_metadata?.full_name ||
+      user?.email?.split("@")[0] ||
+      "Learner";
+
+    const { data: courseRow } = await supabase
+      .from("courses")
+      .select("title")
+      .eq("id", courseId)
+      .maybeSingle();
+
+    const courseTitle = courseRow?.title || "Course";
+
+    // Award +50 XP for completing a lesson
+    const { recordLearnerXP, recordActivityPulse } = await import("@/lib/telemetry");
+    await recordLearnerXP(userId, userName, 50, userProfile?.avatar_url);
+
+    await recordActivityPulse({
+      type: "lesson_complete",
+      actor: userName,
+      title: `Completed lesson in ${courseTitle}`,
+    });
+
+    // Milestone bonus: 100% completion of course
+    if (progressPct >= 100) {
+      await recordLearnerXP(userId, userName, 250, userProfile?.avatar_url);
+      await recordActivityPulse({
+        type: "certificate",
+        actor: userName,
+        title: `Earned Certificate of Completion in ${courseTitle}!`,
+      });
+
+      // Add a celebration notification
+      await supabase.from("notifications").insert({
+        user_id: userId,
+        title: "Course Completed! 🎓",
+        message: `Congratulations! You completed ${courseTitle} and earned 250 bonus XP!`,
+        href: `/course/${courseId}`,
+        created_at: new Date().toISOString(),
+      });
+    }
+  } catch (telemetryError) {
+    console.warn("[Progress] Failed to record telemetry:", telemetryError);
+  }
+
+  // 6. Revalidate all affected pages
   revalidatePath(`/course/${courseId}`);
   revalidatePath(`/course/${courseId}/lesson/${lessonId}`);
   revalidatePath("/learning");

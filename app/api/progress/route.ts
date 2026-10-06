@@ -79,6 +79,41 @@ export async function POST(request: NextRequest) {
           .eq("user_id", user.id)
           .eq("course_id", courseId);
 
+        // 5. Record learner XP & push live activity telemetry
+        try {
+          const userName =
+            user.full_name ||
+            user.email?.split("@")[0] ||
+            "Learner";
+
+          const { data: courseRow } = await supabase
+            .from("courses")
+            .select("title")
+            .eq("id", courseId)
+            .maybeSingle();
+
+          const courseTitle = courseRow?.title || "Course";
+
+          const { recordLearnerXP, recordActivityPulse } = await import("@/lib/telemetry");
+          await recordLearnerXP(user.id, userName, 50, user.avatar_url);
+          await recordActivityPulse({
+            type: "lesson_complete",
+            actor: userName,
+            title: `Completed lesson in ${courseTitle}`,
+          });
+
+          if (progressPct >= 100) {
+            await recordLearnerXP(user.id, userName, 250, user.avatar_url);
+            await recordActivityPulse({
+              type: "certificate",
+              actor: userName,
+              title: `Earned Certificate of Completion in ${courseTitle}!`,
+            });
+          }
+        } catch (telemetryErr) {
+          console.warn("[Progress API] Failed to record telemetry:", telemetryErr);
+        }
+
         return NextResponse.json({ success: true, progressPct });
       }
     }

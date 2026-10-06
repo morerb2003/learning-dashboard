@@ -95,7 +95,7 @@ export default function CommunityWorkspace({
 
   useEffect(() => {
     const channel = supabase
-      .channel(`community-messages:${currentUser.id}`)
+      .channel(`community-live:${currentUser.id}`)
       .on(
         "postgres_changes",
         {
@@ -114,6 +114,51 @@ export default function CommunityWorkspace({
               incoming,
             ]);
           }
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "course_discussions",
+        },
+        (payload) => {
+          const incoming = payload.new as Discussion;
+          setDiscussions((current) => [
+            incoming,
+            ...current.filter((item) => item.id !== incoming.id),
+          ]);
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "discussion_replies",
+        },
+        (payload) => {
+          const incoming = payload.new as DiscussionReply;
+          setReplies((current) => [
+            ...current.filter((item) => item.id !== incoming.id),
+            incoming,
+          ]);
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "announcements",
+        },
+        (payload) => {
+          const incoming = payload.new as Announcement;
+          setAnnouncements((current) => [
+            incoming,
+            ...current.filter((item) => item.id !== incoming.id),
+          ]);
         }
       )
       .subscribe();
