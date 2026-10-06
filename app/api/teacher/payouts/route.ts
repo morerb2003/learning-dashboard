@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/roles";
 import { createClient } from "@/lib/supabase/server";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser();
     if (!user || (user.role !== "teacher" && user.role !== "admin")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const rl = await checkRateLimit("generalApi", user.id);
+    if (!rl.success) {
+      return rateLimitResponse(rl.reset, "Too many payout requests. Please try again in a few minutes.");
     }
 
     const body = await request.json();

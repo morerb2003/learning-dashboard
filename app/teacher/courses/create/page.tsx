@@ -225,6 +225,11 @@ export default function CreateCoursePage() {
                   className="hidden"
                   onChange={(event) => {
                     const file = event.target.files?.[0] ?? null;
+                    if (file && file.size > 5 * 1024 * 1024) {
+                      setError("Thumbnail must be smaller than 5MB.");
+                      return;
+                    }
+                    setError(null);
                     setThumbnailFile(file);
                     setThumbnailPreview(file ? URL.createObjectURL(file) : "");
                   }}

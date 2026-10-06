@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/roles";
 import { askAiTutor } from "@/lib/ai/service";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized. Please log in to use AI Tutor." }, { status: 401 });
+    }
+
+    const rl = await checkRateLimit("aiGeneration", user.id);
+    if (!rl.success) {
+      return rateLimitResponse(rl.reset, "AI Tutor query limit reached. Please wait a minute before asking more questions.");
     }
 
     const body = await request.json();

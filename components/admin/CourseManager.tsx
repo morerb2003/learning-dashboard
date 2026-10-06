@@ -133,6 +133,11 @@ export default function CourseManager({
   };
 
   const handleThumbnailChange = (file: File | null) => {
+    if (file && file.size > 5 * 1024 * 1024) {
+      setSaveError("Thumbnail image must be smaller than 5MB.");
+      return;
+    }
+    setSaveError(null);
     setThumbnailFile(file);
     if (file) {
       setThumbnailPreview(URL.createObjectURL(file));

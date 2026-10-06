@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/roles";
 import { generateAiQuiz } from "@/lib/ai/service";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,6 +11,11 @@ export async function POST(request: NextRequest) {
         { error: "Unauthorized. Teacher or Admin privileges required." },
         { status: 403 }
       );
+    }
+
+    const rl = await checkRateLimit("aiGeneration", user.id);
+    if (!rl.success) {
+      return rateLimitResponse(rl.reset, "AI Quiz generation limit reached. Please wait a minute before generating more quizzes.");
     }
 
     const body = await request.json();
