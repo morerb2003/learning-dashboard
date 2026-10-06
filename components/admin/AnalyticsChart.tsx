@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo } from "react";
+import { useIsMounted } from "@/lib/hooks/useIsMounted";
 import {
   BarChart,
   Bar,
@@ -56,11 +57,7 @@ export default function AnalyticsChart({
   attempts,
   submissions,
 }: AnalyticsChartProps) {
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  const isMounted = useIsMounted();
   
   // 1. Role Distribution Data (Pie Chart)
   const roleData = useMemo(() => {

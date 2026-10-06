@@ -23,6 +23,7 @@ import {
 import CourseReviews from "@/components/course/CourseReviews";
 import type { CourseReview } from "@/types/review";
 import PremiumEnrollButton from "@/components/course/PremiumEnrollButton";
+import CourseViewsBadge from "@/components/telemetry/CourseViewsBadge";
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
 interface CatalogueLesson {
@@ -344,7 +345,8 @@ export default async function CourseDetailPage({
                   {course.description || "No course description has been added yet."}
                 </p>
 
-                <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pt-2">
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-3 pt-2">
+                  <CourseViewsBadge courseId={course.id} />
                   <div className="flex items-center gap-1.5 text-xs text-zinc-400">
                     <BarChart3 className="w-3.5 h-3.5 text-zinc-500" />
                     {course.category || "General"}

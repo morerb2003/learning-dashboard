@@ -36,6 +36,8 @@ import NotificationBell from "@/components/notifications/NotificationBell";
 import RealtimeRefresh from "@/components/realtime/RealtimeRefresh";
 import DashboardFooter from "@/components/layout/DashboardFooter";
 import CourseCard from "./CourseCard";
+import LiveLeaderboardCard from "@/components/telemetry/LiveLeaderboardCard";
+import LiveActivityPulse from "@/components/telemetry/LiveActivityPulse";
 
 const NotesView = dynamic(() => import("./NotesView"), {
   loading: () => (
@@ -257,12 +259,18 @@ export default function Dashboard({
           
           {/* 1. Dashboard View */}
           {activeTab === "dashboard" && (
-            <BentoGrid
-              courses={initialCourses}
-              fullName={profile.full_name}
-              totalCompletedLessons={totalCompletedLessons}
-              analytics={analytics}
-            />
+            <div className="space-y-8">
+              <BentoGrid
+                courses={initialCourses}
+                fullName={profile.full_name}
+                totalCompletedLessons={totalCompletedLessons}
+                analytics={analytics}
+              />
+              <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <LiveLeaderboardCard />
+                <LiveActivityPulse />
+              </div>
+            </div>
           )}
 
           {/* 2. Courses View */}

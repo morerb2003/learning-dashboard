@@ -7,14 +7,12 @@ test.describe("authentication", () => {
     await expect(
       page.getByRole("heading", { name: "Learn smarter. Teach better." })
     ).toBeVisible();
-    await expect(page.getByRole("link", { name: "Get started" })).toHaveAttribute(
-      "href",
-      "/register"
-    );
-    await expect(page.getByRole("link", { name: "Log in" })).toHaveAttribute(
-      "href",
-      "/login"
-    );
+    await expect(
+      page.getByRole("link", { name: /start learning free|get started/i }).first()
+    ).toHaveAttribute("href", "/register");
+    await expect(
+      page.getByRole("link", { name: /sign in|log in/i }).first()
+    ).toHaveAttribute("href", "/login");
   });
 
   test("protected routes redirect anonymous users to login", async ({ page }) => {

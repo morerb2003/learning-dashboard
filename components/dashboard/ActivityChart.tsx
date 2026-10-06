@@ -1,4 +1,5 @@
 "use client";
+import { useIsMounted } from "@/lib/hooks/useIsMounted";
 
 import React from "react";
 import { 
@@ -47,11 +48,7 @@ export default function ActivityChart({
 }: {
   data: Array<{ day: string; modules: number }>;
 }) {
-  const [isMounted, setIsMounted] = React.useState(false);
-
-  React.useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  const isMounted = useIsMounted();
 
   return (
     <div className="w-full h-full min-h-[220px] flex flex-col justify-between" suppressHydrationWarning>

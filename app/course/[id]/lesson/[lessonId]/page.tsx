@@ -12,6 +12,7 @@ import { getCurrentUser } from "@/lib/auth/roles";
 import { getLessonProgressForCourse } from "@/lib/course/progress";
 import MarkCompleteButton from "@/components/course/MarkCompleteButton";
 import VideoPlayer from "@/components/course/VideoPlayer";
+import AiTutorDrawer from "@/components/ai/AiTutorDrawer";
 
 export const dynamic = "force-dynamic";
 
@@ -255,6 +256,9 @@ export default async function LessonPage({ params }: LessonPageProps) {
           </aside>
         </section>
       </main>
+
+      {/* AI Study Tutor Drawer */}
+      <AiTutorDrawer courseTitle={course.title} lessonTitle={lesson.title} />
     </div>
   );
 }

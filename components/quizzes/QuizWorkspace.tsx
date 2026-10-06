@@ -16,6 +16,7 @@ import {
   Trophy,
   Users,
 } from "lucide-react";
+import AiQuizGeneratorModal from "@/components/ai/AiQuizGeneratorModal";
 
 type QuizCourse = {
   id: string;
@@ -388,12 +389,39 @@ export default function QuizWorkspace({
         </div>
 
         <section className="relative overflow-hidden rounded-3xl border border-white/5 bg-white/[0.02] p-6">
-          <div className="mb-5 flex items-center justify-between gap-4 border-b border-white/5 pb-4">
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-4 border-b border-white/5 pb-4">
             <div>
               <h2 className="text-sm font-bold text-white">Create Quiz</h2>
               <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-widest text-zinc-500">MCQ and True/False questions</p>
             </div>
-            <div className="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-cyan-300">Teacher only</div>
+            <div className="flex items-center gap-3">
+              <AiQuizGeneratorModal
+                onUseQuiz={(aiQuiz) => {
+                  setDraftTitle(aiQuiz.title);
+                  setDraftDescription(aiQuiz.description);
+                  setDraftQuestions(
+                    aiQuiz.questions.map((q) => {
+                      const opts: [string, string, string, string] = [
+                        q.options[0] || "",
+                        q.options[1] || "",
+                        q.options[2] || "",
+                        q.options[3] || "",
+                      ];
+                      return {
+                        id: crypto.randomUUID(),
+                        question_text: q.question,
+                        question_type: "mcq",
+                        options: opts,
+                        correct_answer: q.options[q.correctIndex] || q.options[0] || "",
+                        points: 1,
+                      };
+                    })
+                  );
+                  setStatusMessage(`AI Quiz "${aiQuiz.title}" loaded into builder! Review and save below.`);
+                }}
+              />
+              <div className="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-cyan-300">Teacher only</div>
+            </div>
           </div>
 
           <form onSubmit={handleCreateQuiz} className="space-y-4">

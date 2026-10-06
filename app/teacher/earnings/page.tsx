@@ -50,8 +50,17 @@ export default async function TeacherEarningsPage() {
   const courseIds = courses.map((c) => c.id);
   const courseMap = new Map(courses.map((c) => [c.id, c.title]));
 
-  // 2. Fetch payments for teacher's courses, joining buyer profile via user_id FK
-  let payments: any[] = [];
+  interface TeacherPayment {
+    id: string;
+    user_id: string;
+    course_id: string;
+    amount?: number | null;
+    total_cents?: number | null;
+    discount_cents?: number | null;
+    status: string;
+    created_at: string;
+  }
+  let payments: TeacherPayment[] = [];
   if (courseIds.length > 0) {
     const { data: paymentRows } = await supabase
       .from("payments")
@@ -66,7 +75,7 @@ export default async function TeacherEarningsPage() {
 
   // 3. Fetch profile display names for each unique buyer
   const buyerIds = [...new Set(payments.map((p) => p.user_id))];
-  let profileMap = new Map<string, { name: string; email: string }>();
+  const profileMap = new Map<string, { name: string; email: string }>();
 
   if (buyerIds.length > 0) {
     const { data: profiles } = await supabase

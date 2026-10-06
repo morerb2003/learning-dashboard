@@ -232,7 +232,6 @@ export default function AdminSettingsPage() {
 
   /* Danger */
   const [dangerConfirm, setDangerConfirm] = useState("");
-  const [dangerAction, setDangerAction] = useState<string | null>(null);
 
   /* Save state */
   const [isSaving, setIsSaving] = useState(false);
@@ -389,7 +388,7 @@ export default function AdminSettingsPage() {
         <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-violet-500/10 bg-violet-500/[0.03] p-3.5">
           <Info className="w-4 h-4 text-violet-400 shrink-0 mt-0.5" />
           <p className="text-[11px] text-zinc-400 leading-relaxed">
-            RLS policies are enforced at the database level via Supabase. All reads and writes are scoped to the authenticated user's JWT identity. Admin bypass is provided via <code className="font-mono text-violet-300 bg-violet-500/10 px-1 rounded">is_admin()</code> role check.
+            RLS policies are enforced at the database level via Supabase. All reads and writes are scoped to the authenticated user&apos;s JWT identity. Admin bypass is provided via <code className="font-mono text-violet-300 bg-violet-500/10 px-1 rounded">is_admin()</code> role check.
           </p>
         </div>
       </SectionCard>

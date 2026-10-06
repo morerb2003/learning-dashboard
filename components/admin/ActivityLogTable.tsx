@@ -9,7 +9,7 @@ export interface AuditLog {
   action: string;
   entity_type: string;
   entity_id: string | null;
-  details: any;
+  details: Record<string, unknown> | null;
   created_at: string;
   actor?: {
     full_name: string | null;
@@ -64,7 +64,7 @@ export default function ActivityLogTable({ initialLogs }: ActivityLogTableProps)
 
   // Filter & Sort logs
   const filteredLogs = useMemo(() => {
-    let result = logs.filter((log) => {
+    const result = logs.filter((log) => {
       // 1. Search Query
       const actorName = log.actor?.full_name || "";
       const actorEmail = log.actor?.email || "";
@@ -132,7 +132,7 @@ export default function ActivityLogTable({ initialLogs }: ActivityLogTableProps)
     }).format(new Date(value));
   }
 
-  function formatValue(val: any): string {
+  function formatValue(val: unknown): string {
     if (val === null || val === undefined) return "null";
     if (typeof val === "boolean") return val ? "true" : "false";
     if (typeof val === "object") return JSON.stringify(val);
@@ -165,8 +165,8 @@ export default function ActivityLogTable({ initialLogs }: ActivityLogTableProps)
   function renderDetailsDiff(log: AuditLog) {
     const details = log.details;
     if (!details) return <span className="text-zinc-600">No payload</span>;
-    const oldObj = details.old;
-    const newObj = details.new;
+    const oldObj = (details.old && typeof details.old === "object" ? details.old : null) as Record<string, unknown> | null;
+    const newObj = (details.new && typeof details.new === "object" ? details.new : null) as Record<string, unknown> | null;
 
     // Check if it's an update change
     if (oldObj && newObj) {

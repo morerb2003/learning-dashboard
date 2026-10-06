@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo } from "react";
+import { useIsMounted } from "@/lib/hooks/useIsMounted";
 import {
   BarChart,
   Bar,
@@ -59,11 +60,7 @@ const tooltipStyle = {
 };
 
 export default function TeacherAnalyticsChart({ courses, students, enrollments }: TeacherAnalyticsChartProps) {
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  const isMounted = useIsMounted();
 
   // 1. Course Progress Bar Chart
   const progressData = useMemo(() =>

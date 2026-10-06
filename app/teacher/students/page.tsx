@@ -59,7 +59,7 @@ export default async function TeacherStudentsPage() {
 
   // 3. Fetch profiles for enrolled students only (scoped by student IDs)
   const studentIds = [...new Set(enrollments.map((e) => e.user_id))];
-  let profileMap = new Map<string, { name: string; email: string; created_at: string }>();
+  const profileMap = new Map<string, { name: string; email: string; created_at: string }>();
 
   if (studentIds.length > 0) {
     const { data: profiles } = await supabase

@@ -144,7 +144,6 @@ export default function VideoPlayer({
   const router = useRouter();
   const [isNavigating, setIsNavigating] = useState(false);
   const [loadedLessonId, setLoadedLessonId] = useState<string | null>(null);
-  const [lastPosition, setLastPosition] = useState<number | null>(null);
 
   const currentIndex = allLessons.findIndex((l) => l.id === lesson.id);
   const prevLesson = currentIndex > 0 ? allLessons[currentIndex - 1] : null;
@@ -153,20 +152,6 @@ export default function VideoPlayer({
 
   const { type, embedUrl, rawUrl } = parseVideoUrl(lesson.video_url);
   const iframeLoaded = loadedLessonId === lesson.id;
-
-  // Restore saved playback position
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(`aura_pos_${lesson.id}`);
-      if (saved) {
-        setLastPosition(parseFloat(saved));
-      } else {
-        setLastPosition(null);
-      }
-    } catch {
-      // Ignore localStorage errors
-    }
-  }, [lesson.id]);
 
   const handleTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
     const currentTime = (e.target as HTMLVideoElement).currentTime;
