@@ -11,6 +11,7 @@ import GoogleButton from "@/components/auth/GoogleButton";
 import PasswordInput from "@/components/auth/PasswordInput";
 import PasswordStrength, { getPasswordStrength } from "@/components/auth/PasswordStrength";
 import MagneticButton from "@/components/motion/MagneticButton";
+import { preCheckSignupAction } from "@/lib/auth/security-actions";
 
 type SignupRole = "student" | "teacher";
 
@@ -52,50 +53,62 @@ export default function RegisterForm() {
 
     setIsSubmitting(true);
 
-    const supabase = createClient();
-    const callbackUrl = new URL("/auth/callback", window.location.origin);
-    callbackUrl.searchParams.set(
-      "next",
-      getSafeRedirectPath(new URLSearchParams(window.location.search).get("next"))
-    );
+    try {
+      const preCheck = await preCheckSignupAction();
+      if (!preCheck.allowed) {
+        setError(preCheck.error || "Too many signup attempts. Please try again later.");
+        return;
+      }
 
-    const { data, error: authError } = await supabase.auth.signUp({
-      email: normalizedEmail,
-      password,
-      options: {
-        data: {
-          full_name: normalizedFullName,
-          role,
-        },
-        emailRedirectTo: callbackUrl.toString(),
-      },
-    });
-
-    setIsSubmitting(false);
-
-    if (authError) {
-      setError(
-        authError.message.toLowerCase().includes("database error")
-          ? "Registration is blocked by the database profile trigger. Run fix-registration.sql in Supabase SQL Editor, then try again."
-          : authError.message
+      const supabase = createClient();
+      const callbackUrl = new URL("/auth/callback", window.location.origin);
+      callbackUrl.searchParams.set(
+        "next",
+        getSafeRedirectPath(new URLSearchParams(window.location.search).get("next"))
       );
-      return;
-    }
 
-    if (data.session) {
-      router.replace(role === "teacher" ? "/teacher" : "/learning");
-      router.refresh();
-      return;
-    }
+      const { data, error: authError } = await supabase.auth.signUp({
+        email: normalizedEmail,
+        password,
+        options: {
+          data: {
+            full_name: normalizedFullName,
+            role,
+          },
+          emailRedirectTo: callbackUrl.toString(),
+        },
+      });
 
-    setMessage(
-      role === "teacher"
-        ? "Check your inbox to verify your email. Teacher access will stay pending until an admin approves it."
-        : "Check your inbox to confirm your email, then sign in."
-    );
-    setTimeout(() => {
-      router.replace("/login?registered=1");
-    }, 1800);
+      if (authError) {
+        setError(
+          authError.message.toLowerCase().includes("database error")
+            ? "Registration is blocked by the database profile trigger. Run fix-registration.sql in Supabase SQL Editor, then try again."
+            : authError.message
+        );
+        return;
+      }
+
+      if (data.session) {
+        router.replace(role === "teacher" ? "/teacher" : "/learning");
+        router.refresh();
+        return;
+      }
+
+      setMessage(
+        role === "teacher"
+          ? "Check your inbox to verify your email. Teacher access will stay pending until an admin approves it."
+          : "Check your inbox to confirm your email, then sign in."
+      );
+      setTimeout(() => {
+        router.replace("/login?registered=1");
+      }, 1800);
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error ? err.message : "Unable to reach registration service. Please check your network.";
+      setError(msg);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

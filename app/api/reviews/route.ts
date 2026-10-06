@@ -1,6 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth/roles";
+import { checkRateLimit, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
+import { getCached, setCached, deleteCached } from "@/lib/cache";
+
+interface ReviewRow {
+  id: string;
+  course_id: string;
+  student_id: string;
+  rating: number;
+  review_text: string | null;
+  created_at: string;
+  updated_at: string;
+  profiles?: {
+    full_name?: string | null;
+    email?: string | null;
+    avatar_url?: string | null;
+  } | null;
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,6 +26,16 @@ export async function GET(request: NextRequest) {
 
     if (!courseId) {
       return NextResponse.json({ error: "courseId is required." }, { status: 400 });
+    }
+
+    // 1. Check Redis cache
+    const cacheKey = `aura:cache:reviews:${courseId}`;
+    const cachedReviews = await getCached<unknown[]>(cacheKey);
+    if (cachedReviews !== null) {
+      return NextResponse.json(
+        { reviews: cachedReviews },
+        { headers: { "X-Cache-Lookup": "HIT" } }
+      );
     }
 
     const supabase = await createClient();
@@ -22,7 +49,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    const formattedReviews = (reviews ?? []).map((r: any) => ({
+    const formattedReviews = ((reviews as unknown as ReviewRow[]) ?? []).map((r) => ({
       id: r.id,
       course_id: r.course_id,
       student_id: r.student_id,
@@ -34,9 +61,16 @@ export async function GET(request: NextRequest) {
       student_avatar_url: r.profiles?.avatar_url || null,
     }));
 
-    return NextResponse.json({ reviews: formattedReviews });
-  } catch (err: any) {
-    return NextResponse.json({ error: err?.message || "Internal server error" }, { status: 500 });
+    // Cache for 60 seconds
+    await setCached(cacheKey, formattedReviews, 60);
+
+    return NextResponse.json(
+      { reviews: formattedReviews },
+      { headers: { "X-Cache-Lookup": "MISS" } }
+    );
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Internal server error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -45,6 +79,12 @@ export async function POST(request: NextRequest) {
     const user = await getCurrentUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized. Please log in." }, { status: 401 });
+    }
+
+    // 2. Redis Rate Limit: 20 requests / minute / user
+    const rateLimitCheck = await checkRateLimit("reviews", user.id || getClientIp(request));
+    if (!rateLimitCheck.success) {
+      return rateLimitResponse(rateLimitCheck.reset);
     }
 
     const body = await request.json();
@@ -87,8 +127,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    // 3. Invalidate Redis reviews cache
+    await deleteCached(`aura:cache:reviews:${courseId}`);
+
     return NextResponse.json({ review }, { status: 201 });
-  } catch (err: any) {
-    return NextResponse.json({ error: err?.message || "Internal server error" }, { status: 500 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Internal server error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

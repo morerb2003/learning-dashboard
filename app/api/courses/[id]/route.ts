@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth/roles";
+import { CACHE_KEYS, getCached, setCached, deleteCached, deleteCachedPattern } from "@/lib/cache";
+
+interface CourseDetailResponse {
+  course: unknown;
+  lessons: unknown[];
+}
 
 export async function GET(
   request: NextRequest,
@@ -8,6 +14,16 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+
+    // 1. Check Redis cache
+    const cacheKey = CACHE_KEYS.courseDetail(id);
+    const cachedData = await getCached<CourseDetailResponse>(cacheKey);
+    if (cachedData !== null) {
+      return NextResponse.json(cachedData, {
+        headers: { "X-Cache-Lookup": "HIT" },
+      });
+    }
+
     const supabase = await createClient();
 
     const [courseResult, lessonsResult] = await Promise.all([
@@ -23,12 +39,20 @@ export async function GET(
       return NextResponse.json({ error: "Course not found." }, { status: 404 });
     }
 
-    return NextResponse.json({
+    const result: CourseDetailResponse = {
       course: courseResult.data,
       lessons: lessonsResult.data ?? [],
+    };
+
+    // Cache course details for 5 minutes (300s)
+    await setCached(cacheKey, result, 300);
+
+    return NextResponse.json(result, {
+      headers: { "X-Cache-Lookup": "MISS" },
     });
-  } catch (err: any) {
-    return NextResponse.json({ error: err?.message || "Internal server error" }, { status: 500 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Internal server error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -58,7 +82,7 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const updateData: Record<string, any> = {};
+    const updateData: Record<string, unknown> = {};
 
     const allowedFields = [
       "title",
@@ -89,9 +113,16 @@ export async function PATCH(
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    // Invalidate Redis caches
+    await Promise.all([
+      deleteCached(CACHE_KEYS.courseDetail(id)),
+      deleteCachedPattern("aura:cache:courses:list:*"),
+    ]);
+
     return NextResponse.json({ course: updatedCourse });
-  } catch (err: any) {
-    return NextResponse.json({ error: err?.message || "Internal server error" }, { status: 500 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Internal server error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -125,8 +156,15 @@ export async function DELETE(
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    // Invalidate Redis caches
+    await Promise.all([
+      deleteCached(CACHE_KEYS.courseDetail(id)),
+      deleteCachedPattern("aura:cache:courses:list:*"),
+    ]);
+
     return NextResponse.json({ success: true });
-  } catch (err: any) {
-    return NextResponse.json({ error: err?.message || "Internal server error" }, { status: 500 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Internal server error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

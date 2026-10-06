@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getSafeRedirectPath } from "@/lib/auth/redirects";
 import { NextResponse } from "next/server";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
@@ -16,6 +17,15 @@ export async function GET(request: Request) {
     : forwardedHost
       ? `https://${forwardedHost}`
       : requestUrl.origin;
+
+  // Rate limit auth callback requests by client IP
+  const clientIp = getClientIp(request);
+  const rateLimitCheck = await checkRateLimit("generalApi", clientIp);
+  if (!rateLimitCheck.success) {
+    const loginUrl = new URL("/login", origin);
+    loginUrl.searchParams.set("error", "Too many authentication requests. Please try again shortly.");
+    return NextResponse.redirect(loginUrl);
+  }
 
   if (errorParam) {
     const loginUrl = new URL("/login", origin);

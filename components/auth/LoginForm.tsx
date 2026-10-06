@@ -10,6 +10,11 @@ import { getSafeRedirectPath } from "@/lib/auth/redirects";
 import GoogleButton from "@/components/auth/GoogleButton";
 import PasswordInput from "@/components/auth/PasswordInput";
 import MagneticButton from "@/components/motion/MagneticButton";
+import {
+  preCheckLoginAction,
+  recordLoginAttemptAction,
+  preCheckPasswordResetAction,
+} from "@/lib/auth/security-actions";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -53,29 +58,44 @@ export default function LoginForm() {
     setMessage("");
     setIsSubmitting(true);
 
-    const supabase = createClient();
-    const { error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const preCheck = await preCheckLoginAction(email);
+      if (!preCheck.allowed) {
+        setError(preCheck.error || "Too many login attempts. Please try again later.");
+        return;
+      }
 
-    setIsSubmitting(false);
+      const supabase = createClient();
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (authError) {
-      setError(authError.message);
-      return;
+      if (authError) {
+        await recordLoginAttemptAction(email, false);
+        setError(authError.message);
+        return;
+      }
+
+      await recordLoginAttemptAction(email, true);
+
+      if (rememberEmail) {
+        window.localStorage.setItem("aura_remembered_email", email);
+      } else {
+        window.localStorage.removeItem("aura_remembered_email");
+      }
+
+      const nextPath = new URLSearchParams(window.location.search).get("next");
+      const redirectTo = getSafeRedirectPath(nextPath);
+      router.replace(redirectTo);
+      router.refresh();
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error ? err.message : "Unable to reach authentication server. Please check your network.";
+      setError(msg);
+    } finally {
+      setIsSubmitting(false);
     }
-
-    if (rememberEmail) {
-      window.localStorage.setItem("aura_remembered_email", email);
-    } else {
-      window.localStorage.removeItem("aura_remembered_email");
-    }
-
-    const nextPath = new URLSearchParams(window.location.search).get("next");
-    const redirectTo = getSafeRedirectPath(nextPath);
-    router.replace(redirectTo);
-    router.refresh();
   };
 
   const handlePasswordReset = async () => {
@@ -87,24 +107,36 @@ export default function LoginForm() {
       return;
     }
 
-    setIsSendingReset(true);
+    try {
+      const preCheck = await preCheckPasswordResetAction(email);
+      if (!preCheck.allowed) {
+        setError(preCheck.error || "Too many password reset requests.");
+        return;
+      }
 
-    const supabase = createClient();
-    const resetUrl = new URL("/auth/callback", window.location.origin);
-    resetUrl.searchParams.set("next", "/reset-password");
+      setIsSendingReset(true);
 
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: resetUrl.toString(),
-    });
+      const supabase = createClient();
+      const resetUrl = new URL("/auth/callback", window.location.origin);
+      resetUrl.searchParams.set("next", "/reset-password");
 
-    setIsSendingReset(false);
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: resetUrl.toString(),
+      });
 
-    if (resetError) {
-      setError(resetError.message);
-      return;
+      if (resetError) {
+        setError(resetError.message);
+        return;
+      }
+
+      setMessage("Password reset link sent. Check your inbox.");
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error ? err.message : "Unable to send password reset request.";
+      setError(msg);
+    } finally {
+      setIsSendingReset(false);
     }
-
-    setMessage("Password reset link sent. Check your inbox.");
   };
 
   return (

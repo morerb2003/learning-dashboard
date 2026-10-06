@@ -90,6 +90,33 @@ The SQL setup creates these public storage buckets:
 Teacher registrations initially receive the `pending_teacher` role. An admin
 must promote the profile to `teacher` before teacher routes become available.
 
+## Upstash Redis Configuration (Rate Limiting, Cache, & Idempotency)
+
+AURA integrates **Upstash Redis** for high-performance serverless rate limiting, response caching, temporary verification data, login security throttling, and payment idempotency. Supabase PostgreSQL remains the persistent source of truth.
+
+### Setup Instructions:
+
+1. **Create an Upstash Redis Database**:
+   - Go to [Upstash Console](https://console.upstash.com/) and create a free or standard Redis database.
+   - Choose a region geographically close to your Supabase instance / Vercel deployment.
+2. **Copy REST Credentials**:
+   - Under database details, find the **REST API** section.
+   - Copy `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`.
+3. **Configure Local Environment**:
+   - Add the variables to your local `.env.local`:
+     ```env
+     UPSTASH_REDIS_REST_URL=https://your-upstash-redis-url.upstash.io
+     UPSTASH_REDIS_REST_TOKEN=your-upstash-redis-rest-token
+     ```
+   - **Security Note**: Never expose these credentials with `NEXT_PUBLIC_`. Redis is strictly server-only.
+4. **Configure Production (Vercel)**:
+   - In your Vercel Project Settings > **Environment Variables**, add `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`.
+5. **Restart & Redeploy**:
+   - For local development: restart `npm run dev`.
+   - For production: trigger a redeploy or git push.
+
+*Note: If Redis environment variables are omitted or temporarily unreachable, AURA automatically and gracefully activates in-memory fail-safe fallbacks so core LMS functionality is never interrupted.*
+
 ## Commands
 
 ```bash

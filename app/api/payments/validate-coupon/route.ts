@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { checkRateLimit, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
   try {
+    const ip = getClientIp(request);
+    const limitCheck = await checkRateLimit("generalApi", ip);
+    if (!limitCheck.success) {
+      return rateLimitResponse(limitCheck.reset);
+    }
+
     const body = await request.json();
-    const { code, amountCents = 0, courseId, planCode } = body;
+    const { code, amountCents = 0 } = body;
 
     if (!code || typeof code !== "string" || !code.trim()) {
       return NextResponse.json({ error: "Coupon code is required." }, { status: 400 });
@@ -78,7 +85,8 @@ export async function POST(request: NextRequest) {
           discountType === "percentage" ? `${discountValue}% OFF` : `$${(discountValue).toFixed(2)} OFF`,
       },
     });
-  } catch (err: any) {
-    return NextResponse.json({ error: err?.message || "Internal server error" }, { status: 500 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Internal server error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
