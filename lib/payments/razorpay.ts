@@ -260,3 +260,98 @@ export function verifyRazorpayWebhookSignature(
     return false;
   }
 }
+
+export interface RazorpayRefundResult {
+  id: string;
+  entity: "refund";
+  amount: number;
+  currency: string;
+  payment_id: string;
+  notes: Record<string, string>;
+  receipt: string | null;
+  status: "processed" | "pending" | "failed";
+  speed_processed?: string;
+  speed_requested?: string;
+  created_at: number;
+}
+
+export interface CreateRefundParams {
+  paymentId: string;
+  amountPaise?: number;
+  notes?: Record<string, string>;
+  receipt?: string;
+  speed?: "normal" | "optimum";
+}
+
+/**
+ * Creates a refund for a payment via Razorpay.
+ * Amount must be in the smallest currency unit (paise). If omitted, full refund is issued.
+ */
+export async function createRazorpayRefund(
+  params: CreateRefundParams
+): Promise<RazorpayRefundResult> {
+  const razorpay = getRazorpayClient();
+  const paymentId = params.paymentId?.trim();
+
+  if (!paymentId) {
+    throw new Error("Razorpay Payment ID is required to process refund.");
+  }
+
+  const options: Record<string, unknown> = {};
+
+  if (params.amountPaise !== undefined) {
+    const amount = Math.round(params.amountPaise);
+    if (amount <= 0) {
+      throw new Error("Refund amount must be greater than zero.");
+    }
+    options.amount = amount;
+  }
+
+  if (params.notes) {
+    options.notes = params.notes;
+  }
+
+  if (params.receipt) {
+    options.receipt = params.receipt.slice(0, 40);
+  }
+
+  if (params.speed) {
+    options.speed = params.speed;
+  }
+
+  try {
+    const refund = await razorpay.payments.refund(paymentId, options);
+    return refund as unknown as RazorpayRefundResult;
+  } catch (error) {
+    const errorMsg =
+      error instanceof Error ? error.message : "Failed to create Razorpay refund.";
+    throw new Error(`Razorpay Refund Error: ${errorMsg}`);
+  }
+}
+
+/**
+ * Fetches an existing Razorpay refund.
+ */
+export async function fetchRazorpayRefund(
+  paymentId: string,
+  refundId: string
+): Promise<RazorpayRefundResult> {
+  if (!paymentId?.trim() || !refundId?.trim()) {
+    throw new Error("Both Payment ID and Refund ID are required to fetch refund.");
+  }
+
+  const razorpay = getRazorpayClient();
+
+  try {
+    const refund = await razorpay.payments.fetchRefund(
+      paymentId.trim(),
+      refundId.trim()
+    );
+    return refund as unknown as RazorpayRefundResult;
+  } catch (error) {
+    const errorMsg =
+      error instanceof Error ? error.message : "Failed to fetch Razorpay refund.";
+    throw new Error(`Razorpay Fetch Refund Error: ${errorMsg}`);
+  }
+}
+

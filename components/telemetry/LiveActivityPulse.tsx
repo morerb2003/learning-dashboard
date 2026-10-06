@@ -66,8 +66,10 @@ export default function LiveActivityPulse() {
   }, []);
 
   useEffect(() => {
-    // Initial fetch
-    void fetchLiveFeed();
+    // Initial fetch scheduled asynchronously
+    const timer = setTimeout(() => {
+      void fetchLiveFeed();
+    }, 0);
 
     // 1. Supabase Realtime Broadcast channel
     const supabase = createClient();
@@ -95,6 +97,7 @@ export default function LiveActivityPulse() {
     }, 10000);
 
     return () => {
+      clearTimeout(timer);
       clearInterval(interval);
       clearInterval(clockInterval);
       void supabase.removeChannel(channel);

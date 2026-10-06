@@ -10,9 +10,18 @@ import {
   Users,
   ChevronDown,
   ChevronUp,
+  AlertTriangle,
+  RotateCcw,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  Loader2,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 /* ─── Types ──────────────────────────────────────────────────────────────────── */
+export type PaymentStatus = "completed" | "pending" | "failed" | "refunded";
+
 export interface Payment {
   id: string;
   user_id: string;
@@ -20,12 +29,41 @@ export interface Payment {
   amount: number;
   discount_applied: number;
   payment_type: "course_purchase" | "subscription_pro";
-  status: "completed" | "pending" | "failed";
+  status: PaymentStatus;
   transaction_id: string;
   created_at: string;
   coupon_id: string | null;
   profiles: { full_name: string | null; email: string | null } | null;
   courses: { title: string | null } | null;
+}
+
+export interface ServerMetrics {
+  totalGrossSales: number;
+  platformRevenue: number;
+  teacherEarnings: number;
+  totalTransactions: number;
+  successfulPayments: number;
+  failedPayments: number;
+  refundsCount: number;
+  refundsTotal: number;
+  activeSubscriptionsCount: number;
+  monthlyRecurringRevenue: number;
+  courseSalesRevenue: number;
+  subscriptionRevenue: number;
+  pendingTeacherPayoutsCount: number;
+  pendingTeacherPayoutsTotal: number;
+}
+
+export interface AdminPayoutItem {
+  id: string;
+  teacher_id: string;
+  amount_cents: number;
+  currency: string;
+  payout_method: string;
+  payout_details: string;
+  status: "pending" | "approved" | "paid" | "rejected";
+  created_at: string;
+  teacher: { full_name: string | null; email: string | null } | null;
 }
 
 interface RevenueDashboardProps {
@@ -34,6 +72,8 @@ interface RevenueDashboardProps {
     platform: number;
     teachers: number;
   };
+  serverMetrics?: ServerMetrics;
+  payouts?: AdminPayoutItem[];
 }
 
 /* ─── Helpers ─────────────────────────────────────────────────────────────────── */
@@ -125,25 +165,29 @@ function StatCard({
 export default function RevenueDashboard({
   payments,
   ledgerTotals,
+  serverMetrics,
+  payouts = [],
 }: RevenueDashboardProps) {
+  const router = useRouter();
   const [sortField, setSortField] = useState<"created_at" | "amount">("created_at");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [typeFilter, setTypeFilter] = useState<"all" | "course_purchase" | "subscription_pro">("all");
+  const [processingPayoutId, setProcessingPayoutId] = useState<string | null>(null);
 
-  /* Aggregate stats */
+  /* Fallback or authoritative server metrics */
   const completed = useMemo(() => payments.filter((p) => p.status === "completed"), [payments]);
-  const totalRevenue = useMemo(() => completed.reduce((sum, p) => sum + Number(p.amount), 0), [completed]);
-  const totalDiscount = useMemo(() => completed.reduce((sum, p) => sum + Number(p.discount_applied ?? 0), 0), [completed]);
-  const courseRevenue = useMemo(
-    () => completed.filter((p) => p.payment_type === "course_purchase").reduce((sum, p) => sum + Number(p.amount), 0),
-    [completed]
-  );
-  const subRevenue = useMemo(
-    () => completed.filter((p) => p.payment_type === "subscription_pro").reduce((sum, p) => sum + Number(p.amount), 0),
-    [completed]
-  );
-  const uniqueBuyers = useMemo(() => new Set(completed.map((p) => p.user_id)).size, [completed]);
-  const couponsUsed = useMemo(() => completed.filter((p) => p.coupon_id).length, [completed]);
+  const grossSales = serverMetrics?.totalGrossSales ?? completed.reduce((sum, p) => sum + Number(p.amount), 0);
+  const courseRevenue = serverMetrics?.courseSalesRevenue ?? completed.filter((p) => p.payment_type === "course_purchase").reduce((sum, p) => sum + Number(p.amount), 0);
+  const subRevenue = serverMetrics?.subscriptionRevenue ?? completed.filter((p) => p.payment_type === "subscription_pro").reduce((sum, p) => sum + Number(p.amount), 0);
+  const platformEarnings = serverMetrics?.platformRevenue ?? ledgerTotals.platform;
+  const teacherEarnings = serverMetrics?.teacherEarnings ?? ledgerTotals.teachers;
+  const mrr = serverMetrics?.monthlyRecurringRevenue ?? 0;
+  const activeSubsCount = serverMetrics?.activeSubscriptionsCount ?? 0;
+  const refundsTotal = serverMetrics?.refundsTotal ?? 0;
+  const refundsCount = serverMetrics?.refundsCount ?? 0;
+  const failedCount = serverMetrics?.failedPayments ?? payments.filter((p) => p.status === "failed").length;
+  const pendingPayoutsCount = serverMetrics?.pendingTeacherPayoutsCount ?? payouts.filter((p) => p.status === "pending").length;
+  const pendingPayoutsTotal = serverMetrics?.pendingTeacherPayoutsTotal ?? payouts.filter((p) => p.status === "pending").reduce((sum, p) => sum + p.amount_cents / 100, 0);
 
   const monthlySeries = useMemo(() => buildMonthlySeries(payments), [payments]);
 
@@ -166,16 +210,61 @@ export default function RevenueDashboard({
     }
   };
 
+  const handleUpdatePayoutStatus = async (
+    payoutId: string,
+    status: "approved" | "paid" | "rejected"
+  ) => {
+    setProcessingPayoutId(payoutId);
+    try {
+      const res = await fetch("/api/admin/payouts", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ payoutId, status }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error || "Failed to update payout.");
+      } else {
+        router.refresh();
+      }
+    } catch {
+      alert("Failed to update payout.");
+    } finally {
+      setProcessingPayoutId(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
-      {/* Stat Cards */}
+      {/* ── Primary Monetization KPI Grid ────────────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         <StatCard
-          label="Total Revenue"
-          value={fmt(totalRevenue)}
+          label="Total Gross Sales"
+          value={fmt(grossSales)}
           icon={DollarSign}
           color="bg-mesh-violet"
-          sub={`${completed.length} transactions`}
+          sub={`${completed.length} successful payments`}
+        />
+        <StatCard
+          label="Platform Revenue (20%)"
+          value={fmt(platformEarnings)}
+          icon={TrendingUp}
+          color="bg-mesh-cyan"
+          sub="Net platform commission"
+        />
+        <StatCard
+          label="Teacher Earnings (80%)"
+          value={fmt(teacherEarnings)}
+          icon={Users}
+          color="bg-mesh-orange"
+          sub="Accrued instructor share"
+        />
+        <StatCard
+          label="Monthly Recurring (MRR)"
+          value={fmt(mrr)}
+          icon={Crown}
+          color="bg-mesh-violet"
+          sub={`${activeSubsCount} active subscriptions`}
         />
         <StatCard
           label="Course Sales"
@@ -189,32 +278,43 @@ export default function RevenueDashboard({
           value={fmt(subRevenue)}
           icon={Crown}
           color="bg-mesh-orange"
-          sub="Pro memberships"
-        />
-        <StatCard
-          label="Unique Buyers"
-          value={uniqueBuyers.toString()}
-          icon={Users}
-          color="bg-mesh-violet"
-          sub={`${couponsUsed} coupon uses`}
-        />
-        <StatCard
-          label="Platform Earnings"
-          value={fmt(ledgerTotals.platform)}
-          icon={TrendingUp}
-          color="bg-mesh-cyan"
-          sub="After teacher share"
-        />
-        <StatCard
-          label="Teacher Earnings"
-          value={fmt(ledgerTotals.teachers)}
-          icon={Users}
-          color="bg-mesh-orange"
-          sub="Accrued instructor share"
+          sub="Pro / Pro Creator sales"
         />
       </div>
 
-      {/* Charts row */}
+      {/* ── Secondary Intelligence & Risk Grid ──────────────────────────────────── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          label="Total Transactions"
+          value={payments.length.toString()}
+          icon={DollarSign}
+          color="bg-mesh-violet"
+          sub={`${completed.length} success &bull; ${failedCount} failed`}
+        />
+        <StatCard
+          label="Failed Payments"
+          value={failedCount.toString()}
+          icon={AlertTriangle}
+          color="bg-mesh-orange"
+          sub="Failed attempts &amp; cancellations"
+        />
+        <StatCard
+          label="Refunds Processed"
+          value={fmt(refundsTotal)}
+          icon={RotateCcw}
+          color="bg-mesh-cyan"
+          sub={`${refundsCount} refunds under policy`}
+        />
+        <StatCard
+          label="Pending Teacher Payouts"
+          value={fmt(pendingPayoutsTotal)}
+          icon={Clock}
+          color="bg-mesh-violet"
+          sub={`${pendingPayoutsCount} requests awaiting review`}
+        />
+      </div>
+
+      {/* ── Charts & Revenue Mix row ────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Monthly Revenue Bar Chart */}
         <div className="lg:col-span-2 relative glass-card rounded-2xl overflow-hidden p-5 border border-white/5">
@@ -243,19 +343,19 @@ export default function RevenueDashboard({
             <h3 className="text-sm font-bold text-white">Revenue Mix</h3>
             <div className="space-y-3">
               {[
-                { label: "Course Purchases", value: courseRevenue, total: totalRevenue, color: "from-violet-500 to-indigo-500" },
-                { label: "Pro Subscriptions", value: subRevenue, total: totalRevenue, color: "from-amber-400 to-orange-500" },
+                { label: "Course Purchases", value: courseRevenue, total: grossSales, color: "from-violet-500 to-indigo-500" },
+                { label: "Pro Subscriptions", value: subRevenue, total: grossSales, color: "from-amber-400 to-orange-500" },
               ].map((item) => {
-                const pct = totalRevenue > 0 ? Math.round((item.value / totalRevenue) * 100) : 0;
+                const pct = grossSales > 0 ? Math.round((item.value / grossSales) * 100) : 0;
                 return (
-                  <div key={item.label} className="space-y-1.5">
-                    <div className="flex justify-between text-[10px] font-semibold text-zinc-400">
-                      <span>{item.label}</span>
+                  <div key={item.label} className="space-y-1">
+                    <div className="flex justify-between text-xs font-semibold">
+                      <span className="text-zinc-400">{item.label}</span>
                       <span className="text-white">{fmt(item.value)} ({pct}%)</span>
                     </div>
-                    <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                    <div className="h-2 w-full rounded-full bg-white/5 overflow-hidden">
                       <div
-                        className={`h-full bg-gradient-to-r ${item.color} rounded-full transition-all duration-700`}
+                        className={`h-full rounded-full bg-gradient-to-r ${item.color} transition-all duration-700`}
                         style={{ width: `${pct}%` }}
                       />
                     </div>
@@ -264,126 +364,212 @@ export default function RevenueDashboard({
               })}
             </div>
 
-            <div className="pt-2 space-y-2 border-t border-white/5">
-              <div className="flex justify-between text-[10px] font-semibold text-zinc-500">
-                <span>Total Discounts Given</span>
-                <span className="text-rose-400">-{fmt(totalDiscount)}</span>
+            <div className="pt-2 border-t border-white/5">
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-zinc-400 font-semibold">Teacher Commission Split</span>
+                <span className="font-bold text-emerald-400">80% Teacher / 20% AURA</span>
               </div>
-              <div className="flex justify-between text-[10px] font-semibold text-zinc-500">
-                <span>Coupons Redeemed</span>
-                <span className="text-white">{couponsUsed}</span>
-              </div>
-              <div className="flex justify-between text-[10px] font-bold text-zinc-300 border-t border-white/5 pt-2">
-                <span>Net Revenue</span>
-                <span className="text-emerald-400">{fmt(totalRevenue)}</span>
-              </div>
+              <p className="text-[10px] text-zinc-500 mt-1">
+                Platform fee automatically ledgered in minor paise units on every sale.
+              </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Transactions Table */}
-      <div className="relative glass-card rounded-2xl overflow-hidden border border-white/5">
-        <div className="absolute inset-0 bg-mesh-violet opacity-20 pointer-events-none" />
-        <div className="grain-overlay" />
-        <div className="relative z-10">
-          {/* Table header row */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-5 border-b border-white/5">
+      {/* ── Pending Teacher Payouts Review Section ─────────────────────────────── */}
+      {payouts.length > 0 && (
+        <div className="relative glass-card rounded-2xl overflow-hidden p-5 border border-white/5 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div>
-              <h3 className="text-sm font-bold text-white">Transaction Log</h3>
-              <p className="text-[10px] text-zinc-500">{tableRows.length} records shown</p>
+              <h3 className="text-sm font-bold text-white">Teacher Payout Requests Review</h3>
+              <p className="text-[10px] text-zinc-500">
+                Manual review queue. Disburse via UPI/NEFT before marking paid.
+              </p>
             </div>
-            <div className="flex items-center gap-2">
-              <select
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value as typeof typeFilter)}
-                className="rounded-xl border border-white/5 bg-zinc-950/60 px-3 py-1.5 text-[10px] font-semibold text-zinc-300 outline-none"
-              >
-                <option value="all">All types</option>
-                <option value="course_purchase">Course Purchases</option>
-                <option value="subscription_pro">Subscriptions</option>
-              </select>
-            </div>
+            <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-full w-fit">
+              Manual Transfer Workflow
+            </span>
           </div>
 
-          {/* Table */}
           <div className="overflow-x-auto">
             <table className="w-full text-[11px]">
               <thead>
                 <tr className="border-b border-white/5 text-zinc-500 uppercase tracking-wider">
-                  <th className="text-left px-5 py-3 font-bold">User</th>
-                  <th className="text-left px-3 py-3 font-bold">
-                    <button onClick={() => toggleSort("created_at")} className="flex items-center gap-1 cursor-pointer hover:text-white transition-colors">
-                      Date {renderSortIcon("created_at", sortField, sortDir)}
-                    </button>
-                  </th>
-                  <th className="text-left px-3 py-3 font-bold">Type</th>
-                  <th className="text-left px-3 py-3 font-bold">Course</th>
-                  <th className="text-right px-3 py-3 font-bold">
-                    <button onClick={() => toggleSort("amount")} className="flex items-center gap-1 ml-auto cursor-pointer hover:text-white transition-colors">
-                      Amount {renderSortIcon("amount", sortField, sortDir)}
-                    </button>
-                  </th>
-                  <th className="text-right px-5 py-3 font-bold">Status</th>
+                  <th className="text-left px-4 py-2.5 font-bold">Teacher</th>
+                  <th className="text-left px-3 py-2.5 font-bold">Amount</th>
+                  <th className="text-left px-3 py-2.5 font-bold">Method</th>
+                  <th className="text-left px-3 py-2.5 font-bold">Details</th>
+                  <th className="text-left px-3 py-2.5 font-bold">Status</th>
+                  <th className="text-right px-4 py-2.5 font-bold">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/[0.04]">
-                {tableRows.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="text-center py-10 text-zinc-600">No transactions recorded yet.</td>
-                  </tr>
-                )}
-                {tableRows.map((p) => (
+                {payouts.map((p) => (
                   <tr key={p.id} className="hover:bg-white/[0.02] transition-colors">
-                    <td className="px-5 py-3">
+                    <td className="px-4 py-3">
                       <p className="font-semibold text-white truncate max-w-[140px]">
-                        {p.profiles?.full_name ?? "Unknown"}
+                        {p.teacher?.full_name || "Instructor"}
                       </p>
-                      <p className="text-zinc-600 text-[9px] truncate">{p.profiles?.email ?? p.user_id.slice(0, 8)}</p>
+                      <p className="text-zinc-600 text-[9px] truncate">{p.teacher?.email || p.teacher_id.slice(0, 8)}</p>
                     </td>
-                    <td className="px-3 py-3 text-zinc-400 whitespace-nowrap">
-                      {new Date(p.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                    <td className="px-3 py-3 font-black text-white whitespace-nowrap">
+                      {fmt(p.amount_cents / 100)}
+                    </td>
+                    <td className="px-3 py-3 uppercase font-bold text-zinc-400">
+                      {p.payout_method}
+                    </td>
+                    <td className="px-3 py-3 text-zinc-300 truncate max-w-[180px]">
+                      {p.payout_details}
                     </td>
                     <td className="px-3 py-3">
-                      {p.payment_type === "subscription_pro" ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-amber-500/20 bg-amber-500/10 text-amber-300 text-[9px] font-bold uppercase">
-                          <Crown className="w-2.5 h-2.5" /> Pro
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-violet-500/20 bg-violet-500/10 text-violet-300 text-[9px] font-bold uppercase">
-                          <ShoppingCart className="w-2.5 h-2.5" /> Course
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-3 py-3 text-zinc-400 max-w-[120px]">
-                      <span className="truncate block">{p.courses?.title ?? (p.payment_type === "subscription_pro" ? "Pro Membership" : "—")}</span>
-                    </td>
-                    <td className="px-3 py-3 text-right">
-                      <p className="font-black text-white">{fmt(Number(p.amount))}</p>
-                      {Number(p.discount_applied) > 0 && (
-                        <p className="text-[9px] text-zinc-600 flex items-center justify-end gap-0.5">
-                          <Tag className="w-2 h-2" /> -{fmt(Number(p.discount_applied))}
-                        </p>
-                      )}
-                    </td>
-                    <td className="px-5 py-3 text-right">
                       <span
-                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${
-                          p.status === "completed"
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${
+                          p.status === "paid"
                             ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                            : p.status === "approved"
+                            ? "bg-sky-500/10 text-sky-400 border border-sky-500/20"
                             : p.status === "pending"
-                            ? "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20"
+                            ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
                             : "bg-red-500/10 text-red-400 border border-red-500/20"
                         }`}
                       >
                         {p.status}
                       </span>
                     </td>
+                    <td className="px-4 py-3 text-right">
+                      {p.status === "pending" || p.status === "approved" ? (
+                        <div className="flex items-center justify-end gap-1.5">
+                          {processingPayoutId === p.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin text-zinc-400" />
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => handleUpdatePayoutStatus(p.id, "paid")}
+                                className="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-[10px] font-bold hover:bg-emerald-500/20 transition"
+                              >
+                                Mark Paid
+                              </button>
+                              <button
+                                onClick={() => handleUpdatePayoutStatus(p.id, "rejected")}
+                                className="px-2.5 py-1 rounded-lg bg-red-500/10 border border-red-500/30 text-red-300 text-[10px] font-bold hover:bg-red-500/20 transition"
+                              >
+                                Reject
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-zinc-600 text-[10px]">Settled</span>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+
+      {/* ── Transactions Table ─────────────────────────────────────────────────── */}
+      <div className="relative glass-card rounded-2xl overflow-hidden border border-white/5">
+        <div className="p-5 border-b border-white/5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-bold text-white">Payment Transactions Ledger</h3>
+            <p className="text-[10px] text-zinc-500">Audited transaction records and receipt status</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value as typeof typeFilter)}
+              className="rounded-xl border border-white/5 bg-zinc-950/60 px-3 py-1.5 text-[10px] font-semibold text-zinc-300 outline-none"
+            >
+              <option value="all">All types</option>
+              <option value="course_purchase">Course Purchases</option>
+              <option value="subscription_pro">Subscriptions</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Table */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-[11px]">
+            <thead>
+              <tr className="border-b border-white/5 text-zinc-500 uppercase tracking-wider">
+                <th className="text-left px-5 py-3 font-bold">User</th>
+                <th className="text-left px-3 py-3 font-bold">
+                  <button onClick={() => toggleSort("created_at")} className="flex items-center gap-1 cursor-pointer hover:text-white transition-colors">
+                    Date {renderSortIcon("created_at", sortField, sortDir)}
+                  </button>
+                </th>
+                <th className="text-left px-3 py-3 font-bold">Type</th>
+                <th className="text-left px-3 py-3 font-bold">Course / Plan</th>
+                <th className="text-right px-3 py-3 font-bold">
+                  <button onClick={() => toggleSort("amount")} className="flex items-center gap-1 ml-auto cursor-pointer hover:text-white transition-colors">
+                    Amount {renderSortIcon("amount", sortField, sortDir)}
+                  </button>
+                </th>
+                <th className="text-right px-5 py-3 font-bold">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/[0.04]">
+              {tableRows.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="text-center py-10 text-zinc-600">No transactions recorded yet.</td>
+                </tr>
+              )}
+              {tableRows.map((p) => (
+                <tr key={p.id} className="hover:bg-white/[0.02] transition-colors">
+                  <td className="px-5 py-3">
+                    <p className="font-semibold text-white truncate max-w-[140px]">
+                      {p.profiles?.full_name ?? "Unknown"}
+                    </p>
+                    <p className="text-zinc-600 text-[9px] truncate">{p.profiles?.email ?? p.user_id.slice(0, 8)}</p>
+                  </td>
+                  <td className="px-3 py-3 text-zinc-400 whitespace-nowrap">
+                    {new Date(p.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                  </td>
+                  <td className="px-3 py-3">
+                    {p.payment_type === "subscription_pro" ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-amber-500/20 bg-amber-500/10 text-amber-300 text-[9px] font-bold uppercase">
+                        <Crown className="w-2.5 h-2.5" /> Pro
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-violet-500/20 bg-violet-500/10 text-violet-300 text-[9px] font-bold uppercase">
+                        <ShoppingCart className="w-2.5 h-2.5" /> Course
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-3 py-3 text-zinc-400 max-w-[120px]">
+                    <span className="truncate block">{p.courses?.title ?? (p.payment_type === "subscription_pro" ? "Pro Membership" : "—")}</span>
+                  </td>
+                  <td className="px-3 py-3 text-right">
+                    <p className="font-black text-white">{fmt(Number(p.amount))}</p>
+                    {Number(p.discount_applied) > 0 && (
+                      <p className="text-[9px] text-zinc-600 flex items-center justify-end gap-0.5">
+                        <Tag className="w-2 h-2" /> -{fmt(Number(p.discount_applied))}
+                      </p>
+                    )}
+                  </td>
+                  <td className="px-5 py-3 text-right">
+                    <span
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${
+                        p.status === "completed"
+                          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                          : p.status === "refunded"
+                          ? "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20"
+                          : p.status === "pending"
+                          ? "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20"
+                          : "bg-red-500/10 text-red-400 border border-red-500/20"
+                      }`}
+                    >
+                      {p.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

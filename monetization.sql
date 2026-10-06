@@ -483,7 +483,8 @@ DECLARE
     v_payment_id UUID;
     v_subscription_id UUID;
     v_teacher_id UUID;
-    v_platform_rate_bps INTEGER := 3000;
+    -- Authoritative 80/20 split: Platform takes 20% (2000 bps), Teacher gets 80% (8000 bps)
+    v_platform_rate_bps INTEGER := 2000;
     v_platform_cents INTEGER;
     v_teacher_cents INTEGER;
     v_period_end TIMESTAMPTZ;

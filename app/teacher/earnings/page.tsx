@@ -121,6 +121,19 @@ export default async function TeacherEarningsPage() {
     netEarningsCents = Math.round(grossRevenueCents * 0.8);
   }
 
+  // 5. Fetch teacher payouts
+  const { data: payoutsData } = await supabase
+    .from("teacher_payouts")
+    .select("id, amount_cents, currency, payout_method, payout_details, status, admin_notes, created_at, processed_at")
+    .eq("teacher_id", user.id)
+    .order("created_at", { ascending: false });
+
+  const teacherPayouts = payoutsData ?? [];
+  const inflightPayoutsCents = teacherPayouts
+    .filter((p) => p.status === "pending" || p.status === "approved")
+    .reduce((sum, p) => sum + Number(p.amount_cents || 0), 0);
+
+  const withdrawableBalanceCents = Math.max(0, netEarningsCents - inflightPayoutsCents);
   const platformFeeCents = Math.max(0, grossRevenueCents - netEarningsCents);
   const totalSalesCount = payments.length;
 
@@ -181,7 +194,7 @@ export default async function TeacherEarningsPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <TeacherPayoutTrigger availableBalanceCents={netEarningsCents} />
+          <TeacherPayoutTrigger availableBalanceCents={withdrawableBalanceCents} />
           {csvRows.length > 0 && (
             <CsvDownloadButton
               filename={`teacher-earnings-${new Date().toISOString().slice(0, 10)}.csv`}
@@ -389,6 +402,82 @@ export default async function TeacherEarningsPage() {
                     <br />
                     Once students enroll in your paid courses, revenue entries
                     will appear here.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      {/* ── Payout Requests History ─────────────────────────────────────────── */}
+      <section className="rounded-3xl border border-white/5 bg-zinc-900/60 p-6 backdrop-blur-xl">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+          <div>
+            <h2 className="text-base font-black text-white">Payout Requests &amp; Disbursals</h2>
+            <p className="text-[11px] text-zinc-400 mt-0.5">
+              Track manual admin review and transfer statuses for requested earnings withdrawals.
+            </p>
+          </div>
+          <span className="inline-flex items-center text-[10px] font-bold text-zinc-400 bg-white/5 border border-white/10 px-3 py-1 rounded-full w-fit">
+            Manual Review Workflow &bull; NEFT / UPI
+          </span>
+        </div>
+
+        <div className="overflow-x-auto rounded-2xl border border-white/5 bg-zinc-950/40">
+          <table className="w-full text-left text-xs">
+            <thead>
+              <tr className="border-b border-white/5 bg-white/[0.02] text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                <th className="py-3 px-5">Requested Date</th>
+                <th className="py-3 px-4">Amount</th>
+                <th className="py-3 px-4">Channel</th>
+                <th className="py-3 px-4">Destination Details</th>
+                <th className="py-3 px-4">Status</th>
+                <th className="py-3 px-5 text-right">Notes</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {teacherPayouts.length > 0 ? (
+                teacherPayouts.map((p) => {
+                  const statusColors: Record<string, string> = {
+                    pending: "border-amber-500/20 bg-amber-500/10 text-amber-300",
+                    approved: "border-sky-500/20 bg-sky-500/10 text-sky-300",
+                    paid: "border-emerald-500/20 bg-emerald-500/10 text-emerald-300",
+                    rejected: "border-red-500/20 bg-red-500/10 text-red-300",
+                  };
+                  return (
+                    <tr key={p.id} className="text-zinc-300 hover:bg-white/[0.02] transition-colors">
+                      <td className="py-3 px-5 font-medium whitespace-nowrap">
+                        {formatDate(p.created_at)}
+                      </td>
+                      <td className="py-3 px-4 font-black text-white">
+                        {fmt(p.amount_cents)}
+                      </td>
+                      <td className="py-3 px-4 uppercase font-bold text-zinc-400">
+                        {p.payout_method}
+                      </td>
+                      <td className="py-3 px-4 text-zinc-400 truncate max-w-[200px]">
+                        {p.payout_details}
+                      </td>
+                      <td className="py-3 px-4">
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded-full border text-[9px] font-bold uppercase tracking-wider ${
+                            statusColors[p.status] || "border-white/10 text-zinc-400"
+                          }`}
+                        >
+                          {p.status}
+                        </span>
+                      </td>
+                      <td className="py-3 px-5 text-right text-zinc-500 text-[11px]">
+                        {p.admin_notes || (p.status === "pending" ? "In review" : "—")}
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan={6} className="py-10 text-center text-zinc-500 text-xs">
+                    No payout requests submitted yet. Use &ldquo;Request Payout&rdquo; to withdraw your available balance.
                   </td>
                 </tr>
               )}

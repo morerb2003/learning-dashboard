@@ -95,7 +95,7 @@ export default function PayoutRequestModal({
             </div>
             <h3 className="text-base font-black text-white">Payout Request Submitted!</h3>
             <p className="text-xs text-zinc-400 max-w-xs">
-              Funds will be transferred to your specified {method.toUpperCase()} account within 1-2 business days.
+              Your request has been placed in the review queue. Disbursal to your specified {method.toUpperCase()} account will be processed within 1-2 business days following manual administrator verification.
             </p>
           </div>
         ) : (

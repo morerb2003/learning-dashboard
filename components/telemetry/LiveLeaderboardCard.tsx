@@ -35,8 +35,10 @@ export default function LiveLeaderboardCard() {
   }, []);
 
   useEffect(() => {
-    // Initial fetch
-    void fetchLeaderboard();
+    // Initial fetch scheduled asynchronously
+    const timer = setTimeout(() => {
+      void fetchLeaderboard();
+    }, 0);
 
     // 1. Supabase Realtime Broadcast channel
     const supabase = createClient();
@@ -55,6 +57,7 @@ export default function LiveLeaderboardCard() {
     }, 8000);
 
     return () => {
+      clearTimeout(timer);
       clearInterval(interval);
       void supabase.removeChannel(channel);
     };

@@ -8,6 +8,8 @@ import {
 } from "./razorpay";
 import { CACHE_KEYS, deleteCached, deleteCachedPattern } from "@/lib/cache";
 import { recordActivityPulse } from "@/lib/telemetry";
+import { MonetizationNotifications } from "@/lib/notifications";
+import { calculateRevenueSplit } from "./pricing";
 import type {
   ClientPaymentIntent,
   ConfirmedPayment,
@@ -232,7 +234,45 @@ export async function confirmPaymentIntent(
     throw new Error(error?.message ?? "Unable to finalize payment.");
   }
 
-  // 4. Invalidate relevant Redis caches & emit social pulse event
+  const confirmedResult = data as ConfirmedPayment;
+
+  // 4. Send idempotent notifications
+  try {
+    if (intent.purchase_type === "course" && intent.course_id) {
+      const { data: course } = await admin
+        .from("courses")
+        .select("title, teacher_id")
+        .eq("id", intent.course_id)
+        .maybeSingle();
+
+      const courseTitle = course?.title || "Enrolled Course";
+      await MonetizationNotifications.coursePaymentSuccess(
+        user.id,
+        courseTitle,
+        confirmedResult.payment_id
+      );
+
+      if (course?.teacher_id) {
+        const split = calculateRevenueSplit(intent.total_cents);
+        await MonetizationNotifications.teacherSaleReceived(
+          course.teacher_id,
+          courseTitle,
+          split.teacherCents / 100,
+          confirmedResult.payment_id
+        );
+      }
+    } else {
+      await MonetizationNotifications.subscriptionActivated(
+        user.id,
+        "AURA Pro",
+        confirmedResult.payment_id
+      );
+    }
+  } catch (notifErr) {
+    console.warn("[Payments] Notification delivery error:", notifErr);
+  }
+
+  // 5. Invalidate relevant Redis caches & emit social pulse event
   try {
     if (intent.course_id) {
       await deleteCached(CACHE_KEYS.courseDetail(intent.course_id));
@@ -251,7 +291,7 @@ export async function confirmPaymentIntent(
     console.warn("[Payments] Post-confirmation cache cleanup warning:", cacheErr);
   }
 
-  return data as ConfirmedPayment;
+  return confirmedResult;
 }
 
 /**
@@ -307,6 +347,44 @@ export async function confirmPaymentIntentFromWebhook(params: {
     throw new Error(error?.message ?? "Unable to finalize payment from webhook.");
   }
 
+  const webhookResult = data as ConfirmedPayment;
+
+  // Send idempotent notifications
+  try {
+    if (intent.purchase_type === "course" && intent.course_id) {
+      const { data: course } = await admin
+        .from("courses")
+        .select("title, teacher_id")
+        .eq("id", intent.course_id)
+        .maybeSingle();
+
+      const courseTitle = course?.title || "Enrolled Course";
+      await MonetizationNotifications.coursePaymentSuccess(
+        intent.user_id,
+        courseTitle,
+        webhookResult.payment_id
+      );
+
+      if (course?.teacher_id) {
+        const split = calculateRevenueSplit(intent.total_cents);
+        await MonetizationNotifications.teacherSaleReceived(
+          course.teacher_id,
+          courseTitle,
+          split.teacherCents / 100,
+          webhookResult.payment_id
+        );
+      }
+    } else {
+      await MonetizationNotifications.subscriptionActivated(
+        intent.user_id,
+        "AURA Pro",
+        webhookResult.payment_id
+      );
+    }
+  } catch (notifErr) {
+    console.warn("[Payments Webhook] Notification delivery error:", notifErr);
+  }
+
   try {
     if (intent.course_id) {
       await deleteCached(CACHE_KEYS.courseDetail(intent.course_id));
@@ -325,5 +403,5 @@ export async function confirmPaymentIntentFromWebhook(params: {
     console.warn("[Payments Webhook] Cache cleanup warning:", cacheErr);
   }
 
-  return data as ConfirmedPayment;
+  return webhookResult;
 }

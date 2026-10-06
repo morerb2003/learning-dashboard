@@ -3,6 +3,7 @@ import { verifyRazorpayWebhookSignature } from "@/lib/payments/razorpay";
 import { confirmPaymentIntentFromWebhook } from "@/lib/payments/service";
 import { getCached, setCached } from "@/lib/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { MonetizationNotifications } from "@/lib/notifications";
 
 export async function POST(request: Request) {
   try {
@@ -43,20 +44,48 @@ export async function POST(request: Request) {
     const eventType = String(event.event || "");
     const eventId =
       (request.headers.get("x-razorpay-event-id") as string) ||
+      (event.id as string) ||
       `evt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
-    // 2. Redis-backed idempotency deduplication (24 hour TTL)
+    // 2. Multi-Tier Deduplication:
+    // Layer A: Fast Redis Cache (24-hour TTL)
     const dedupKey = `razorpay:webhook:${eventId}`;
-    const alreadyProcessed = await getCached<boolean>(dedupKey);
+    const alreadyProcessedInRedis = await getCached<boolean>(dedupKey);
 
-    if (alreadyProcessed) {
+    if (alreadyProcessedInRedis) {
       return NextResponse.json(
-        { received: true, deduplicated: true },
+        { received: true, deduplicated: true, source: "redis" },
         { status: 200 }
       );
     }
 
-    // Mark event as in-flight / processed
+    const admin = createAdminClient();
+
+    // Layer B: Database-Level Deduplication Table
+    const { data: existingEvent } = await admin
+      .from("webhook_events")
+      .select("id")
+      .eq("event_id", eventId)
+      .maybeSingle();
+
+    if (existingEvent) {
+      await setCached(dedupKey, true, 60 * 60 * 24);
+      return NextResponse.json(
+        { received: true, deduplicated: true, source: "database" },
+        { status: 200 }
+      );
+    }
+
+    // Mark event in database audit log
+    await admin.from("webhook_events").insert({
+      event_id: eventId,
+      event_type: eventType,
+      provider: "razorpay",
+      payload: event,
+      status: "processing",
+    });
+
+    // Mark event in Redis
     await setCached(dedupKey, true, 60 * 60 * 24);
 
     // 3. Process supported events
@@ -112,7 +141,6 @@ export async function POST(request: Request) {
         );
 
         if (orderId) {
-          const admin = createAdminClient();
           await admin
             .from("payment_intents")
             .update({
@@ -126,10 +154,139 @@ export async function POST(request: Request) {
         break;
       }
 
+      case "refund.created":
+      case "refund.processed": {
+        const refundEntity = ((payload.refund as Record<string, unknown>)?.entity ||
+          {}) as Record<string, unknown>;
+        const providerPaymentId = String(refundEntity.payment_id || "");
+        const refundId = String(refundEntity.id || "");
+        const amountCents = Number(refundEntity.amount || 0);
+
+        if (providerPaymentId) {
+          const { data: payment } = await admin
+            .from("payments")
+            .select("id, user_id, course_id, subscription_id, status, total_cents, currency, payment_intent_id")
+            .eq("provider_payment_id", providerPaymentId)
+            .maybeSingle();
+
+          if (payment && payment.status !== "refunded") {
+            const nowIso = new Date().toISOString();
+
+            // Mark payment as refunded
+            await admin
+              .from("payments")
+              .update({
+                status: "refunded",
+                refund_id: refundId,
+                refunded_at: nowIso,
+                refund_amount_cents: amountCents || payment.total_cents,
+              })
+              .eq("id", payment.id);
+
+            // Insert into payment_refunds audit table
+            await admin.from("payment_refunds").insert({
+              payment_id: payment.id,
+              user_id: payment.user_id,
+              amount_cents: amountCents || payment.total_cents,
+              currency: payment.currency,
+              reason: "Webhook refund event",
+              provider_refund_id: refundId,
+              status: "processed",
+              created_at: nowIso,
+              processed_at: nowIso,
+            });
+
+            // Adjust revenue ledger
+            const { data: originalLedger } = await admin
+              .from("revenue_ledger")
+              .select("account_type, account_id, amount_cents, currency, commission_rate_bps")
+              .eq("payment_id", payment.id)
+              .eq("direction", "credit");
+
+            for (const entry of originalLedger || []) {
+              await admin.from("revenue_ledger").insert({
+                payment_id: payment.id,
+                payment_intent_id: payment.payment_intent_id,
+                account_type: entry.account_type,
+                account_id: entry.account_id,
+                entry_type: "refund",
+                direction: "debit",
+                amount_cents: entry.amount_cents,
+                currency: entry.currency,
+                commission_rate_bps: entry.commission_rate_bps,
+                metadata: { webhook_event_id: eventId, refund_id: refundId },
+              });
+            }
+
+            // Revoke access
+            if (payment.course_id) {
+              await admin
+                .from("enrollments")
+                .delete()
+                .eq("user_id", payment.user_id)
+                .eq("course_id", payment.course_id);
+            }
+
+            if (payment.subscription_id) {
+              await admin
+                .from("subscriptions")
+                .update({ status: "refunded", updated_at: nowIso })
+                .eq("id", payment.subscription_id);
+
+              await admin
+                .from("profiles")
+                .update({ subscription_tier: "free" })
+                .eq("id", payment.user_id);
+            }
+
+            // Notify user
+            await MonetizationNotifications.refundProcessed(
+              payment.user_id,
+              (amountCents || payment.total_cents) / 100,
+              payment.id
+            );
+          }
+        }
+        break;
+      }
+
+      case "subscription.cancelled":
+      case "subscription.halted": {
+        const subEntity = ((payload.subscription as Record<string, unknown>)?.entity ||
+          {}) as Record<string, unknown>;
+        const providerSubId = String(subEntity.id || "");
+
+        if (providerSubId) {
+          const { data: sub } = await admin
+            .from("subscriptions")
+            .select("id, user_id")
+            .eq("provider_subscription_id", providerSubId)
+            .maybeSingle();
+
+          if (sub) {
+            await admin
+              .from("subscriptions")
+              .update({
+                status: "canceled",
+                cancel_at_period_end: true,
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", sub.id);
+          }
+        }
+        break;
+      }
+
       default:
-        // Other events received and acknowledged cleanly
+        // Other events safely acknowledged
         break;
     }
+
+    // Update webhook event to processed
+    await admin
+      .from("webhook_events")
+      .update({ status: "processed", processed_at: new Date().toISOString() })
+      .eq("event_id", eventId);
 
     return NextResponse.json({ received: true }, { status: 200 });
   } catch (error) {
