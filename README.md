@@ -117,6 +117,35 @@ AURA integrates **Upstash Redis** for high-performance serverless rate limiting,
 
 *Note: If Redis environment variables are omitted or temporarily unreachable, AURA automatically and gracefully activates in-memory fail-safe fallbacks so core LMS functionality is never interrupted.*
 
+## Razorpay Payment Gateway Configuration (Test & Live Modes)
+
+AURA natively integrates **Razorpay** for course enrollments and subscription upgrades, featuring HMAC-SHA256 signature verification, Redis payment idempotency, and automated webhook reconciliation.
+
+### Setup Instructions:
+
+1. **Obtain API Keys from Razorpay Dashboard**:
+   - Log in to your [Razorpay Dashboard](https://dashboard.razorpay.com/).
+   - Navigate to **Settings > API Keys**.
+   - Generate your **Key ID** (`rzp_test_...` or `rzp_live_...`) and **Key Secret**.
+2. **Configure Webhook**:
+   - In Razorpay Dashboard, go to **Settings > Webhooks > Add New Webhook**.
+   - Set **Webhook URL**: `https://your-domain.com/api/payments/webhook` (or using ngrok during local development).
+   - Enter a secure random string for **Secret** (e.g. 32 alphanumeric characters).
+   - Select active events:
+     - `payment.captured`
+     - `order.paid`
+     - `payment.failed`
+3. **Set Environment Variables in `.env.local`**:
+   ```env
+   RAZORPAY_KEY_ID=rzp_test_xxxxxxxxxxxxx
+   RAZORPAY_KEY_SECRET=your_razorpay_key_secret
+   RAZORPAY_WEBHOOK_SECRET=your_webhook_secret
+   PAYMENT_GATEWAY=razorpay
+   ```
+   *Security Warning*: `RAZORPAY_KEY_SECRET` and `RAZORPAY_WEBHOOK_SECRET` are strictly server-only. Never expose them to client code or prefix with `NEXT_PUBLIC_`.
+4. **Fallback / Test Mock Gateway**:
+   - If `PAYMENT_GATEWAY` is omitted or set to `mock`, AURA uses the built-in `MockPaymentGateway` for instantaneous testing without external network dependencies.
+
 ## Commands
 
 ```bash

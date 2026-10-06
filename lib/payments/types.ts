@@ -31,6 +31,8 @@ export interface PaymentIntentQuote {
 export interface ClientPaymentIntent extends PaymentIntentQuote {
   provider: string;
   clientSecret: string;
+  razorpayKeyId?: string;
+  razorpayOrderId?: string;
 }
 
 export interface ConfirmedPayment {
@@ -43,9 +45,17 @@ export interface GatewayIntent {
   provider: string;
   providerIntentId: string;
   clientSecret: string;
+  razorpayKeyId?: string;
+  razorpayOrderId?: string;
 }
 
 export interface GatewayConfirmation {
   providerPaymentId: string;
   status: "succeeded";
+}
+
+export interface RazorpayConfirmationInput {
+  razorpay_payment_id: string;
+  razorpay_order_id: string;
+  razorpay_signature: string;
 }

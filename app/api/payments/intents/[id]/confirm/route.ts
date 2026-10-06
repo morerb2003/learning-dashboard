@@ -18,7 +18,23 @@ export async function POST(request: Request, context: RouteContext) {
     }
 
     const { id } = await context.params;
-    const payment = await confirmPaymentIntent(id);
+
+    let razorpayDetails: {
+      razorpay_payment_id: string;
+      razorpay_order_id: string;
+      razorpay_signature: string;
+    } | undefined = undefined;
+
+    try {
+      const parsed = await request.json();
+      if (parsed && typeof parsed === "object" && parsed.razorpay_payment_id) {
+        razorpayDetails = parsed;
+      }
+    } catch {
+      // Body may be empty for mock gateway
+    }
+
+    const payment = await confirmPaymentIntent(id, razorpayDetails);
     return NextResponse.json(payment);
   } catch (error) {
     const message =

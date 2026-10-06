@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS public.subscription_plans (
     name TEXT NOT NULL,
     monthly_price_cents INTEGER NOT NULL DEFAULT 0 CHECK (monthly_price_cents >= 0),
     yearly_price_cents INTEGER NOT NULL DEFAULT 0 CHECK (yearly_price_cents >= 0),
-    currency TEXT NOT NULL DEFAULT 'USD' CHECK (char_length(currency) = 3),
+    currency TEXT NOT NULL DEFAULT 'INR' CHECK (char_length(currency) = 3),
     features JSONB NOT NULL DEFAULT '[]'::jsonb,
     is_active BOOLEAN NOT NULL DEFAULT true,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -17,11 +17,11 @@ CREATE TABLE IF NOT EXISTS public.subscription_plans (
 );
 
 INSERT INTO public.subscription_plans
-    (code, name, monthly_price_cents, yearly_price_cents, features)
+    (code, name, monthly_price_cents, yearly_price_cents, currency, features)
 VALUES
-    ('free', 'Free', 0, 0, '["free_courses"]'::jsonb),
-    ('pro', 'Pro', 1999, 19990, '["premium_courses","certificates"]'::jsonb),
-    ('premium', 'Premium', 3499, 34990, '["premium_courses","certificates","priority_support","downloads"]'::jsonb)
+    ('free', 'Free', 0, 0, 'INR', '["free_courses"]'::jsonb),
+    ('pro', 'Pro', 49900, 499000, 'INR', '["premium_courses","certificates"]'::jsonb),
+    ('premium', 'Premium', 99900, 999000, 'INR', '["premium_courses","certificates","priority_support","downloads"]'::jsonb)
 ON CONFLICT (code) DO UPDATE SET
     name = EXCLUDED.name,
     monthly_price_cents = EXCLUDED.monthly_price_cents,
@@ -339,7 +339,7 @@ DECLARE
     v_discount_cents INTEGER := 0;
     v_discount_label TEXT;
     v_subtotal_cents INTEGER;
-    v_currency TEXT := 'USD';
+    v_currency TEXT := 'INR';
     v_intent public.payment_intents%ROWTYPE;
     v_key TEXT := COALESCE(NULLIF(btrim(p_idempotency_key), ''), gen_random_uuid()::TEXT);
 BEGIN

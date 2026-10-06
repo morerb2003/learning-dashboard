@@ -25,7 +25,7 @@ export default function PremiumEnrollButton({
         className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-amber-400 via-orange-400 to-rose-400 px-5 text-xs font-black text-zinc-950 shadow-xl shadow-orange-500/20 transition hover:brightness-110 sm:w-auto cursor-pointer"
       >
         <ShoppingCart className="h-4 w-4" />
-        Buy Now &mdash; ${price.toFixed(2)}
+        Buy Now &mdash; ₹{price.toFixed(2)}
       </button>
 
       {/* Premium badge indicator */}

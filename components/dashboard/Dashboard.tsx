@@ -573,7 +573,7 @@ export default function Dashboard({
                         className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-gradient-to-r from-amber-400 via-orange-400 to-rose-400 text-xs font-black text-zinc-950 shadow-lg shadow-amber-500/20 hover:brightness-110 transition cursor-pointer"
                       >
                         <Zap className="w-4 h-4" />
-                        Upgrade to Pro &mdash; $19.99/mo
+                        Upgrade to Pro &mdash; ₹499/mo
                       </button>
                     </div>
                   )}
@@ -588,7 +588,7 @@ export default function Dashboard({
                     window.location.reload();
                   }}
                   title="AURA Pro Membership"
-                  price={19.99}
+                  price={499}
                 />
               </div>
             </div>
