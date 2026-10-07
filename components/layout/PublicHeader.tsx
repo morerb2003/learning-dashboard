@@ -55,18 +55,18 @@ export default function PublicHeader({ user }: PublicHeaderProps) {
         {/* Desktop Navigation Links */}
         <nav className="hidden md:flex items-center gap-1 rounded-full border border-white/8 bg-white/[0.03] px-4 py-1.5 backdrop-blur-xl text-sm font-medium text-zinc-300">
           {[
-            { href: "/", label: "Home" },
-            { href: "/dashboard", label: "Courses" },
+            { href: "/#catalog", label: "Catalog" },
+            { href: "/#demo-player", label: "Sandbox Player" },
+            { href: "/#certificates", label: "Certifications" },
+            { href: "/#reviews", label: "Outcomes" },
+            { href: "/#features", label: "Workspaces" },
             { href: "/pricing", label: "Pricing & Pro" },
-            { href: "/community", label: "Community" },
-            { href: "/#features", label: "Features" },
-            { href: "/#why-aura", label: "Why AURA" },
             { href: "/#faq", label: "FAQ" },
           ].map((item) => (
             <Link
               key={item.label}
               href={item.href}
-              className="relative px-3.5 py-1.5 rounded-full text-zinc-300 transition-all duration-200 hover:text-white hover:bg-white/8 text-xs font-semibold"
+              className="relative px-3 py-1.5 rounded-full text-zinc-300 transition-all duration-200 hover:text-white hover:bg-white/8 text-xs font-semibold"
             >
               {item.label}
             </Link>
@@ -131,18 +131,32 @@ export default function PublicHeader({ user }: PublicHeaderProps) {
           >
             <nav className="flex flex-col space-y-3 text-sm font-semibold text-zinc-300">
               <Link
-                href="/"
+                href="/#catalog"
                 onClick={() => setMobileMenuOpen(false)}
                 className="hover:text-white py-1"
               >
-                Home
+                Catalog &amp; Syllabus
               </Link>
               <Link
-                href="/dashboard"
+                href="/#demo-player"
                 onClick={() => setMobileMenuOpen(false)}
                 className="hover:text-white py-1"
               >
-                Courses
+                Sandbox Player
+              </Link>
+              <Link
+                href="/#certificates"
+                onClick={() => setMobileMenuOpen(false)}
+                className="hover:text-white py-1"
+              >
+                Certifications
+              </Link>
+              <Link
+                href="/#reviews"
+                onClick={() => setMobileMenuOpen(false)}
+                className="hover:text-white py-1"
+              >
+                Outcomes &amp; Reviews
               </Link>
               <Link
                 href="/pricing"
@@ -151,19 +165,12 @@ export default function PublicHeader({ user }: PublicHeaderProps) {
               >
                 Pricing &amp; Pro
               </Link>
-              <Link
-                href="/community"
-                onClick={() => setMobileMenuOpen(false)}
-                className="hover:text-white py-1"
-              >
-                Community
-              </Link>
               <a
                 href="#features"
                 onClick={() => setMobileMenuOpen(false)}
                 className="hover:text-white py-1"
               >
-                Features
+                Workspaces
               </a>
               <a
                 href="#faq"

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -15,6 +15,7 @@ import {
   LockKeyhole,
   MessageSquareText,
   Play,
+  Search,
   ShieldCheck,
   Sparkles,
   Star,
@@ -22,11 +23,18 @@ import {
   UserRoundCheck,
   Users,
   Zap,
+  Award,
 } from "lucide-react";
 import PublicHeader from "@/components/layout/PublicHeader";
 import PublicFooter from "@/components/layout/PublicFooter";
 import HeroPreviewTabs from "@/components/landing/HeroPreviewTabs";
 import FaqAccordion from "@/components/landing/FaqAccordion";
+import CourseCatalogExplorer from "@/components/landing/CourseCatalogExplorer";
+import InteractiveLessonPlayer from "@/components/landing/InteractiveLessonPlayer";
+import CertificateShowcase from "@/components/landing/CertificateShowcase";
+import CareerOutcomesReviews from "@/components/landing/CareerOutcomesReviews";
+import LearningPathways from "@/components/landing/LearningPathways";
+import InstructorEnterpriseBanner from "@/components/landing/InstructorEnterpriseBanner";
 import {
   SpotlightCard,
   AnimatedCounter,
@@ -47,10 +55,10 @@ const roleFeatures = [
     accent: "violet",
     spotlightColor: "rgba(139, 92, 246, 0.16)",
     items: [
-      "Course enrollment & live progress",
-      "Interactive quizzes with instant feedback",
-      "Assignment submissions & grading",
-      "Verifiable completion certificates",
+      "Course enrollment & live progress tracking",
+      "Interactive quizzes with instant explanation feedback",
+      "Hands-on assignment submissions & grading",
+      "Cryptographically verifiable completion certificates",
     ],
   },
   {
@@ -62,10 +70,10 @@ const roleFeatures = [
     accent: "cyan",
     spotlightColor: "rgba(6, 182, 212, 0.16)",
     items: [
-      "Modular course & lesson builder",
-      "Real-time learner analytics & trends",
+      "Modular course, lesson, quiz & assignment builder",
+      "Real-time learner analytics & cohort drop-off trends",
       "Assignment review & feedback workflows",
-      "Automated quiz assessment management",
+      "Automated monthly revenue payouts with 80% split",
     ],
   },
   {
@@ -77,60 +85,39 @@ const roleFeatures = [
     accent: "emerald",
     spotlightColor: "rgba(16, 185, 129, 0.16)",
     items: [
-      "User, instructor & role management",
-      "System audit trails & activity logs",
-      "Content moderation workflows",
-      "Platform-wide performance metrics",
+      "User, instructor approval & role management",
+      "System audit trails & telemetry activity logs",
+      "Content moderation & refund workflows",
+      "Platform-wide financial and performance metrics",
     ],
   },
 ];
 
-const reasons = [
-  { icon: Play, label: "Interactive modules & live media" },
-  { icon: TrendingUp, label: "Real-time progress telemetry" },
-  { icon: BarChart3, label: "Detailed instructor insights" },
-  { icon: AwardIcon, label: "Cryptographically verified certs" },
-  { icon: MessageSquareText, label: "Collaborative community forums" },
-  { icon: LockKeyhole, label: "Enterprise role-based security" },
-];
-
-function AwardIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="12" cy="8" r="7" />
-      <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88" />
-    </svg>
-  );
-}
-
 const faqs = [
   {
-    question: "Who is AURA built for?",
+    question: "How do AURA's certificates compare to platforms like Coursera & Udemy?",
     answer:
-      "AURA provides tailor-made, distraction-free workspaces for students, teachers, and administrators, each optimized specifically for their goals and responsibilities.",
+      "Every AURA certificate includes a unique verification ID, cryptographically hashed completion record, and direct 1-click sharing to LinkedIn. Employers and university evaluators can verify student authenticity without requiring account registration.",
   },
   {
-    question: "Can teachers publish and monetize complete courses?",
+    question: "Can teachers publish, price, and monetize their own courses?",
     answer:
-      "Yes! Teachers can create multi-chapter courses, rich lessons, quizzes with automated scoring, and assignments, plus monitor student completion and metrics in real-time.",
+      "Yes! Teachers receive an 80/20 revenue split with automated monthly payouts via UPI or direct bank transfer. Instructors get full access to course cloning, bulk lesson imports, automated quiz grading, and real-time student drop-off telemetry.",
   },
   {
-    question: "How is student progress and certification verified?",
+    question: "What does the learning experience include?",
     answer:
-      "Every lesson read, quiz passed, and assignment accepted counts toward verifiable milestones. Once complete, students receive shareable digital certificates with unique verification IDs.",
+      "Each course provides a structured multi-module curriculum, high-definition video lectures, curated notes, live code sandboxes, interactive knowledge checks, and hands-on capstone projects reviewed by instructors.",
+  },
+  {
+    question: "Is there an enterprise tier for engineering and design teams?",
+    answer:
+      "Yes. AURA for Enterprise offers centralized seat licensing, team analytics dashboards, SSO integration, dedicated technical support, and the ability to author custom internal company onboarding tracks.",
   },
   {
     question: "Is role-based security strictly enforced?",
     answer:
-      "Yes. Student, teacher, and administrative interfaces are strictly guarded with server-side authentication, Row-Level Security (RLS) in PostgreSQL, and permission checks.",
+      "Yes. Student, instructor, and admin environments are secured by server-side authentication, Row-Level Security (RLS) in PostgreSQL, and rate-limited API routes backed by Upstash Redis.",
   },
 ];
 
@@ -138,23 +125,23 @@ const stats = [
   {
     numericValue: 18,
     suffix: "+",
-    label: "Published Courses",
+    label: "Academic Tracks",
     icon: BookOpen,
-    color: "text-violet-400",
-  },
-  {
-    numericValue: 8,
-    suffix: " Fields",
-    label: "Specializations",
-    icon: Sparkles,
     color: "text-cyan-400",
   },
   {
-    numericValue: 24,
-    suffix: "+",
-    label: "Expert Instructors",
-    icon: Users,
-    color: "text-indigo-400",
+    numericValue: 35,
+    suffix: "k+",
+    label: "Certificates Issued",
+    icon: Award,
+    color: "text-violet-400",
+  },
+  {
+    numericValue: 4.9,
+    suffix: "★",
+    label: "Average Rating",
+    icon: Star,
+    color: "text-amber-400",
   },
   {
     numericValue: 99.4,
@@ -166,6 +153,8 @@ const stats = [
 ];
 
 export default function LandingView() {
+  const [heroSearch, setHeroSearch] = useState("");
+
   return (
     <main className="min-h-screen overflow-hidden bg-[#030303] text-zinc-100 relative selection:bg-cyan-500/30 selection:text-white">
       {/* Dynamic Background Mesh Layers */}
@@ -176,9 +165,9 @@ export default function LandingView() {
 
       <PublicHeader user={null} />
 
-      {/* ===================== HERO SECTION ===================== */}
-      <section className="relative mx-auto max-w-7xl px-5 pt-12 pb-20 lg:pt-20 lg:pb-32 lg:px-8">
-        {/* Floating status badges above hero */}
+      {/* ===================== HERO SECTION (Coursera/Udemy Benchmarked) ===================== */}
+      <section className="relative mx-auto max-w-7xl px-5 pt-10 pb-16 lg:pt-16 lg:pb-28 lg:px-8">
+        {/* Floating status badges */}
         <div className="mb-6 flex flex-wrap items-center gap-3">
           <FloatingBadge
             icon={Zap}
@@ -186,7 +175,7 @@ export default function LandingView() {
             duration={5}
             yOffset={6}
           >
-            Next-Gen Learning Operating System
+            The Premier Fullstack Academy &amp; LMS
           </FloatingBadge>
           <div className="hidden sm:inline-flex">
             <FloatingBadge
@@ -196,33 +185,67 @@ export default function LandingView() {
               duration={6.5}
               yOffset={7}
             >
-              Realtime AI & Progress Telemetry
+              Accredited Digital Credentials
             </FloatingBadge>
           </div>
         </div>
 
-        <div className="grid items-center gap-14 lg:grid-cols-[1.02fr_0.98fr]">
+        <div className="grid items-center gap-12 lg:grid-cols-[1.02fr_0.98fr]">
           <div className="relative z-10">
-            <h1 className="max-w-3xl text-5xl font-black leading-[0.94] tracking-[-0.055em] text-white sm:text-6xl lg:text-7xl">
+            <h1 className="max-w-3xl text-4xl font-black leading-[0.96] tracking-[-0.055em] text-white sm:text-6xl lg:text-7xl">
               <span className="block text-zinc-100">
-                <TextReveal text="Learn smarter." />
+                <TextReveal text="Learn without limits." />
               </span>
               <span className="block mt-2 bg-gradient-to-r from-cyan-300 via-sky-300 to-violet-400 bg-clip-text text-transparent drop-shadow-sm">
-                <TextReveal text="Teach better." delay={0.2} />
+                <TextReveal text="Master production code." delay={0.2} />
               </span>
             </h1>
 
             <FadeIn delay={0.2} direction="up">
-              <p className="mt-7 max-w-xl text-base leading-8 text-zinc-400 sm:text-lg">
-                The modern fullstack platform uniting structured courses, smart
-                quizzes, interactive assignments, certified credentials, and
-                powerful instructor analytics in one unified workspace.
+              <p className="mt-6 max-w-xl text-base leading-relaxed text-zinc-400 sm:text-lg">
+                Build real-world systems with structured curriculum, auto-graded quizzes, hands-on code reviews, and cryptographically verified certificates recognized by industry leaders.
               </p>
             </FadeIn>
 
-            {/* Hero CTAs */}
+            {/* Coursera/Udemy-style Hero Search Bar */}
+            <FadeIn delay={0.25} direction="up">
+              <div className="mt-8 relative max-w-lg">
+                <div className="flex items-center rounded-2xl border border-white/12 bg-zinc-950/80 p-1.5 backdrop-blur-xl shadow-xl shadow-cyan-500/5 focus-within:border-cyan-400 focus-within:ring-1 focus-within:ring-cyan-400 transition-all">
+                  <Search className="h-4 w-4 ml-3 text-zinc-400 shrink-0" />
+                  <input
+                    type="text"
+                    value={heroSearch}
+                    onChange={(e) => setHeroSearch(e.target.value)}
+                    placeholder="What skill do you want to master today? (e.g. Next.js, AI, Postgres)"
+                    className="w-full bg-transparent px-3 py-2 text-xs font-semibold text-white placeholder-zinc-500 focus:outline-none"
+                  />
+                  <a
+                    href="#catalog"
+                    className="shrink-0 rounded-xl bg-gradient-to-r from-cyan-400 to-sky-400 px-4 py-2 text-xs font-black text-zinc-950 hover:brightness-110 active:scale-95 transition"
+                  >
+                    Explore
+                  </a>
+                </div>
+
+                {/* Popular Keywords Chips (Udemy signature) */}
+                <div className="mt-3 flex items-center gap-1.5 overflow-x-auto text-[11px] text-zinc-400">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 shrink-0">Popular:</span>
+                  {["Next.js 16", "PostgreSQL RLS", "AI Agents", "Docker & Cloud", "Design Systems"].map((chip) => (
+                    <a
+                      key={chip}
+                      href="#catalog"
+                      className="rounded-lg bg-white/[0.04] border border-white/8 px-2.5 py-0.5 text-zinc-300 hover:text-white hover:border-cyan-400/40 transition shrink-0"
+                    >
+                      {chip}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </FadeIn>
+
+            {/* Hero Action Buttons */}
             <FadeIn delay={0.3} direction="up">
-              <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Link
                   href="/register"
                   className="btn-shimmer inline-flex h-13 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-400 via-sky-300 to-violet-400 px-7 text-sm font-black text-zinc-950 shadow-2xl shadow-cyan-500/25 transition hover:brightness-110 active:scale-[0.97]"
@@ -230,21 +253,21 @@ export default function LandingView() {
                   Start Learning Free
                   <ArrowRight className="h-4 w-4" />
                 </Link>
-                <Link
-                  href="/login?next=/dashboard"
+                <a
+                  href="#catalog"
                   className="inline-flex h-13 items-center justify-center gap-2 rounded-2xl border border-white/12 bg-white/[0.04] px-6 text-sm font-bold text-white transition hover:border-white/25 hover:bg-white/[0.08] active:scale-[0.97]"
                 >
-                  Explore Course Catalog
+                  Browse Course Catalog
                   <ChevronRight className="h-4 w-4 text-zinc-400" />
-                </Link>
+                </a>
               </div>
 
               {/* Trust Indicators */}
               <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3 text-xs font-semibold text-zinc-400">
                 {[
-                  "3 Dedicated Role Workspaces",
-                  "Verified Digital Badges",
-                  "Zero Configuration Setup",
+                  "3 Tailored Role Workspaces",
+                  "Verifiable Digital Badges",
+                  "80/20 Instructor Revenue Split",
                 ].map((item) => (
                   <span key={item} className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-emerald-400" />
@@ -255,15 +278,32 @@ export default function LandingView() {
             </FadeIn>
           </div>
 
-          {/* Interactive Hero 3D Tilt Preview Mockup with Live Tab Switcher */}
+          {/* Interactive Hero 3D Tilt Preview Mockup */}
           <div className="relative z-10">
             <HeroPreviewTabs />
           </div>
         </div>
       </section>
 
+      {/* ===================== LOGO / TRUSTED-BY BANNER (Coursera benchmark) ===================== */}
+      <section className="relative border-y border-white/8 bg-white/[0.01] py-8">
+        <div className="mx-auto max-w-7xl px-5 text-center lg:px-8">
+          <p className="text-[11px] font-black uppercase tracking-[0.22em] text-zinc-400">
+            Engineers &amp; instructors on AURA build with production technologies from
+          </p>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-8 sm:gap-14 text-zinc-400 font-black text-sm tracking-widest uppercase opacity-85">
+            <span className="hover:text-white transition">▲ Vercel</span>
+            <span className="hover:text-white transition">⚡ Supabase</span>
+            <span className="hover:text-white transition">✦ Stripe</span>
+            <span className="hover:text-white transition">⬡ Docker</span>
+            <span className="hover:text-white transition">🐘 PostgreSQL</span>
+            <span className="hover:text-white transition">◆ Upstash</span>
+          </div>
+        </div>
+      </section>
+
       {/* ===================== ANIMATED STATS BAR ===================== */}
-      <section className="relative border-y border-white/8 bg-white/[0.02] backdrop-blur-xl">
+      <section className="relative border-b border-white/8 bg-white/[0.02] backdrop-blur-xl">
         <div className="mx-auto grid max-w-7xl grid-cols-2 px-5 py-2 md:grid-cols-4 lg:px-8">
           {stats.map((stat, idx) => {
             const Icon = stat.icon;
@@ -294,6 +334,15 @@ export default function LandingView() {
         </div>
       </section>
 
+      {/* ===================== SIGNATURE SECTION 1: COURSE CATALOG EXPLORER (Udemy & Coursera benchmark) ===================== */}
+      <CourseCatalogExplorer />
+
+      {/* ===================== SIGNATURE SECTION 2: INTERACTIVE LESSON PLAYER SANDBOX ===================== */}
+      <InteractiveLessonPlayer />
+
+      {/* ===================== SIGNATURE SECTION 3: 4-STEP METHODOLOGY PATHWAY ===================== */}
+      <LearningPathways />
+
       {/* ===================== ROLE WORKSPACES (SPOTLIGHT CARDS) ===================== */}
       <section id="features" className="relative mx-auto max-w-7xl px-5 py-24 lg:px-8 lg:py-32">
         <FadeIn direction="up">
@@ -302,11 +351,11 @@ export default function LandingView() {
               <Sparkles className="h-3 w-3" />
               Tailored Architecture
             </span>
-            <h2 className="mt-4 text-4xl font-black tracking-tight text-white sm:text-5xl">
+            <h2 className="mt-4 text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white">
               One ecosystem. Three purpose-built workspaces.
             </h2>
-            <p className="mt-5 text-base leading-7 text-zinc-400">
-              Students, instructors, and managers operate inside dedicated
+            <p className="mt-4 text-sm sm:text-base leading-relaxed text-zinc-400">
+              Students, instructors, and administrators operate inside dedicated
               environments crafted to accelerate their primary workflows.
             </p>
           </div>
@@ -333,7 +382,7 @@ export default function LandingView() {
                     >
                       <Icon className="h-6 w-6" />
                     </div>
-                    <p className="mt-6 text-[10px] font-black uppercase tracking-[0.22em] text-zinc-500">
+                    <p className="mt-6 text-[10px] font-black uppercase tracking-[0.22em] text-zinc-400">
                       {feature.eyebrow}
                     </p>
                     <h3 className="mt-2 text-xl font-black text-white">
@@ -364,214 +413,14 @@ export default function LandingView() {
         </Stagger>
       </section>
 
-      {/* ===================== PLATFORM INTERACTIVE SHOWCASE ===================== */}
-      <section id="platform" className="relative border-y border-white/8 bg-white/[0.015]">
-        <div className="mx-auto max-w-7xl px-5 py-24 lg:px-8 lg:py-32">
-          <FadeIn direction="up">
-            <div className="text-center max-w-2xl mx-auto">
-              <span className="inline-flex items-center gap-2 rounded-full border border-violet-400/20 bg-violet-400/10 px-3.5 py-1 text-[10px] font-black uppercase tracking-[0.24em] text-violet-300">
-                <BarChart3 className="h-3 w-3" />
-                Live Platform Capabilities
-              </span>
-              <h2 className="mt-4 text-4xl font-black tracking-tight text-white sm:text-5xl">
-                Clarity and momentum at every level.
-              </h2>
-              <p className="mt-4 text-base text-zinc-400">
-                Real-time feedback loops replace guesswork with measurable student growth.
-              </p>
-            </div>
-          </FadeIn>
+      {/* ===================== SIGNATURE SECTION 4: CERTIFICATE SHOWCASE (Coursera signature) ===================== */}
+      <CertificateShowcase />
 
-          <div className="mt-14 grid gap-6 lg:grid-cols-2">
-            {/* Teacher Analytics Spotlight Card */}
-            <SpotlightCard
-              spotlightColor="rgba(139, 92, 246, 0.18)"
-              className="p-8"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-violet-400">
-                    Instructor Intelligence
-                  </p>
-                  <h3 className="mt-1 text-2xl font-black text-white">
-                    Measure Engagement Trends
-                  </h3>
-                  <p className="mt-1 text-xs text-zinc-400">
-                    Weekly quiz submissions & lesson throughput
-                  </p>
-                </div>
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-500/15 text-violet-300 border border-violet-500/20">
-                  <BarChart3 className="h-5 w-5" />
-                </div>
-              </div>
+      {/* ===================== SIGNATURE SECTION 5: CAREER OUTCOMES & REVIEWS (Coursera benchmark) ===================== */}
+      <CareerOutcomesReviews />
 
-              {/* Animated Interactive Bar Chart Representation */}
-              <div className="relative mt-8 flex h-56 items-end gap-3 rounded-2xl border border-white/6 bg-black/40 p-5">
-                {[
-                  { label: "Mon", h: 42 },
-                  { label: "Tue", h: 64 },
-                  { label: "Wed", h: 58 },
-                  { label: "Thu", h: 84 },
-                  { label: "Fri", h: 72 },
-                  { label: "Sat", h: 92 },
-                  { label: "Sun", h: 98 },
-                ].map((bar) => (
-                  <div key={bar.label} className="flex h-full flex-1 flex-col justify-end items-center gap-2">
-                    <div className="w-full flex-1 flex items-end">
-                      <div
-                        className="w-full rounded-t-lg bg-gradient-to-t from-violet-600/70 via-indigo-500 to-cyan-300 transition-all duration-700 hover:brightness-125"
-                        style={{ height: `${bar.h}%` }}
-                      />
-                    </div>
-                    <span className="text-[9px] font-bold uppercase text-zinc-500">{bar.label}</span>
-                  </div>
-                ))}
-              </div>
-            </SpotlightCard>
-
-            {/* Course Workspace Spotlight Card */}
-            <SpotlightCard
-              spotlightColor="rgba(6, 182, 212, 0.18)"
-              className="p-8"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-cyan-400">
-                    Student Velocity
-                  </p>
-                  <h3 className="mt-1 text-2xl font-black text-white">
-                    Active Study Paths
-                  </h3>
-                  <p className="mt-1 text-xs text-zinc-400">
-                    Continuous learning without losing context
-                  </p>
-                </div>
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-cyan-500/15 text-cyan-300 border border-cyan-500/20">
-                  <BookOpen className="h-5 w-5" />
-                </div>
-              </div>
-
-              <div className="relative mt-8 space-y-3.5">
-                {[
-                  { title: "Design Systems with React & Figma", progress: 88, icon: FileText, tag: "UI/UX" },
-                  { title: "Distributed Systems with Node & Go", progress: 64, icon: Users, tag: "Backend" },
-                  { title: "Production Database Modeling & RLS", progress: 42, icon: TrendingUp, tag: "Database" },
-                ].map((course) => {
-                  const Icon = course.icon;
-                  return (
-                    <div
-                      key={course.title}
-                      className="flex items-center gap-4 rounded-2xl border border-white/8 bg-black/40 p-4 transition-colors hover:border-white/18"
-                    >
-                      <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-cyan-400/10 text-cyan-300 border border-cyan-400/20">
-                        <Icon className="h-5 w-5" />
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between gap-4 text-xs font-bold">
-                          <span className="text-white truncate">{course.title}</span>
-                          <span className="text-cyan-300 font-mono">{course.progress}%</span>
-                        </div>
-                        <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-white/8">
-                          <div
-                            className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-violet-400"
-                            style={{ width: `${course.progress}%` }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </SpotlightCard>
-          </div>
-        </div>
-      </section>
-
-      {/* ===================== WHY CHOOSE AURA ===================== */}
-      <section id="why-aura" className="relative mx-auto max-w-7xl px-5 py-24 lg:px-8 lg:py-32">
-        <div className="grid items-center gap-16 lg:grid-cols-[0.85fr_1.15fr]">
-          <FadeIn direction="left">
-            <div>
-              <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3.5 py-1 text-[10px] font-black uppercase tracking-[0.24em] text-emerald-300">
-                <CheckCircle2 className="h-3 w-3" />
-                The AURA Advantage
-              </span>
-              <h2 className="mt-4 text-4xl font-black tracking-tight text-white sm:text-5xl">
-                Engineered to turn daily study into mastered skills.
-              </h2>
-              <p className="mt-5 text-base leading-7 text-zinc-400">
-                Every component inside AURA is connected. Progress on quizzes,
-                lesson completions, and assignments immediately update your
-                dashboard, portfolio, and completion certifications.
-              </p>
-              <Link
-                href="/register"
-                className="mt-8 inline-flex items-center gap-2 rounded-xl bg-white/8 border border-white/12 px-5 py-3 text-sm font-bold text-cyan-300 transition hover:bg-white/12 hover:text-white"
-              >
-                Create Free Account
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </div>
-          </FadeIn>
-
-          <Stagger className="grid gap-4 sm:grid-cols-2" staggerDelay={0.08}>
-            {reasons.map((reason) => {
-              const Icon = reason.icon;
-              return (
-                <StaggerItem key={reason.label}>
-                  <div className="flex items-center gap-4 rounded-2xl border border-white/8 bg-white/[0.03] p-5 backdrop-blur-md transition-all hover:border-white/18 hover:bg-white/[0.06]">
-                    <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/6 text-zinc-200 border border-white/8">
-                      <Icon className="h-5 w-5" />
-                    </span>
-                    <span className="text-sm font-bold text-zinc-100">{reason.label}</span>
-                  </div>
-                </StaggerItem>
-              );
-            })}
-          </Stagger>
-        </div>
-
-        {/* Testimonials */}
-        <div className="mt-20 grid gap-6 md:grid-cols-2">
-          {[
-            {
-              quote:
-                "The AURA interface is unlike typical clunky LMS platforms. Everything from quizzes to assignment submissions is lightning fast and visually inspiring.",
-              role: "Computer Science Student",
-              author: "Alex Rivera",
-            },
-            {
-              quote:
-                "Having live course telemetry and automated quiz grading cuts my teaching admin work by 70%. It gives me time to focus on mentorship.",
-              role: "Lead Fullstack Instructor",
-              author: "Dr. Marcus Chen",
-            },
-          ].map((testimonial) => (
-            <SpotlightCard
-              key={testimonial.author}
-              spotlightColor="rgba(255, 255, 255, 0.08)"
-              className="p-8"
-            >
-              <div className="flex gap-1 text-amber-400">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star key={i} className="h-4 w-4 fill-current" />
-                ))}
-              </div>
-              <blockquote className="mt-6 text-base font-bold leading-7 text-zinc-200">
-                &ldquo;{testimonial.quote}&rdquo;
-              </blockquote>
-              <div className="mt-6 flex items-center justify-between border-t border-white/6 pt-4">
-                <div>
-                  <p className="text-sm font-black text-white">{testimonial.author}</p>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
-                    {testimonial.role}
-                  </p>
-                </div>
-              </div>
-            </SpotlightCard>
-          ))}
-        </div>
-      </section>
+      {/* ===================== SIGNATURE SECTION 6: INSTRUCTOR & ENTERPRISE DUAL BANNER (Udemy benchmark) ===================== */}
+      <InstructorEnterpriseBanner />
 
       {/* ===================== FAQ ACCORDION ===================== */}
       <section id="faq" className="relative border-y border-white/8 bg-white/[0.015]">
@@ -579,14 +428,14 @@ export default function LandingView() {
           <FadeIn direction="left">
             <div>
               <span className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3.5 py-1 text-[10px] font-black uppercase tracking-[0.24em] text-cyan-300">
-                Support & Details
+                Support &amp; Details
               </span>
-              <h2 className="mt-4 text-4xl font-black tracking-tight text-white">
+              <h2 className="mt-4 text-3xl sm:text-4xl font-black tracking-tight text-white">
                 Frequently Asked
                 <span className="block text-zinc-500">Questions.</span>
               </h2>
-              <p className="mt-4 text-sm text-zinc-400 leading-6">
-                Have more questions? Visit our community discussions or sign up to explore the curriculum.
+              <p className="mt-4 text-xs sm:text-sm text-zinc-400 leading-relaxed">
+                Have more questions about courses, certifications, or instructor payouts? Explore our community discussions or sign up to get started.
               </p>
             </div>
           </FadeIn>
@@ -608,27 +457,26 @@ export default function LandingView() {
             <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 text-violet-200 border border-white/15 shadow-xl">
               <UserRoundCheck className="h-7 w-7" />
             </span>
-            <h2 className="mt-7 text-4xl font-black tracking-tight text-white sm:text-5xl">
-              Ready to experience modern learning?
+            <h2 className="mt-7 text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white">
+              Ready to master production software skills?
             </h2>
-            <p className="mt-4 text-base leading-7 text-zinc-300">
-              Join thousands of students and teachers building skills on a platform
-              crafted for speed, clarity, and real progress.
+            <p className="mt-4 text-sm sm:text-base leading-relaxed text-zinc-300">
+              Join thousands of students and instructors on an academic platform crafted for speed, verifiable skills, and real career impact.
             </p>
             <div className="mt-9 flex flex-col sm:flex-row items-center justify-center gap-3.5">
               <Link
                 href="/register"
                 className="btn-shimmer inline-flex h-13 w-full sm:w-auto items-center justify-center gap-2 rounded-2xl bg-white px-8 text-sm font-black text-zinc-950 transition hover:bg-zinc-200 active:scale-[0.97]"
               >
-                Create Your Account
+                Create Free Account
                 <ArrowRight className="h-4 w-4" />
               </Link>
-              <Link
-                href="/dashboard"
+              <a
+                href="#catalog"
                 className="inline-flex h-13 w-full sm:w-auto items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/[0.05] px-8 text-sm font-bold text-white transition hover:bg-white/10 active:scale-[0.97]"
               >
-                Browse Catalog
-              </Link>
+                Explore Course Catalog
+              </a>
             </div>
           </div>
         </div>
