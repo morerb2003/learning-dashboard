@@ -11,34 +11,38 @@ export default function NotificationBell() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
 
-  const loadNotifications = useCallback(async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const { data } = await supabase
-      .from("notifications")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-      .limit(12);
-
-    if (data) setNotifications(data as Notification[]);
-  }, [supabase]);
-
   useEffect(() => {
+    let isCancelled = false;
     let channel: ReturnType<typeof supabase.channel> | null = null;
 
     const connect = async () => {
-      await loadNotifications();
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user || isCancelled) return;
 
-      channel = supabase
-        .channel(`notifications:${user.id}`)
+      const { data } = await supabase
+        .from("notifications")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(12);
+
+      if (isCancelled) return;
+      if (data) setNotifications(data as Notification[]);
+
+      const channelName = `notifications:${user.id}`;
+      const existingChannel = supabase
+        .getChannels()
+        .find((c) => c.topic === `realtime:${channelName}` || c.topic === channelName);
+      if (existingChannel) {
+        await supabase.removeChannel(existingChannel);
+      }
+
+      if (isCancelled) return;
+
+      const newChannel = supabase
+        .channel(channelName)
         .on(
           "postgres_changes",
           {
@@ -54,16 +58,26 @@ export default function NotificationBell() {
               ...current.filter((item) => item.id !== incoming.id),
             ].slice(0, 12));
           }
-        )
-        .subscribe();
+        );
+
+      if (isCancelled) {
+        void supabase.removeChannel(newChannel);
+        return;
+      }
+
+      channel = newChannel;
+      newChannel.subscribe();
     };
 
     void connect();
 
     return () => {
-      if (channel) void supabase.removeChannel(channel);
+      isCancelled = true;
+      if (channel) {
+        void supabase.removeChannel(channel);
+      }
     };
-  }, [loadNotifications, supabase]);
+  }, [supabase]);
 
   const unreadCount = notifications.filter((item) => !item.read_at).length;
 
