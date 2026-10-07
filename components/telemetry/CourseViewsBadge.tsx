@@ -78,7 +78,7 @@ export default function CourseViewsBadge({
       }`}
     >
       <Eye className={`h-3.5 w-3.5 ${hasBumped ? "text-emerald-300 animate-pulse" : "text-violet-400"}`} />
-      <span>{totalViews.toLocaleString()} views</span>
+      <span suppressHydrationWarning>{totalViews.toLocaleString()} views</span>
       {totalViews > 100 && (
         <span className="flex items-center gap-0.5 text-amber-400 text-[10px] font-bold">
           <Flame className="h-3 w-3 fill-amber-400" /> Trending

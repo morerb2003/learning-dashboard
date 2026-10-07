@@ -268,7 +268,7 @@ export default function AdminProfileView({ data }: AdminProfileViewProps) {
                       </span>
                       <span className="text-zinc-200">{log.entity_type}</span>
                     </div>
-                    <span className="text-zinc-500 text-[11px]">
+                    <span className="text-zinc-500 text-[11px]" suppressHydrationWarning>
                       {new Date(log.created_at).toLocaleString()}
                     </span>
                   </div>
@@ -563,7 +563,7 @@ export default function AdminProfileView({ data }: AdminProfileViewProps) {
                       </span>
                       <span className="text-xs font-medium text-white">{log.entity_type}</span>
                     </div>
-                    <span className="text-[11px] text-zinc-400">
+                    <span className="text-[11px] text-zinc-400" suppressHydrationWarning>
                       {new Date(log.created_at).toLocaleString()}
                     </span>
                   </div>

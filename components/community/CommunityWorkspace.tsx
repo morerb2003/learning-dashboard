@@ -377,7 +377,7 @@ export default function CommunityWorkspace({
                     </span>
                   </div>
                   <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-zinc-400">{item.body}</p>
-                  <p className="mt-3 text-[10px] uppercase tracking-wider text-zinc-600">
+                  <p className="mt-3 text-[10px] uppercase tracking-wider text-zinc-600" suppressHydrationWarning>
                     {new Date(item.published_at).toLocaleString()}
                   </p>
                 </article>

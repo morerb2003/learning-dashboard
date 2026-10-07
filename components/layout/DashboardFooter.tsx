@@ -5,7 +5,7 @@ export default function DashboardFooter() {
   return (
     <footer className="mt-auto border-t border-white/5 bg-zinc-950/40 px-6 py-4 text-xs text-zinc-500 shrink-0">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 max-w-7xl mx-auto">
-        <p className="text-[11px] font-medium">
+        <p className="text-[11px] font-medium" suppressHydrationWarning>
           © {new Date().getFullYear()} AURA Learning Platform
         </p>
         <div className="flex items-center gap-5 text-[11px]">

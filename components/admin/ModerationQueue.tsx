@@ -239,7 +239,7 @@ export default function ModerationQueue({
               {/* Header Badges */}
               <div className="flex flex-wrap items-center gap-3">
                 {renderContentTypeBadge(flag.content_type)}
-                <span className="text-[10px] uppercase tracking-widest text-zinc-500">
+                <span className="text-[10px] uppercase tracking-widest text-zinc-500" suppressHydrationWarning>
                   {new Date(flag.created_at).toLocaleString()}
                 </span>
                 {flag.reporter && (

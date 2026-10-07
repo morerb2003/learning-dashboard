@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Settings,
   Shield,
@@ -198,6 +198,11 @@ type TabId = typeof TABS[number]["id"];
 
 export default function AdminSettingsPage() {
   const [activeTab, setActiveTab] = useState<TabId>("general");
+  const [lastChecked, setLastChecked] = useState<string>("");
+
+  useEffect(() => {
+    setLastChecked(new Date().toLocaleTimeString());
+  }, []);
 
   /* General */
   const [platformName, setPlatformName] = useState("AURA LMS");
@@ -319,7 +324,9 @@ export default function AdminSettingsPage() {
             </div>
           ))}
         </div>
-        <p className="mt-4 text-[11px] text-zinc-600">Last checked: {new Date().toLocaleTimeString()}</p>
+        <p className="mt-4 text-[11px] text-zinc-600" suppressHydrationWarning>
+          Last checked: {lastChecked || "Online"}
+        </p>
       </SectionCard>
     </div>
   );

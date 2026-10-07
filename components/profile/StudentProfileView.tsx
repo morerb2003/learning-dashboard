@@ -625,7 +625,7 @@ export default function StudentProfileView({ data }: StudentProfileViewProps) {
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between">
                         <span className="text-[10px] uppercase font-bold text-amber-300">Verified</span>
-                        <span className="text-[10px] text-zinc-500">{new Date(cert.issued_at).toLocaleDateString()}</span>
+                        <span className="text-[10px] text-zinc-500" suppressHydrationWarning>{new Date(cert.issued_at).toLocaleDateString()}</span>
                       </div>
                       <h4 className="text-sm font-bold text-white">{cert.course_title}</h4>
                       <p className="text-[10px] font-mono text-zinc-400">ID: {cert.certificate_number}</p>

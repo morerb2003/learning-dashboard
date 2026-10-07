@@ -158,7 +158,7 @@ export default function NotesView({ initialNotes }: NotesViewProps) {
                   <p className="relative z-10 text-xs text-zinc-400 leading-relaxed whitespace-pre-wrap">
                     {note.content}
                   </p>
-                  <p className="relative z-10 text-[9px] text-zinc-600 mt-4 font-medium uppercase tracking-wider">
+                  <p className="relative z-10 text-[9px] text-zinc-600 mt-4 font-medium uppercase tracking-wider" suppressHydrationWarning>
                     {new Date(note.created_at).toLocaleDateString()}
                   </p>
                 </motion.div>

@@ -54,7 +54,7 @@ export default function PublicFooter() {
         </div>
 
         <div className="mt-12 pt-6 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-zinc-500">
-          <p>© {new Date().getFullYear()} AURA Learning Dashboard. All rights reserved.</p>
+          <p suppressHydrationWarning>© {new Date().getFullYear()} AURA Learning Dashboard. All rights reserved.</p>
           <p className="flex items-center gap-1">
             Engineered for high performance and visual excellence
           </p>

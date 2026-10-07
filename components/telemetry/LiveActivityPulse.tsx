@@ -11,21 +11,21 @@ const INITIAL_EVENTS: ActivityPulseEvent[] = [
     type: "enrollment",
     title: "Enrolled in Fullstack Next.js & React 19",
     actor: "Alex C.",
-    timestamp: new Date(Date.now() - 1000 * 60 * 3).toISOString(),
+    timestamp: "2026-10-07T12:00:00.000Z",
   },
   {
     id: "act-init-2",
     type: "lesson_complete",
     title: "Completed Server Components & Telemetry",
     actor: "Sarah M.",
-    timestamp: new Date(Date.now() - 1000 * 60 * 12).toISOString(),
+    timestamp: "2026-10-07T11:50:00.000Z",
   },
   {
     id: "act-init-3",
     type: "certificate",
     title: "Earned Certified Professional Badge",
     actor: "Liam P.",
-    timestamp: new Date(Date.now() - 1000 * 60 * 25).toISOString(),
+    timestamp: "2026-10-07T11:35:00.000Z",
   },
 ];
 
@@ -45,7 +45,12 @@ export default function LiveActivityPulse() {
   const [events, setEvents] = useState<ActivityPulseEvent[]>(INITIAL_EVENTS);
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSync, setLastSync] = useState<Date>(new Date());
+  const [isMounted, setIsMounted] = useState(false);
   const [, setTick] = useState(0);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const fetchLiveFeed = useCallback(async () => {
     try {
@@ -166,8 +171,8 @@ export default function LiveActivityPulse() {
                     </span>
                   )}
                 </span>
-                <span className="text-[10px] text-zinc-500 shrink-0 font-medium">
-                  {formatTimeAgo(evt.timestamp)}
+                <span className="text-[10px] text-zinc-500 shrink-0 font-medium" suppressHydrationWarning>
+                  {isMounted ? formatTimeAgo(evt.timestamp) : "Recently"}
                 </span>
               </div>
               <p className="text-[11px] text-zinc-300 truncate mt-0.5">{evt.title}</p>
@@ -181,7 +186,11 @@ export default function LiveActivityPulse() {
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
           Active WebSocket & telemetry stream
         </span>
-        <span>Synced {lastSync.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</span>
+        <span suppressHydrationWarning>
+          {isMounted
+            ? `Synced ${lastSync.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`
+            : "Active telemetry stream"}
+        </span>
       </div>
     </div>
   );

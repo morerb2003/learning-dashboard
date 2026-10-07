@@ -15,6 +15,11 @@ export default function LiveLeaderboardCard() {
   ]);
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSync, setLastSync] = useState<Date>(new Date());
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const fetchLeaderboard = useCallback(async () => {
     try {
@@ -140,7 +145,11 @@ export default function LiveLeaderboardCard() {
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
           Realtime XP calculations
         </span>
-        <span>Updated {lastSync.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</span>
+        <span suppressHydrationWarning>
+          {isMounted
+            ? `Updated ${lastSync.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`
+            : "Realtime calculations"}
+        </span>
       </div>
     </div>
   );
