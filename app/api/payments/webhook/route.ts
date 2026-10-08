@@ -6,6 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { MonetizationNotifications } from "@/lib/notifications";
 
 export async function POST(request: Request) {
+  let currentEventId: string | null = null;
   try {
     const rawBody = await request.text();
     const signature = request.headers.get("x-razorpay-signature");
@@ -46,6 +47,7 @@ export async function POST(request: Request) {
       (request.headers.get("x-razorpay-event-id") as string) ||
       (event.id as string) ||
       `evt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    currentEventId = eventId;
 
     // 2. Multi-Tier Deduplication:
     // Layer A: Fast Redis Cache (24-hour TTL)
@@ -64,11 +66,11 @@ export async function POST(request: Request) {
     // Layer B: Database-Level Deduplication Table
     const { data: existingEvent } = await admin
       .from("webhook_events")
-      .select("id")
+      .select("id, status")
       .eq("event_id", eventId)
       .maybeSingle();
 
-    if (existingEvent) {
+    if (existingEvent && existingEvent.status === "processed") {
       await setCached(dedupKey, true, 60 * 60 * 24);
       return NextResponse.json(
         { received: true, deduplicated: true, source: "database" },
@@ -76,17 +78,25 @@ export async function POST(request: Request) {
       );
     }
 
-    // Mark event in database audit log
-    await admin.from("webhook_events").insert({
-      event_id: eventId,
-      event_type: eventType,
-      provider: "razorpay",
-      payload: event,
-      status: "processing",
-    });
-
-    // Mark event in Redis
-    await setCached(dedupKey, true, 60 * 60 * 24);
+    // Mark event in database audit log as processing (or update if retrying)
+    if (existingEvent) {
+      await admin
+        .from("webhook_events")
+        .update({
+          status: "processing",
+          error_message: null,
+          processed_at: new Date().toISOString(),
+        })
+        .eq("event_id", eventId);
+    } else {
+      await admin.from("webhook_events").insert({
+        event_id: eventId,
+        event_type: eventType,
+        provider: "razorpay",
+        payload: event,
+        status: "processing",
+      });
+    }
 
     // 3. Process supported events
     const payload = (event.payload || {}) as Record<string, unknown>;
@@ -288,11 +298,31 @@ export async function POST(request: Request) {
       .update({ status: "processed", processed_at: new Date().toISOString() })
       .eq("event_id", eventId);
 
+    // Cache in Redis only after successful completion
+    await setCached(dedupKey, true, 60 * 60 * 24);
+
     return NextResponse.json({ received: true }, { status: 200 });
   } catch (error) {
     const errorMsg =
       error instanceof Error ? error.message : "Webhook processing failure.";
     console.error("[Razorpay Webhook] Processing error:", error);
+
+    if (currentEventId) {
+      try {
+        const admin = createAdminClient();
+        await admin
+          .from("webhook_events")
+          .update({
+            status: "failed",
+            error_message: errorMsg,
+            processed_at: new Date().toISOString(),
+          })
+          .eq("event_id", currentEventId);
+      } catch {
+        // Best-effort audit log
+      }
+    }
+
     return NextResponse.json({ error: errorMsg }, { status: 500 });
   }
 }

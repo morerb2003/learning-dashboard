@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useSyncExternalStore } from "react";
 import {
   Settings,
   Shield,
@@ -198,11 +198,11 @@ type TabId = typeof TABS[number]["id"];
 
 export default function AdminSettingsPage() {
   const [activeTab, setActiveTab] = useState<TabId>("general");
-  const [lastChecked, setLastChecked] = useState<string>("");
-
-  useEffect(() => {
-    setLastChecked(new Date().toLocaleTimeString());
-  }, []);
+  const lastChecked = useSyncExternalStore(
+    () => () => {},
+    () => new Date().toLocaleTimeString(),
+    () => "Online"
+  );
 
   /* General */
   const [platformName, setPlatformName] = useState("AURA LMS");

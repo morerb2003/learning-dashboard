@@ -1,4 +1,5 @@
 import { getRedisClient } from "./redis.ts";
+import { logger } from "./logger.ts";
 
 /**
  * In-memory fallback store when Redis is unavailable or unconfigured.
@@ -6,15 +7,31 @@ import { getRedisClient } from "./redis.ts";
 interface MemoryCacheEntry {
   value: string;
   expiresAt: number;
+  lastAccessed: number;
 }
 
+const MAX_MEMORY_CACHE_ENTRIES = 2000;
 const memoryCache = new Map<string, MemoryCacheEntry>();
+
+// Concurrency: in-flight promise map for single-flight cache stampede coalescing
+const inFlightPromises = new Map<string, Promise<unknown>>();
 
 function cleanMemoryCache() {
   const now = Date.now();
   for (const [key, entry] of memoryCache.entries()) {
     if (entry.expiresAt <= now) {
       memoryCache.delete(key);
+    }
+  }
+
+  // If still above capacity, evict least recently accessed entries
+  if (memoryCache.size > MAX_MEMORY_CACHE_ENTRIES) {
+    const sorted = Array.from(memoryCache.entries()).sort(
+      (a, b) => a[1].lastAccessed - b[1].lastAccessed
+    );
+    const toRemove = memoryCache.size - MAX_MEMORY_CACHE_ENTRIES;
+    for (let i = 0; i < toRemove; i++) {
+      memoryCache.delete(sorted[i][0]);
     }
   }
 }
@@ -45,7 +62,7 @@ export async function getCached<T>(key: string): Promise<T | null> {
       }
       return null;
     } catch (error) {
-      console.warn(`[Cache] Redis get failed for key "${key}", checking memory fallback:`, error);
+      logger.warn(`[Cache] Redis get failed for key "${key}", checking memory fallback`, undefined, error);
     }
   }
 
@@ -53,6 +70,7 @@ export async function getCached<T>(key: string): Promise<T | null> {
   cleanMemoryCache();
   const entry = memoryCache.get(key);
   if (entry && entry.expiresAt > Date.now()) {
+    entry.lastAccessed = Date.now();
     try {
       return JSON.parse(entry.value) as T;
     } catch {
@@ -81,14 +99,16 @@ export async function setCached<T>(
       await redis.set(key, serialized, { ex: ttlSeconds });
       return true;
     } catch (error) {
-      console.warn(`[Cache] Redis set failed for key "${key}", writing to memory fallback:`, error);
+      logger.warn(`[Cache] Redis set failed for key "${key}", writing to memory fallback`, undefined, error);
     }
   }
 
-  // Memory fallback
+  // Memory fallback with bounded capacity
+  cleanMemoryCache();
   memoryCache.set(key, {
     value: serialized,
     expiresAt: Date.now() + ttlSeconds * 1000,
+    lastAccessed: Date.now(),
   });
   return true;
 }
@@ -105,7 +125,7 @@ export async function deleteCached(key: string): Promise<boolean> {
       await redis.del(key);
       deletedFromRedis = true;
     } catch (error) {
-      console.warn(`[Cache] Redis delete failed for key "${key}":`, error);
+      logger.warn(`[Cache] Redis delete failed for key "${key}"`, undefined, error);
     }
   }
 
@@ -128,7 +148,7 @@ export async function deleteCachedPattern(pattern: string): Promise<number> {
         count += keys.length;
       }
     } catch (error) {
-      console.warn(`[Cache] Redis scan/delete pattern "${pattern}" failed:`, error);
+      logger.warn(`[Cache] Redis scan/delete pattern "${pattern}" failed`, undefined, error);
     }
   }
 
@@ -145,7 +165,8 @@ export async function deleteCachedPattern(pattern: string): Promise<number> {
 }
 
 /**
- * Helper to get or compute and store a cached value.
+ * Cache stampede-safe rememberCached:
+ * Coalesces concurrent calls for the same key into a single execution (single-flight deduplication).
  */
 export async function rememberCached<T>(
   key: string,
@@ -157,9 +178,23 @@ export async function rememberCached<T>(
     return cached;
   }
 
-  const fresh = await fetcher();
-  if (fresh !== null && fresh !== undefined) {
-    await setCached(key, fresh, ttlSeconds);
+  // Coalesce in-flight requests for this key
+  if (inFlightPromises.has(key)) {
+    return inFlightPromises.get(key) as Promise<T>;
   }
-  return fresh;
+
+  const promise = (async () => {
+    try {
+      const fresh = await fetcher();
+      if (fresh !== null && fresh !== undefined) {
+        await setCached(key, fresh, ttlSeconds);
+      }
+      return fresh;
+    } finally {
+      inFlightPromises.delete(key);
+    }
+  })();
+
+  inFlightPromises.set(key, promise);
+  return promise;
 }

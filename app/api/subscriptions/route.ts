@@ -54,9 +54,10 @@ export async function GET() {
         },
       ],
       currentSubscription,
-      userTier: user ? "free" : null,
+      userTier: user ? user.subscription_tier || "free" : null,
     });
-  } catch (err: any) {
-    return NextResponse.json({ error: err?.message || "Internal server error" }, { status: 500 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Internal server error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

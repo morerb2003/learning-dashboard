@@ -79,8 +79,29 @@ const LIMIT_CONFIGS: Record<RateLimiterType, LimitConfig> = {
 // Map of initialized Upstash Ratelimit instances
 const upstashLimiters = new Map<RateLimiterType, Ratelimit>();
 
+const MAX_MEMORY_WINDOWS = 5000;
 // In-memory fallback map: key -> list of timestamp ms
 const memoryWindows = new Map<string, number[]>();
+
+function cleanMemoryWindows(now: number) {
+  // Prune empty windows
+  for (const [key, hits] of memoryWindows.entries()) {
+    if (hits.length === 0 || hits[hits.length - 1] < now - 600000) {
+      memoryWindows.delete(key);
+    }
+  }
+
+  // Cap size if still over limit
+  if (memoryWindows.size > MAX_MEMORY_WINDOWS) {
+    const keysToRemove = Array.from(memoryWindows.keys()).slice(
+      0,
+      memoryWindows.size - MAX_MEMORY_WINDOWS
+    );
+    for (const k of keysToRemove) {
+      memoryWindows.delete(k);
+    }
+  }
+}
 
 function checkMemoryRateLimit(
   type: RateLimiterType,
@@ -90,6 +111,8 @@ function checkMemoryRateLimit(
   const now = Date.now();
   const windowStart = now - config.windowMs;
   const memoryKey = `${config.prefix}:${identifier}`;
+
+  cleanMemoryWindows(now);
 
   const currentHits = (memoryWindows.get(memoryKey) || []).filter(
     (time) => time > windowStart

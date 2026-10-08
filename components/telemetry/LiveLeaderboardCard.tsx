@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useSyncExternalStore } from "react";
 import { Trophy, Medal, Sparkles, Zap, RefreshCw, Radio } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { LeaderboardEntry } from "@/lib/telemetry";
@@ -15,11 +15,11 @@ export default function LiveLeaderboardCard() {
   ]);
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSync, setLastSync] = useState<Date>(new Date());
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  const isMounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
 
   const fetchLeaderboard = useCallback(async () => {
     try {

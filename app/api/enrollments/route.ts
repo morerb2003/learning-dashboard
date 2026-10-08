@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth/roles";
+import { safeJson } from "@/lib/api-response";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 export async function GET() {
   try {
@@ -31,11 +33,9 @@ export async function GET() {
     }));
 
     return NextResponse.json({ enrollments: normalised });
-  } catch (err: any) {
-    return NextResponse.json(
-      { error: err?.message || "Internal server error" },
-      { status: 500 }
-    );
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Internal server error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -49,23 +49,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
+    const rl = await checkRateLimit("generalApi", user.id);
+    if (!rl.success) {
+      return rateLimitResponse(rl.reset, "Too many enrollment requests. Please wait a minute.");
+    }
+
+    const body = await safeJson<{ courseId?: string }>(request);
     const { courseId } = body;
 
-    if (!courseId) {
+    if (!courseId || typeof courseId !== "string" || !courseId.trim()) {
       return NextResponse.json(
-        { error: "courseId is required." },
+        { error: "Valid courseId is required." },
         { status: 400 }
       );
     }
 
     const supabase = await createClient();
 
-    // Verify the course exists and is accessible
+    // 1. Verify course existence and pricing
     const { data: course, error: courseError } = await supabase
       .from("courses")
-      .select("id, title, price_cents")
-      .eq("id", courseId)
+      .select("id, title, price_cents, is_pro, is_published")
+      .eq("id", courseId.trim())
       .maybeSingle();
 
     if (courseError || !course) {
@@ -75,12 +80,48 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 2. Access control: If course is paid or pro, verify student entitlement
+    const isPaidCourse = (course.price_cents ?? 0) > 0 || Boolean(course.is_pro);
+
+    if (isPaidCourse && user.role !== "admin") {
+      // Check active subscription
+      const { data: activeSub } = await supabase
+        .from("subscriptions")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("status", "active")
+        .maybeSingle();
+
+      // Check paid course transaction
+      const { data: payment } = await supabase
+        .from("payments")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("course_id", courseId.trim())
+        .eq("status", "completed")
+        .maybeSingle();
+
+      if (!activeSub && !payment) {
+        return NextResponse.json(
+          {
+            error:
+              "This is a premium course. Enrollment requires course checkout or an active Pro subscription.",
+            requiresPurchase: true,
+            courseId: course.id,
+            priceCents: course.price_cents,
+          },
+          { status: 403 }
+        );
+      }
+    }
+
+    // 3. Atomically upsert enrollment
     const { data, error } = await supabase
       .from("enrollments")
       .upsert(
         {
           user_id: user.id,
-          course_id: courseId,
+          course_id: courseId.trim(),
           progress: 0,
           enrolled_at: new Date().toISOString(),
           last_accessed_at: new Date().toISOString(),
@@ -95,10 +136,9 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ enrollment: data }, { status: 201 });
-  } catch (err: any) {
-    return NextResponse.json(
-      { error: err?.message || "Internal server error" },
-      { status: 500 }
-    );
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Internal server error";
+    const status = message.includes("Invalid JSON") ? 400 : 500;
+    return NextResponse.json({ error: message }, { status });
   }
 }

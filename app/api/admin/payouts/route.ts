@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/roles";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendNotification } from "@/lib/notifications";
+import { safeJson } from "@/lib/api-response";
 
 export async function GET() {
   try {
@@ -39,10 +40,10 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "Admin access required." }, { status: 403 });
     }
 
-    const body = await request.json();
+    const body = await safeJson<{ payoutId?: string; status?: string; adminNotes?: string }>(request);
     const { payoutId, status, adminNotes } = body;
 
-    if (!payoutId || !["approved", "paid", "rejected"].includes(status)) {
+    if (!payoutId || !status || !["approved", "paid", "rejected"].includes(status)) {
       return NextResponse.json(
         { error: "Invalid parameters. Required: payoutId and status ('approved' | 'paid' | 'rejected')." },
         { status: 400 }

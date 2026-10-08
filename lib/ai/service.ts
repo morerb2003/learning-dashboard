@@ -43,6 +43,7 @@ export async function askAiTutor(
         try {
           const res = await fetch("https://api.openai.com/v1/chat/completions", {
             method: "POST",
+            signal: AbortSignal.timeout(12000),
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${apiKey}`,
@@ -114,6 +115,7 @@ export async function generateAiQuiz(
         try {
           const res = await fetch("https://api.openai.com/v1/chat/completions", {
             method: "POST",
+            signal: AbortSignal.timeout(12000),
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${apiKey}`,

@@ -1,7 +1,10 @@
 import { getRedisClient } from "./redis.ts";
+import { ConflictError } from "./errors.ts";
+import { logger } from "./logger.ts";
 
 const IDEMPOTENCY_TTL_SECONDS = 60 * 60 * 24; // 24 hours
 const LOCK_TIMEOUT_SECONDS = 15; // 15 seconds
+const MAX_MEMORY_ENTRIES = 5000;
 
 interface MemoryIdempotencyEntry {
   result: unknown;
@@ -15,6 +18,17 @@ function cleanMemoryStore() {
   for (const [key, entry] of memoryIdempotency.entries()) {
     if (entry.expiresAt <= now) {
       memoryIdempotency.delete(key);
+    }
+  }
+
+  // If memory store exceeds limit, drop oldest entries
+  if (memoryIdempotency.size > MAX_MEMORY_ENTRIES) {
+    const keysToDelete = Array.from(memoryIdempotency.keys()).slice(
+      0,
+      memoryIdempotency.size - MAX_MEMORY_ENTRIES
+    );
+    for (const k of keysToDelete) {
+      memoryIdempotency.delete(k);
     }
   }
 }
@@ -44,7 +58,7 @@ export async function getIdempotentResult<T>(
       }
       return null;
     } catch (error) {
-      console.warn(`[Idempotency] Redis lookup failed for ${fullKey}:`, error);
+      logger.warn(`[Idempotency] Redis lookup failed for ${fullKey}`, undefined, error);
     }
   }
 
@@ -75,10 +89,11 @@ export async function setIdempotentResult<T>(
       await redis.set(fullKey, serialized, { ex: ttlSeconds });
       return true;
     } catch (error) {
-      console.warn(`[Idempotency] Redis set failed for ${fullKey}:`, error);
+      logger.warn(`[Idempotency] Redis set failed for ${fullKey}`, undefined, error);
     }
   }
 
+  cleanMemoryStore();
   memoryIdempotency.set(fullKey, {
     result,
     expiresAt: Date.now() + ttlSeconds * 1000,
@@ -87,9 +102,30 @@ export async function setIdempotentResult<T>(
 }
 
 /**
- * Execute an operation protected by idempotency.
+ * Helper to wait for concurrent in-flight operation to finish.
+ */
+async function waitForInFlightResult<T>(
+  scope: string,
+  key: string,
+  maxWaitMs = 3000
+): Promise<T | null> {
+  const startTime = Date.now();
+  const intervalMs = 150;
+
+  while (Date.now() - startTime < maxWaitMs) {
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
+    const cached = await getIdempotentResult<T>(scope, key);
+    if (cached !== null) {
+      return cached;
+    }
+  }
+  return null;
+}
+
+/**
+ * Execute an operation protected by idempotency with strict concurrency locking.
  * If an existing result is stored, it immediately returns the cached result.
- * If a concurrent request is currently in-flight, it waits briefly or rejects duplicate race conditions.
+ * If a concurrent request is currently in-flight, it waits for completion or throws ConflictError.
  */
 export async function withIdempotency<T>(
   scope: string,
@@ -111,23 +147,47 @@ export async function withIdempotency<T>(
 
   const redis = getRedisClient();
   const fullKey = buildIdempotencyKey(scope, trimmedKey);
-  // 2. Acquire a short processing lock to prevent parallel double-executions
+  let lockAcquired = false;
+
+  // 2. Acquire processing lock (NX: Only set if Not eXists)
   if (redis) {
     try {
-      await redis.set(fullKey, "IN_FLIGHT", {
+      const lockRes = await redis.set(fullKey, "IN_FLIGHT", {
         nx: true,
         ex: LOCK_TIMEOUT_SECONDS,
       });
+      lockAcquired = lockRes === "OK";
     } catch {
-      // Proceed if Redis fails
+      // Redis error fallback to memory
+      lockAcquired = false;
     }
-  } else {
-    if (!memoryIdempotency.has(fullKey)) {
+  }
+
+  if (!redis || !lockAcquired) {
+    cleanMemoryStore();
+    const existing = memoryIdempotency.get(fullKey);
+    if (existing && existing.expiresAt > Date.now()) {
+      lockAcquired = false;
+    } else {
       memoryIdempotency.set(fullKey, {
         result: "IN_FLIGHT",
         expiresAt: Date.now() + LOCK_TIMEOUT_SECONDS * 1000,
       });
+      lockAcquired = true;
     }
+  }
+
+  // If lock could NOT be acquired, another request is in-flight!
+  if (!lockAcquired) {
+    // Wait for the parallel request to complete
+    const waitedResult = await waitForInFlightResult<T>(scope, trimmedKey);
+    if (waitedResult !== null) {
+      return { result: waitedResult, isCached: true };
+    }
+
+    throw new ConflictError(
+      "A request with this idempotency key is currently in progress. Please retry in a few seconds."
+    );
   }
 
   try {
@@ -135,12 +195,12 @@ export async function withIdempotency<T>(
     await setIdempotentResult(scope, trimmedKey, result, ttlSeconds);
     return { result, isCached: false };
   } catch (err) {
-    // Release in-flight lock if execution fails so user can retry
+    // Release in-flight lock on failure so caller can retry
     if (redis) {
       try {
         await redis.del(fullKey);
       } catch {
-        // Ignore
+        // ignore
       }
     }
     memoryIdempotency.delete(fullKey);

@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getSafeRedirectPath } from "@/lib/auth/redirects";
 import { getSupabaseUrl } from "@/lib/supabase/url";
 
-const protectedRoutes = [
+const protectedPageRoutes = [
   "/admin",
   "/community",
   "/course",
@@ -14,28 +14,66 @@ const protectedRoutes = [
   "/settings",
   "/teacher",
 ];
+
 const authRoutes = ["/login", "/register"];
 
-function isProtectedRoute(pathname: string) {
-  return protectedRoutes.some((route) => pathname === route || pathname.startsWith(`${route}/`));
+function isProtectedPageRoute(pathname: string) {
+  return protectedPageRoutes.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`)
+  );
 }
 
 function isAuthRoute(pathname: string) {
   return authRoutes.includes(pathname);
 }
 
+function isProtectedApiRoute(pathname: string) {
+  return (
+    pathname.startsWith("/api/admin") ||
+    pathname.startsWith("/api/teacher")
+  );
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  const requiresAuthCheck = isProtectedRoute(pathname) || isAuthRoute(pathname);
+  // Correlation Request ID
+  const requestId =
+    request.headers.get("x-request-id") ||
+    request.headers.get("x-correlation-id") ||
+    crypto.randomUUID();
 
-  // If this is a purely public route (e.g. landing page or public assets), bypass middleware auth overhead
+  // Clone request headers and inject request ID
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-request-id", requestId);
+
+  const applySecurityHeaders = (res: NextResponse) => {
+    res.headers.set("X-Request-Id", requestId);
+    res.headers.set("X-Content-Type-Options", "nosniff");
+    res.headers.set("X-Frame-Options", "DENY");
+    res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+    return res;
+  };
+
+  const requiresAuthCheck =
+    isProtectedPageRoute(pathname) ||
+    isAuthRoute(pathname) ||
+    isProtectedApiRoute(pathname);
+
+  // If purely public asset or public page, pass through with request ID & security headers
   if (!requiresAuthCheck) {
-    return NextResponse.next({ request });
+    const res = NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
+    return applySecurityHeaders(res);
   }
 
   let response = NextResponse.next({
-    request,
+    request: {
+      headers: requestHeaders,
+    },
   });
 
   const supabase = createServerClient(
@@ -47,9 +85,13 @@ export async function proxy(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          );
           response = NextResponse.next({
-            request,
+            request: {
+              headers: requestHeaders,
+            },
           });
           cookiesToSet.forEach(({ name, value, options }) => {
             response.cookies.set(name, value, options);
@@ -63,16 +105,63 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user && isProtectedRoute(pathname)) {
+  // 1. API Route Guards
+  if (isProtectedApiRoute(pathname)) {
+    if (!user) {
+      return applySecurityHeaders(
+        NextResponse.json(
+          { success: false, error: "Authentication required", code: "UNAUTHORIZED" },
+          { status: 401 }
+        )
+      );
+    }
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    const userRole = profile?.role?.toLowerCase() || "student";
+
+    if (pathname.startsWith("/api/admin") && userRole !== "admin") {
+      return applySecurityHeaders(
+        NextResponse.json(
+          { success: false, error: "Admin role required", code: "FORBIDDEN" },
+          { status: 403 }
+        )
+      );
+    }
+
+    if (
+      pathname.startsWith("/api/teacher") &&
+      userRole !== "teacher" &&
+      userRole !== "admin"
+    ) {
+      return applySecurityHeaders(
+        NextResponse.json(
+          { success: false, error: "Teacher or Admin role required", code: "FORBIDDEN" },
+          { status: 403 }
+        )
+      );
+    }
+
+    return applySecurityHeaders(response);
+  }
+
+  // 2. Protected Page Redirects (Unauthenticated)
+  if (!user && isProtectedPageRoute(pathname)) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/login";
     redirectUrl.searchParams.set(
       "next",
       getSafeRedirectPath(`${pathname}${request.nextUrl.search}`)
     );
-    return NextResponse.redirect(redirectUrl);
+    const redirectRes = NextResponse.redirect(redirectUrl);
+    return applySecurityHeaders(redirectRes);
   }
 
+  // 3. Role-Based Page Access & Redirection for Authenticated Users
   if (user) {
     const roleCheckNeeded =
       pathname.startsWith("/admin") ||
@@ -84,7 +173,7 @@ export async function proxy(request: NextRequest) {
         .from("profiles")
         .select("role")
         .eq("id", user.id)
-        .single();
+        .maybeSingle();
 
       const userRole = profile?.role?.toLowerCase() || "student";
 
@@ -98,7 +187,8 @@ export async function proxy(request: NextRequest) {
               ? "/teacher"
               : "/dashboard";
         redirectUrl.search = "";
-        return NextResponse.redirect(redirectUrl);
+        const redirectRes = NextResponse.redirect(redirectUrl);
+        return applySecurityHeaders(redirectRes);
       }
 
       // Block non-admins from /admin
@@ -106,21 +196,29 @@ export async function proxy(request: NextRequest) {
         const redirectUrl = request.nextUrl.clone();
         redirectUrl.pathname = userRole === "teacher" ? "/teacher" : "/dashboard";
         redirectUrl.search = "";
-        return NextResponse.redirect(redirectUrl);
+        const redirectRes = NextResponse.redirect(redirectUrl);
+        return applySecurityHeaders(redirectRes);
       }
 
       // Block students from /teacher (teachers and admins allowed)
-      if (pathname.startsWith("/teacher") && userRole !== "teacher" && userRole !== "admin") {
+      if (
+        pathname.startsWith("/teacher") &&
+        userRole !== "teacher" &&
+        userRole !== "admin"
+      ) {
         const redirectUrl = request.nextUrl.clone();
         redirectUrl.pathname = "/dashboard";
         redirectUrl.search = "";
-        return NextResponse.redirect(redirectUrl);
+        const redirectRes = NextResponse.redirect(redirectUrl);
+        return applySecurityHeaders(redirectRes);
       }
     }
   }
 
-  return response;
+  return applySecurityHeaders(response);
 }
+
+export const middleware = proxy;
 
 export const config = {
   matcher: [

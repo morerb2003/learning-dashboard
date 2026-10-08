@@ -10,6 +10,7 @@ export interface AuthUser {
   role: UserRole;
   full_name: string | null;
   avatar_url: string | null;
+  subscription_tier?: string | null;
 }
 
 /**
@@ -30,18 +31,19 @@ export const getCurrentUser = cache(async (): Promise<AuthUser | null> => {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("id, full_name, email, role, avatar_url")
+      .select("id, full_name, email, role, avatar_url, subscription_tier")
       .eq("id", user.id)
-      .single();
+      .maybeSingle();
 
     if (!profile) {
-      const userMeta = (user.user_metadata as Record<string, any>) || {};
+      const userMeta = (user.user_metadata as Record<string, unknown>) || {};
       return {
         id: user.id,
         email: user.email ?? null,
         role: "student",
         full_name: (userMeta.full_name as string) || (userMeta.name as string) || null,
         avatar_url: (userMeta.avatar_url as string) || (userMeta.picture as string) || null,
+        subscription_tier: "free",
       };
     }
 
@@ -51,6 +53,7 @@ export const getCurrentUser = cache(async (): Promise<AuthUser | null> => {
       role: (profile.role as UserRole) ?? "student",
       full_name: profile.full_name ?? null,
       avatar_url: profile.avatar_url ?? null,
+      subscription_tier: (profile.subscription_tier as string) || "free",
     };
   } catch (error) {
     console.warn("Failed to get current user session:", error);

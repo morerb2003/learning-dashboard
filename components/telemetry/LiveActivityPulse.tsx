@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useSyncExternalStore } from "react";
 import { Activity, CheckCircle2, Award, BookOpen, Star, RefreshCw, Radio } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { ActivityPulseEvent } from "@/lib/telemetry";
@@ -45,12 +45,12 @@ export default function LiveActivityPulse() {
   const [events, setEvents] = useState<ActivityPulseEvent[]>(INITIAL_EVENTS);
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSync, setLastSync] = useState<Date>(new Date());
-  const [isMounted, setIsMounted] = useState(false);
+  const isMounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
   const [, setTick] = useState(0);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   const fetchLiveFeed = useCallback(async () => {
     try {
