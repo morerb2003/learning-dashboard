@@ -57,11 +57,43 @@ export default function AdminHeader({
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
-        {/* System Health Badge */}
-        <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 text-[11px] font-medium text-emerald-300">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          Operational
+      <div className="flex items-center gap-3 flex-wrap">
+        {/* Stitch Telemetry Status Badges */}
+        <div className="hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#171b26] border border-white/[0.06] text-xs">
+          <span className="px-2 py-0.5 rounded-full bg-[#00f2fe]/10 text-[#00f2fe] text-[10px] font-bold uppercase tracking-wider border border-[#00f2fe]/30">
+            Ops v4.8
+          </span>
+          <div className="h-3 w-px bg-white/10"></div>
+          <span className="flex items-center gap-1.5 text-[11px] text-[#10b981] font-semibold">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#10b981] animate-pulse"></span>
+            Razorpay Live
+          </span>
+          <div className="h-3 w-px bg-white/10"></div>
+          <span className="text-[10px] text-[#849495]">
+            Sync: <strong className="text-white">1.2s</strong>
+          </span>
+        </div>
+
+        {/* Quick Role Switcher Pills */}
+        <div className="hidden md:flex items-center p-1 rounded-full bg-[#171b26] border border-white/[0.06] text-[11px] font-semibold">
+          <Link
+            href="/learning"
+            className="px-3 py-1 rounded-full text-[#849495] hover:text-white transition-all"
+          >
+            Student
+          </Link>
+          <Link
+            href="/teacher"
+            className="px-3 py-1 rounded-full text-[#849495] hover:text-white transition-all"
+          >
+            Teacher
+          </Link>
+          <Link
+            href="/admin"
+            className="px-3 py-1 rounded-full bg-[#f59e0b]/15 text-[#f59e0b] border border-[#f59e0b]/30 font-bold shadow-[0_0_12px_rgba(245,158,11,0.2)]"
+          >
+            Admin
+          </Link>
         </div>
 
         <NotificationBell />

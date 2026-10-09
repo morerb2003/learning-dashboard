@@ -58,6 +58,28 @@ export default function TeacherHeader({
       </div>
 
       <div className="flex items-center gap-3">
+        {/* Quick Role Switcher Pills */}
+        <div className="hidden md:flex items-center p-1 rounded-full bg-[#171b26] border border-white/[0.06] text-[11px] font-semibold">
+          <Link
+            href="/learning"
+            className="px-3 py-1 rounded-full text-[#849495] hover:text-white transition-all"
+          >
+            Student
+          </Link>
+          <Link
+            href="/teacher"
+            className="px-3 py-1 rounded-full bg-[#818cf8]/15 text-[#818cf8] border border-[#818cf8]/30 font-bold shadow-[0_0_12px_rgba(129,140,248,0.2)]"
+          >
+            Teacher
+          </Link>
+          <Link
+            href="/admin"
+            className="px-3 py-1 rounded-full text-[#849495] hover:text-white transition-all"
+          >
+            Admin
+          </Link>
+        </div>
+
         <Link
           href="/teacher/courses/create"
           className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-3.5 py-2 text-xs font-bold text-white shadow-lg shadow-emerald-500/20 hover:from-emerald-500 hover:to-teal-500 transition-all cursor-pointer"
