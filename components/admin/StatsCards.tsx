@@ -30,21 +30,21 @@ export default function StatsCards({ stats }: StatsCardsProps) {
         return (
           <article
             key={stat.key}
-            className="relative min-h-36 overflow-hidden rounded-lg border border-white/10 bg-white/[0.03] p-5 shadow-lg"
+            className="relative min-h-36 overflow-hidden rounded-2xl modern-card p-5"
           >
             {/* Ambient Background Glow */}
-            <div className={`absolute inset-0 ${stat.bg} opacity-35 pointer-events-none`} />
+            <div className={`absolute inset-0 ${stat.bg} opacity-25 pointer-events-none`} />
             <div className="grain-overlay" />
             
             <div className="relative z-10 flex items-start justify-between">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
                 {stat.label}
               </span>
-              <div className={`rounded-lg border border-white/10 bg-white/[0.04] p-2 ${stat.color}`}>
+              <div className={`rounded-lg border border-white/10 bg-white/[0.06] p-2 ${stat.color}`}>
                 <Icon className="h-4 w-4" />
               </div>
             </div>
-            <p className="relative z-10 mt-8 text-3xl font-black tracking-tight text-white">
+            <p className="relative z-10 mt-8 text-3xl font-black tracking-tight text-white font-plus-jakarta">
               {value.toLocaleString()}
             </p>
           </article>

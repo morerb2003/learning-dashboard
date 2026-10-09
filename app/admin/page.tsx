@@ -59,15 +59,15 @@ export default async function AdminOverviewPage() {
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         
         {/* Recent Users Panel */}
-        <section className="relative overflow-hidden rounded-3xl border border-white/5 bg-white/[0.02] p-6">
-          <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-4">
+        <section className="relative overflow-hidden rounded-3xl modern-card p-6">
+          <div className="flex items-center justify-between border-b border-white/[0.08] pb-4 mb-4">
             <div>
-              <h3 className="text-sm font-bold text-white">Recent Registrations</h3>
-              <p className="text-[10px] font-semibold text-zinc-500 mt-0.5 uppercase tracking-wider">Newest student and teacher accounts</p>
+              <h3 className="text-sm font-bold text-white font-plus-jakarta">Recent Registrations</h3>
+              <p className="text-[10px] font-semibold text-zinc-400 mt-0.5 uppercase tracking-wider">Newest student and teacher accounts</p>
             </div>
             <Link
               href="/admin/users"
-              className="flex items-center gap-1.5 text-xs font-bold text-violet-400 hover:text-violet-300 transition-colors"
+              className="flex items-center gap-1.5 text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors"
             >
               Manage Users <ArrowRight className="w-3.5 h-3.5" />
             </Link>
@@ -76,13 +76,13 @@ export default async function AdminOverviewPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead>
-                <tr className="border-b border-white/5 text-[9px] font-bold uppercase tracking-widest text-zinc-500">
+                <tr className="border-b border-white/[0.08] text-[9px] font-bold uppercase tracking-widest text-zinc-500">
                   <th className="py-2.5">User</th>
                   <th className="py-2.5">Role</th>
                   <th className="py-2.5 text-right">Joined</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
+              <tbody className="divide-y divide-white/[0.06]">
                 {recentUsers.length > 0 ? (
                   recentUsers.map((user) => {
                     const displayName = user.full_name || user.email?.split("@")[0] || "Unnamed";
@@ -93,7 +93,7 @@ export default async function AdminOverviewPage() {
                           <p className="text-[10px] text-zinc-500">{user.email}</p>
                         </td>
                         <td className="py-3">
-                          <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[9px] font-semibold capitalize tracking-wide">
+                          <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-[9px] font-semibold capitalize tracking-wide text-zinc-300">
                             {user.role}
                           </span>
                         </td>
@@ -114,15 +114,15 @@ export default async function AdminOverviewPage() {
         </section>
 
         {/* Recent Courses Panel */}
-        <section className="relative overflow-hidden rounded-3xl border border-white/5 bg-white/[0.02] p-6">
-          <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-4">
+        <section className="relative overflow-hidden rounded-3xl modern-card p-6">
+          <div className="flex items-center justify-between border-b border-white/[0.08] pb-4 mb-4">
             <div>
-              <h3 className="text-sm font-bold text-white">Recent Course Additions</h3>
-              <p className="text-[10px] font-semibold text-zinc-500 mt-0.5 uppercase tracking-wider">Latest learning modules created</p>
+              <h3 className="text-sm font-bold text-white font-plus-jakarta">Recent Course Additions</h3>
+              <p className="text-[10px] font-semibold text-zinc-400 mt-0.5 uppercase tracking-wider">Latest learning modules created</p>
             </div>
             <Link
               href="/admin/courses"
-              className="flex items-center gap-1.5 text-xs font-bold text-violet-400 hover:text-violet-300 transition-colors"
+              className="flex items-center gap-1.5 text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors"
             >
               Manage Catalog <ArrowRight className="w-3.5 h-3.5" />
             </Link>
@@ -137,7 +137,7 @@ export default async function AdminOverviewPage() {
                   <th className="py-2.5 text-right">State</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
+              <tbody className="divide-y divide-white/[0.06]">
                 {recentCourses.length > 0 ? (
                   recentCourses.map((course) => (
                     <tr key={course.id} className="text-zinc-300">

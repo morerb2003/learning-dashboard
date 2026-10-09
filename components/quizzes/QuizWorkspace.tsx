@@ -353,22 +353,22 @@ export default function QuizWorkspace({
   if (mode === "teacher") {
     return (
       <div className="space-y-8">
-        <section className="relative overflow-hidden rounded-3xl border border-white/5 bg-white/[0.02] p-6 md:p-7">
+        <section className="relative overflow-hidden rounded-3xl modern-card p-6 md:p-7">
           <div className="absolute inset-0 bg-mesh-violet opacity-35 pointer-events-none" />
           <div className="grain-overlay" />
           <div className="relative z-10 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
             <div className="space-y-3 max-w-3xl">
-              <span className="inline-flex items-center gap-2 rounded-full border border-violet-500/20 bg-violet-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-violet-300">
+              <span className="inline-flex items-center gap-2 rounded-full border border-violet-500/25 bg-violet-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-violet-300">
                 <ClipboardList className="h-3.5 w-3.5" />
                 Teacher Workflow
               </span>
-              <h1 className="text-2xl md:text-4xl font-black tracking-tight text-white">Quiz control center</h1>
+              <h1 className="text-2xl md:text-4xl font-black tracking-tight text-white font-plus-jakarta">Quiz Control Center</h1>
               <p className="max-w-2xl text-sm text-zinc-400">
                 Create quizzes, add MCQ or True/False questions, and monitor student attempts and scores.
               </p>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-zinc-950/50 px-4 py-3 text-xs text-zinc-300">
+            <div className="rounded-2xl border border-white/[0.08] bg-[#0b0f19]/80 px-4 py-3 text-xs text-zinc-300">
               <p className="font-bold text-white">{currentUserName}</p>
               <p className="mt-0.5 text-zinc-500">Teacher quiz builder</p>
             </div>
@@ -386,16 +386,16 @@ export default function QuizWorkspace({
           ].map((card) => {
             const Icon = card.icon;
             return (
-              <div key={card.label} className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02] p-5">
+              <div key={card.label} className="relative overflow-hidden rounded-2xl modern-card p-5">
                 <div className={`absolute inset-0 ${card.bg} opacity-25 pointer-events-none`} />
                 <div className="grain-overlay" />
                 <div className="relative z-10 flex items-start justify-between">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">{card.label}</span>
-                  <div className={`rounded-lg border border-white/10 bg-white/[0.04] p-2 ${card.color}`}>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">{card.label}</span>
+                  <div className={`rounded-lg border border-white/10 bg-white/[0.06] p-2 ${card.color}`}>
                     <Icon className="h-4 w-4" />
                   </div>
                 </div>
-                <p className="relative z-10 mt-6 text-3xl font-black tracking-tight text-white">{card.value}</p>
+                <p className="relative z-10 mt-6 text-3xl font-black tracking-tight text-white font-plus-jakarta">{card.value}</p>
               </div>
             );
           })}
@@ -627,21 +627,21 @@ export default function QuizWorkspace({
 
   return (
     <div className="space-y-8">
-      <section className="relative overflow-hidden rounded-3xl border border-white/5 bg-white/[0.02] p-6 md:p-7">
+      <section className="relative overflow-hidden rounded-3xl modern-card p-6 md:p-7">
         <div className="absolute inset-0 bg-mesh-cyan opacity-35 pointer-events-none" />
         <div className="grain-overlay" />
         <div className="relative z-10 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
           <div className="space-y-3 max-w-3xl">
-            <span className="inline-flex items-center gap-2 rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-cyan-300">
+            <span className="inline-flex items-center gap-2 rounded-full border border-cyan-500/25 bg-cyan-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-cyan-300">
               <GraduationCap className="h-3.5 w-3.5" />
               Student Workflow
             </span>
-            <h1 className="text-2xl md:text-4xl font-black tracking-tight text-white">Quiz inbox</h1>
+            <h1 className="text-2xl md:text-4xl font-black tracking-tight text-white font-plus-jakarta">Quiz Arena & Inbox</h1>
             <p className="max-w-2xl text-sm text-zinc-400">
               Open available quizzes, answer the questions, and get your score automatically when you submit.
             </p>
           </div>
-          <div className="rounded-2xl border border-white/10 bg-zinc-950/50 px-4 py-3 text-xs text-zinc-300">
+          <div className="rounded-2xl border border-white/[0.08] bg-[#0b0f19]/80 px-4 py-3 text-xs text-zinc-300">
             <p className="font-bold text-white">{currentUserName}</p>
             <p className="mt-0.5 text-zinc-500">Quiz participant</p>
           </div>
@@ -659,16 +659,16 @@ export default function QuizWorkspace({
         ].map((card) => {
           const Icon = card.icon;
           return (
-            <div key={card.label} className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02] p-5">
+            <div key={card.label} className="relative overflow-hidden rounded-2xl modern-card p-5">
               <div className={`absolute inset-0 ${card.bg} opacity-25 pointer-events-none`} />
               <div className="grain-overlay" />
               <div className="relative z-10 flex items-start justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">{card.label}</span>
-                <div className={`rounded-lg border border-white/10 bg-white/[0.04] p-2 ${card.color}`}>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">{card.label}</span>
+                <div className={`rounded-lg border border-white/10 bg-white/[0.06] p-2 ${card.color}`}>
                   <Icon className="h-4 w-4" />
                 </div>
               </div>
-              <p className="relative z-10 mt-6 text-3xl font-black tracking-tight text-white">{card.value}</p>
+              <p className="relative z-10 mt-6 text-3xl font-black tracking-tight text-white font-plus-jakarta">{card.value}</p>
             </div>
           );
         })}

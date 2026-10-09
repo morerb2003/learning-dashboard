@@ -26,6 +26,7 @@ import {
   Zap,
   Cpu,
   Server,
+  Briefcase,
 } from "lucide-react";
 
 export type TabId = 
@@ -36,6 +37,7 @@ export type TabId =
   | "assignments" 
   | "notes" 
   | "community" 
+  | "careers"
   | "profile" 
   | "settings" 
   | "analytics";
@@ -143,8 +145,9 @@ export default function Sidebar({ activeTab, setActiveTab, profile }: SidebarPro
         ],
       },
       {
-        title: "COMMUNITY",
+        title: "CAREERS & COMMUNITY",
         items: [
+          { id: "careers", label: "Careers & Jobs", icon: Briefcase, href: "/careers" },
           { id: "community", label: "Community", icon: MessagesSquare, href: "/community" },
         ],
       },

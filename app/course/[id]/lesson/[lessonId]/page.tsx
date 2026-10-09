@@ -89,12 +89,12 @@ export default async function LessonPage({ params }: LessonPageProps) {
   const sortedLessons = allLessons ?? [];
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      <div className="fixed inset-0 bg-mesh-violet opacity-20 pointer-events-none" />
-      <div className="fixed inset-0 bg-mesh-cyan opacity-10 pointer-events-none mix-blend-screen" />
+    <div className="min-h-screen bg-[#030712] text-zinc-100 relative">
+      <div className="fixed inset-0 bg-mesh-violet opacity-25 pointer-events-none" />
+      <div className="fixed inset-0 bg-mesh-cyan opacity-15 pointer-events-none mix-blend-screen" />
 
       {/* Nav */}
-      <nav className="sticky top-0 z-50 glass-card border-b border-white/5 px-4 md:px-8 h-16 flex items-center justify-between">
+      <nav className="sticky top-0 z-50 bg-[#0b0f19]/80 backdrop-blur-xl border-b border-white/[0.08] px-4 md:px-8 h-16 flex items-center justify-between">
         <Link
           href={`/course/${id}`}
           className="flex items-center gap-2 text-sm font-semibold text-zinc-400 hover:text-white transition-colors group"
@@ -102,16 +102,17 @@ export default async function LessonPage({ params }: LessonPageProps) {
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
           Back to Course
         </Link>
-        <span className="text-xs font-bold text-zinc-500 hidden sm:block">
-          AURA &bull; Lesson View
+        <span className="text-xs font-bold text-zinc-400 hidden sm:flex items-center gap-2">
+          <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
+          AURA &bull; Interactive Studio
         </span>
         <div className="flex items-center gap-2">
           {/* Real progress pill */}
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 text-xs font-bold text-emerald-300">
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-emerald-500/25 bg-emerald-500/10 text-xs font-bold text-emerald-400">
             {completedCount}/{totalLessons} done
           </div>
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-cyan-500/20 bg-cyan-500/10 text-xs font-bold text-cyan-300">
-            <Sparkles className="w-3 h-3" />
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-indigo-500/25 bg-indigo-500/10 text-xs font-bold text-indigo-300">
+            <Sparkles className="w-3 h-3 text-cyan-400" />
             Lesson {lesson.lesson_order}
           </div>
         </div>
@@ -119,17 +120,17 @@ export default async function LessonPage({ params }: LessonPageProps) {
 
       <main className="relative z-10 max-w-7xl mx-auto px-4 md:px-8 py-8 space-y-8">
         {/* Hero section */}
-        <section className="relative overflow-hidden rounded-3xl glass-card p-6 md:p-10">
-          <div className="absolute inset-0 bg-mesh-violet opacity-60 pointer-events-none" />
+        <section className="relative overflow-hidden rounded-3xl modern-card p-6 md:p-10">
+          <div className="absolute inset-0 bg-mesh-violet opacity-40 pointer-events-none" />
           <div className="grain-overlay" />
 
           <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-4 max-w-3xl">
-              <div className="inline-flex items-center gap-2 rounded-full border border-violet-500/20 bg-violet-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-violet-300">
+              <div className="inline-flex items-center gap-2 rounded-full border border-violet-500/25 bg-violet-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-violet-300">
                 <BookOpen className="h-3.5 w-3.5" />
                 {course.title}
               </div>
-              <h1 className="text-2xl md:text-4xl font-black tracking-tight text-white">
+              <h1 className="text-2xl md:text-4xl font-black tracking-tight text-white font-plus-jakarta">
                 {lesson.title}
               </h1>
               <p className="text-sm md:text-base leading-relaxed text-zinc-400">
@@ -139,25 +140,25 @@ export default async function LessonPage({ params }: LessonPageProps) {
 
             {/* Stats grid */}
             <div className="grid grid-cols-2 gap-3 text-xs sm:min-w-[280px]">
-              <div className="rounded-2xl border border-white/5 bg-white/[0.03] p-4">
+              <div className="rounded-2xl border border-white/[0.08] bg-[#0b0f19]/80 p-4">
                 <p className="text-zinc-500 uppercase tracking-wider font-bold text-[10px]">Order</p>
                 <p className="mt-2 text-lg font-black text-white">{lesson.lesson_order}</p>
               </div>
-              <div className="rounded-2xl border border-white/5 bg-white/[0.03] p-4">
+              <div className="rounded-2xl border border-white/[0.08] bg-[#0b0f19]/80 p-4">
                 <p className="text-zinc-500 uppercase tracking-wider font-bold text-[10px]">Video</p>
                 <p className="mt-2 text-lg font-black text-white">
                   {lesson.video_url ? "Ready" : "None"}
                 </p>
               </div>
-              <div className="col-span-2 rounded-2xl border border-white/5 bg-white/[0.03] p-4">
+              <div className="col-span-2 rounded-2xl border border-white/[0.08] bg-[#0b0f19]/80 p-4">
                 <p className="text-zinc-500 uppercase tracking-wider font-bold text-[10px]">
                   Course Progress
                 </p>
                 <div className="mt-2 flex items-center gap-3">
                   <p className="text-lg font-black text-white">{progressPct}%</p>
-                  <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                  <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-gradient-to-r from-violet-500 to-cyan-400 rounded-full transition-all duration-700"
+                      className="h-full bg-gradient-to-r from-indigo-500 via-violet-500 to-cyan-400 rounded-full transition-all duration-700"
                       style={{ width: `${progressPct}%` }}
                     />
                   </div>
@@ -182,7 +183,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
               courseId={id}
             />
 
-            <div className="rounded-3xl glass-card p-6">
+            <div className="rounded-3xl modern-card p-6">
               <h2 className="text-sm font-bold text-white">Lesson Notes</h2>
               <p className="mt-3 text-sm leading-relaxed text-zinc-400">
                 Use this space to add notes, supporting links, or a transcript
@@ -201,9 +202,9 @@ export default async function LessonPage({ params }: LessonPageProps) {
               initialCompleted={isCompleted}
             />
 
-            <div className="rounded-3xl glass-card p-6">
+            <div className="rounded-3xl modern-card p-6">
               <h2 className="flex items-center gap-2 text-sm font-bold text-white">
-                <Clock className="h-4 w-4 text-cyan-300" />
+                <Clock className="h-4 w-4 text-cyan-400" />
                 Lesson Meta
               </h2>
               <dl className="mt-4 space-y-4 text-sm">
