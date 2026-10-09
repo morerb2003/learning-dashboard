@@ -119,10 +119,10 @@ export default function CourseCard({ course, index }: CourseCardProps) {
             <span className="text-zinc-300 group-hover:text-violet-400 transition-colors">{course.progress}%</span>
           </div>
 
-          {/* Custom Animated Progress Bar - layout-shift free using scaleX */}
-          <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden relative">
+          {/* Custom Animated Progress Bar with Stitch Cyan-to-Emerald Gradient */}
+          <div className="w-full h-1.5 bg-[#171b26] rounded-full overflow-hidden relative">
             <motion.div
-              className="h-full bg-gradient-to-r from-violet-500 to-indigo-500 rounded-full"
+              className="h-full bg-gradient-to-r from-[#00f2fe] to-[#10b981] rounded-full shadow-[0_0_8px_rgba(0,242,254,0.4)]"
               initial={{ scaleX: 0 }}
               animate={{ scaleX: course.progress / 100 }}
               style={{ transformOrigin: "left" }}

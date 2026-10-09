@@ -74,7 +74,7 @@ export default function ActivityChart({
             >
               <defs>
                 <linearGradient id="colorHours" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.25} />
+                  <stop offset="5%" stopColor="#00f2fe" stopOpacity={0.35} />
                   <stop offset="95%" stopColor="#6366f1" stopOpacity={0.0} />
                 </linearGradient>
               </defs>
@@ -82,12 +82,12 @@ export default function ActivityChart({
               <CartesianGrid 
                 strokeDasharray="3 3" 
                 vertical={false} 
-                stroke="rgba(255, 255, 255, 0.04)" 
+                stroke="rgba(255, 255, 255, 0.05)" 
               />
 
               <XAxis 
                 dataKey="day" 
-                stroke="#52525b" 
+                stroke="#849495" 
                 fontSize={10}
                 tickLine={false}
                 axisLine={false}
@@ -95,7 +95,7 @@ export default function ActivityChart({
               />
 
               <YAxis 
-                stroke="#52525b" 
+                stroke="#849495" 
                 fontSize={10}
                 tickLine={false}
                 axisLine={false}
@@ -104,21 +104,21 @@ export default function ActivityChart({
 
               <Tooltip 
                 content={<CustomTooltip />} 
-                cursor={{ stroke: 'rgba(139, 92, 246, 0.15)', strokeWidth: 1 }}
+                cursor={{ stroke: 'rgba(0, 242, 254, 0.2)', strokeWidth: 1 }}
               />
 
               <Area
                 type="monotone"
                 dataKey="modules"
-                stroke="#8b5cf6"
-                strokeWidth={2}
+                stroke="#00f2fe"
+                strokeWidth={2.5}
                 fillOpacity={1}
                 fill="url(#colorHours)"
                 activeDot={{ 
-                  r: 4, 
-                  stroke: '#8b5cf6', 
+                  r: 5, 
+                  stroke: '#00f2fe', 
                   strokeWidth: 2, 
-                  fill: '#030303' 
+                  fill: '#0b0f19' 
                 }}
               />
             </AreaChart>

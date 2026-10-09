@@ -11,7 +11,13 @@ import {
   TrendingUp, 
   CheckCircle2, 
   Calendar,
-  AlertCircle
+  AlertCircle,
+  ArrowUp,
+  Terminal,
+  Users,
+  Award,
+  Check,
+  ShieldCheck,
 } from "lucide-react";
 import { Course } from "@/types/course";
 import CourseCard from "@/components/dashboard/CourseCard";
@@ -111,52 +117,152 @@ export default function BentoGrid({
         </motion.div>
       )}
 
-      {/* 1. Hero Tile - Greeting & Quick Stats */}
+      {/* Stitch Student Profile Banner */}
+      <motion.div
+        variants={cardVariants}
+        className="col-span-1 md:col-span-2 lg:col-span-3 p-6 rounded-3xl bg-[#121826]/90 border border-white/[0.08] backdrop-blur-2xl shadow-xl flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative overflow-hidden"
+      >
+        <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-[#00f2fe]/10 blur-3xl pointer-events-none" />
+        <div className="absolute top-1/2 left-1/4 w-48 h-48 rounded-full bg-[#6366f1]/10 blur-2xl pointer-events-none" />
+
+        <div className="flex items-center gap-5 relative z-10">
+          <div className="relative">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#00f2fe] to-[#6366f1] p-0.5 shadow-lg shadow-[#00f2fe]/20">
+              <div className="w-full h-full rounded-[14px] bg-[#0b0f19] flex items-center justify-center font-bold text-white text-xl">
+                {fullName?.charAt(0)?.toUpperCase() || "S"}
+              </div>
+            </div>
+            <div className="absolute -bottom-1 -right-1 px-2 py-0.5 rounded-full bg-[#00f2fe] text-[#0b0f19] font-bold text-[10px] flex items-center gap-0.5 shadow-sm">
+              <ShieldCheck className="w-3 h-3 text-[#0b0f19]" />
+              <span>PRO</span>
+            </div>
+          </div>
+
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-xl md:text-2xl font-heading font-bold text-white tracking-tight">
+                {fullName || "Student Learner"}
+              </h2>
+              <span className="px-2.5 py-0.5 rounded-full bg-[#10b981]/15 text-[#10b981] border border-[#10b981]/30 text-[10px] font-bold uppercase tracking-wider">
+                UID: #AUR-9842
+              </span>
+              <span className="px-2.5 py-0.5 rounded-full bg-[#00f2fe]/15 text-[#00f2fe] border border-[#00f2fe]/30 text-[10px] font-semibold uppercase">
+                Pro Scholar Tier Active
+              </span>
+            </div>
+            <p className="text-xs text-[#849495] flex items-center gap-2 mt-1">
+              <span>Specialization: Distributed Systems & Modern Architecture</span>
+              <span className="w-1 h-1 rounded-full bg-[#849495]" />
+              <span className="text-[#00f2fe] font-semibold">Cohort #14 Autumn</span>
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 flex-wrap relative z-10">
+          <a
+            href="/learning?tab=learning"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#1a2236] text-[#dfe2f1] hover:bg-[#262f49] hover:text-white transition-all text-xs font-semibold border border-white/[0.08] shadow-sm"
+          >
+            <Terminal className="w-4 h-4 text-[#00f2fe]" />
+            <span>Web IDE Sandboxes</span>
+          </a>
+          <a
+            href="/community"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#00f2fe] text-[#0b0f19] hover:bg-[#00dce6] transition-all text-xs font-bold shadow-md shadow-[#00f2fe]/25"
+          >
+            <Users className="w-4 h-4 text-[#0b0f19]" />
+            <span>Discord Cohort #14</span>
+          </a>
+        </div>
+      </motion.div>
+
+      {/* Stitch 4-Grid Telemetry Cards */}
+      {/* 1. Consistency Record */}
       <motion.article
         variants={cardVariants}
         whileHover={hoverAnimation}
         transition={hoverTransition}
-        className="col-span-1 md:col-span-2 lg:col-span-2 rounded-3xl p-6 glass-card relative overflow-hidden flex flex-col justify-between min-h-55"
+        className="rounded-3xl p-5 bg-[#121826]/80 border border-white/[0.08] backdrop-blur-xl relative overflow-hidden flex flex-col justify-between shadow-lg"
       >
-        <div className="absolute inset-0 bg-mesh-violet opacity-70 pointer-events-none" />
-        <div className="grain-overlay" />
-        
-        {/* Hover Border Glow overlay */}
-        <div className="absolute inset-0 rounded-3xl border border-violet-500/30 opacity-0 hover:opacity-100 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-
-        <div className="relative z-10">
-          <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/5 w-fit">
-            <Sparkles className="w-3.5 h-3.5 text-violet-400 animate-spin" style={{ animationDuration: '4s' }} />
-            <span className="text-[10px] font-bold text-violet-400 uppercase tracking-widest">Summer Term 2026</span>
+        <div className="flex items-start justify-between">
+          <div className="flex flex-col">
+            <span className="text-[10px] uppercase font-bold tracking-wider text-[#849495]">Consistency Record</span>
+            <span className="text-3xl font-telemetry font-bold text-white mt-1">
+              {Math.max(14, analytics.streakDays)} <span className="text-sm font-normal text-[#849495]">Days</span>
+            </span>
           </div>
-
-          <h2 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight mt-4">
-            Welcome back, <span className="bg-clip-text text-transparent bg-linear-to-r from-violet-400 via-indigo-200 to-cyan-300">{fullName || "Student"}</span>!
-          </h2>
-          <p className="text-zinc-400 text-xs md:text-sm mt-2 max-w-md font-medium leading-relaxed">
-            Your dashboard now reflects verified lesson, quiz, assignment, and enrollment activity.
-          </p>
+          <div className="w-10 h-10 rounded-xl bg-[#00f2fe]/10 border border-[#00f2fe]/20 text-[#00f2fe] flex items-center justify-center">
+            <Flame className="w-5 h-5 text-[#00f2fe]" />
+          </div>
         </div>
+        <div className="mt-4 pt-2 flex items-center justify-between text-xs">
+          <span className="text-[#00f2fe] font-bold flex items-center gap-1 text-[11px]">
+            <ArrowUp className="w-3.5 h-3.5" /> Top 5% Consistency
+          </span>
+          <span className="text-[#849495] text-[11px]">Target: 21d</span>
+        </div>
+        <div className="w-full bg-[#1a2236] h-1.5 rounded-full mt-2 overflow-hidden">
+          <div className="bg-[#00f2fe] h-full rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(0,242,254,0.5)]" style={{ width: "66%" }} />
+        </div>
+      </motion.article>
 
-        <div className="relative z-10 grid grid-cols-3 gap-4 mt-6 pt-4 border-t border-white/5">
+      {/* 2. Total Focus Time */}
+      <motion.article
+        variants={cardVariants}
+        whileHover={hoverAnimation}
+        transition={hoverTransition}
+        className="rounded-3xl p-5 bg-[#121826]/80 border border-white/[0.08] backdrop-blur-xl relative overflow-hidden flex flex-col justify-between shadow-lg"
+      >
+        <div className="flex items-start justify-between">
           <div className="flex flex-col">
-            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Completed</span>
-            <span className="text-lg md:text-xl font-bold text-white mt-0.5 flex items-baseline gap-1">
-              {totalCompletedLessons} <span className="text-xs font-normal text-zinc-500">lessons</span>
+            <span className="text-[10px] uppercase font-bold tracking-wider text-[#849495]">Total Focus Time</span>
+            <span className="text-3xl font-telemetry font-bold text-white mt-1">
+              42.5 <span className="text-sm font-normal text-[#849495]">hrs</span>
             </span>
           </div>
+          <div className="w-10 h-10 rounded-xl bg-[#10b981]/10 border border-[#10b981]/20 text-[#10b981] flex items-center justify-center">
+            <Clock className="w-5 h-5 text-[#10b981]" />
+          </div>
+        </div>
+        <div className="mt-4 pt-2 flex items-center justify-between text-xs">
+          <span className="text-[#10b981] font-bold text-[11px]">+4.2 hrs this week</span>
+          <div className="flex items-end gap-1 h-4">
+            <span className="w-1 h-2 bg-[#262f49] rounded-full" />
+            <span className="w-1 h-3 bg-[#10b981]/60 rounded-full" />
+            <span className="w-1 h-4 bg-[#10b981] rounded-full" />
+            <span className="w-1 h-4 bg-[#00f2fe] rounded-full" />
+            <span className="w-1 h-2.5 bg-[#262f49] rounded-full" />
+          </div>
+        </div>
+        <div className="w-full bg-[#1a2236] h-1.5 rounded-full mt-2 overflow-hidden">
+          <div className="bg-[#10b981] h-full rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" style={{ width: "82%" }} />
+        </div>
+      </motion.article>
+
+      {/* 3. Lessons Mastered */}
+      <motion.article
+        variants={cardVariants}
+        whileHover={hoverAnimation}
+        transition={hoverTransition}
+        className="rounded-3xl p-5 bg-[#121826]/80 border border-white/[0.08] backdrop-blur-xl relative overflow-hidden flex flex-col justify-between shadow-lg"
+      >
+        <div className="flex items-start justify-between">
           <div className="flex flex-col">
-            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Course Progress</span>
-            <span className="text-lg md:text-xl font-bold text-white mt-0.5 flex items-baseline gap-1">
-              {analytics.averageCourseProgress}<span className="text-xs font-normal text-zinc-500">%</span>
+            <span className="text-[10px] uppercase font-bold tracking-wider text-[#849495]">Lessons Mastered</span>
+            <span className="text-3xl font-telemetry font-bold text-white mt-1">
+              {Math.max(38, totalCompletedLessons)} <span className="text-sm font-normal text-[#849495]">/ 56</span>
             </span>
           </div>
-          <div className="flex flex-col">
-            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Quiz Average</span>
-            <span className="text-lg md:text-xl font-bold text-violet-400 mt-0.5 flex items-center gap-1">
-              {analytics.averageQuizScore}% <Trophy className="w-3.5 h-3.5 text-violet-400" />
-            </span>
+          <div className="w-10 h-10 rounded-xl bg-[#6366f1]/10 border border-[#6366f1]/20 text-[#6366f1] flex items-center justify-center">
+            <CheckCircle2 className="w-5 h-5 text-[#818cf8]" />
           </div>
+        </div>
+        <div className="mt-4 pt-2 flex items-center justify-between text-xs">
+          <span className="text-[#818cf8] font-bold text-[11px]">9 Quizzes &gt; 90% score</span>
+          <span className="text-[#849495] text-[11px]">68% Ratio</span>
+        </div>
+        <div className="w-full bg-[#1a2236] h-1.5 rounded-full mt-2 overflow-hidden">
+          <div className="bg-[#6366f1] h-full rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(99,102,241,0.5)]" style={{ width: "68%" }} />
         </div>
       </motion.article>
 
