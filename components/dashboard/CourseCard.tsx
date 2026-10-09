@@ -102,34 +102,34 @@ export default function CourseCard({ course, index }: CourseCardProps) {
 
       <div className="relative z-10 mt-auto space-y-4">
         <div>
-          <span className="text-[10px] uppercase font-bold tracking-widest text-violet-400/80">
+          <span className="text-[10px] uppercase font-bold tracking-widest text-indigo-400">
             {course.category || "General"}
           </span>
-          <h3 className="text-base font-bold text-white tracking-wide mt-0.5 line-clamp-1 group-hover:text-violet-200 transition-colors duration-200">
+          <h3 className="text-base font-bold text-white tracking-wide mt-0.5 line-clamp-1 group-hover:text-indigo-200 transition-colors duration-200">
             {course.title}
           </h3>
-          <p className="text-[10px] text-zinc-500 font-medium mt-0.5">
+          <p className="text-[10px] text-slate-400 font-medium mt-0.5">
             Instructor: {course.teacher_name || "Staff"}
           </p>
         </div>
 
         <div className="space-y-2">
           <div className="flex items-center justify-between text-xs font-semibold">
-            <span className="text-zinc-500">Progress</span>
-            <span className="text-zinc-300 group-hover:text-violet-400 transition-colors">{course.progress}%</span>
+            <span className="text-slate-500">Progress</span>
+            <span className="text-slate-300 group-hover:text-indigo-400 transition-colors">{course.progress}%</span>
           </div>
 
-          {/* Custom Animated Progress Bar with Stitch Cyan-to-Emerald Gradient */}
-          <div className="w-full h-1.5 bg-[#171b26] rounded-full overflow-hidden relative">
+          {/* Custom Animated Progress Bar with Modern Indigo-Violet-Cyan Gradient */}
+          <div className="w-full h-1.5 bg-white/[0.06] rounded-full overflow-hidden relative">
             <motion.div
-              className="h-full bg-gradient-to-r from-[#00f2fe] to-[#10b981] rounded-full shadow-[0_0_8px_rgba(0,242,254,0.4)]"
+              className="h-full bg-gradient-to-r from-indigo-500 via-violet-500 to-cyan-400 rounded-full shadow-[0_0_10px_rgba(99,102,241,0.5)]"
               initial={{ scaleX: 0 }}
               animate={{ scaleX: course.progress / 100 }}
               style={{ transformOrigin: "left" }}
               transition={{ 
                 type: "spring", 
                 stiffness: 85, 
-                damping: 15,
+                damping: 15, 
                 delay: 0.15 + index * 0.1 
               }}
             />

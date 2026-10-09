@@ -1,19 +1,16 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background-base: #0b0f19;
-  --color-surface-container: #121826;
-  --color-surface-container-high: #1a2236;
-  --color-card-dark: #101624;
+  --color-background-base: #030712;
+  --color-surface-container: #0b0f19;
+  --color-surface-container-high: #111827;
+  --color-card-dark: #0a0e1a;
   --color-card-border: rgba(255, 255, 255, 0.08);
-  --color-primary-cyan: #00f2fe;
-  --color-primary-cyan-dim: #00dce6;
-  --color-secondary-emerald: #10b981;
-  --color-tertiary-indigo: #6366f1;
-  --color-glow-violet: #8b5cf6;
-  --color-glow-indigo: #6366f1;
-  --color-glow-cyan: #00f2fe;
-  --color-glow-emerald: #10b981;
+  --color-brand-primary: #6366f1;
+  --color-brand-violet: #8b5cf6;
+  --color-brand-cyan: #06b6d4;
+  --color-brand-emerald: #10b981;
+  --color-brand-amber: #f59e0b;
 }
 
 :root {
@@ -21,13 +18,13 @@
 }
 
 body {
-  background-color: var(--color-background-base);
+  background-color: #030712;
   background-image: 
-    radial-gradient(circle at 15% 15%, rgba(0, 242, 254, 0.07) 0%, transparent 45%),
-    radial-gradient(circle at 85% 85%, rgba(99, 102, 241, 0.08) 0%, transparent 45%),
-    radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.04) 0%, transparent 55%);
+    radial-gradient(ellipse 80% 50% at 50% -15%, rgba(99, 102, 241, 0.16), transparent 70%),
+    radial-gradient(circle 600px at 95% 25%, rgba(139, 92, 246, 0.08), transparent 60%),
+    radial-gradient(circle 500px at 5% 75%, rgba(6, 182, 212, 0.06), transparent 50%);
   background-attachment: fixed;
-  color: #dfe2f1;
+  color: #f1f5f9;
   font-family: var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   overflow-x: hidden;
 }
@@ -38,7 +35,32 @@ body {
 
 .font-telemetry {
   font-family: var(--font-plus-jakarta), sans-serif;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
+}
+
+/* Linear/Raycast-grade modern card with top specular border highlight */
+.modern-card {
+  background: rgba(11, 15, 25, 0.72);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-top-color: rgba(255, 255, 255, 0.18);
+  box-shadow: 
+    0 16px 40px -12px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.modern-card-hover {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.modern-card-hover:hover {
+  border-color: rgba(99, 102, 241, 0.3);
+  border-top-color: rgba(139, 92, 246, 0.5);
+  box-shadow: 
+    0 20px 48px -10px rgba(0, 0, 0, 0.7),
+    0 0 30px rgba(99, 102, 241, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
 }
 
 /* Glassmorphism Card Style 2.0 with Specular Highlight and Top Border Bevel */

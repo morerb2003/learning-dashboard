@@ -117,43 +117,43 @@ export default function BentoGrid({
         </motion.div>
       )}
 
-      {/* Stitch Student Profile Banner */}
+      {/* Modern Student Profile Banner */}
       <motion.div
         variants={cardVariants}
-        className="col-span-1 md:col-span-2 lg:col-span-3 p-6 rounded-3xl bg-[#121826]/90 border border-white/[0.08] backdrop-blur-2xl shadow-xl flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative overflow-hidden"
+        className="col-span-1 md:col-span-2 lg:col-span-3 p-6 rounded-3xl bg-[#0b0f19]/80 border border-white/[0.08] border-t-white/[0.18] backdrop-blur-2xl shadow-[0_16px_40px_-12px_rgba(0,0,0,0.6)] flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative overflow-hidden"
       >
-        <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-[#00f2fe]/10 blur-3xl pointer-events-none" />
-        <div className="absolute top-1/2 left-1/4 w-48 h-48 rounded-full bg-[#6366f1]/10 blur-2xl pointer-events-none" />
+        <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
+        <div className="absolute top-1/2 left-1/4 w-48 h-48 rounded-full bg-violet-500/10 blur-2xl pointer-events-none" />
 
         <div className="flex items-center gap-5 relative z-10">
           <div className="relative">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#00f2fe] to-[#6366f1] p-0.5 shadow-lg shadow-[#00f2fe]/20">
-              <div className="w-full h-full rounded-[14px] bg-[#0b0f19] flex items-center justify-center font-bold text-white text-xl">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-indigo-500 via-violet-500 to-cyan-400 p-0.5 shadow-lg shadow-indigo-500/25">
+              <div className="w-full h-full rounded-[14px] bg-[#030712] flex items-center justify-center font-bold text-white text-xl">
                 {fullName?.charAt(0)?.toUpperCase() || "S"}
               </div>
             </div>
-            <div className="absolute -bottom-1 -right-1 px-2 py-0.5 rounded-full bg-[#00f2fe] text-[#0b0f19] font-bold text-[10px] flex items-center gap-0.5 shadow-sm">
-              <ShieldCheck className="w-3 h-3 text-[#0b0f19]" />
+            <div className="absolute -bottom-1 -right-1 px-2 py-0.5 rounded-full bg-indigo-500 text-white font-bold text-[10px] flex items-center gap-0.5 shadow-md shadow-indigo-500/30">
+              <ShieldCheck className="w-3 h-3 text-white" />
               <span>PRO</span>
             </div>
           </div>
 
           <div className="flex flex-col">
             <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-xl md:text-2xl font-heading font-bold text-white tracking-tight">
+              <h2 className="text-xl md:text-2xl font-heading font-extrabold text-white tracking-tight">
                 {fullName || "Student Learner"}
               </h2>
-              <span className="px-2.5 py-0.5 rounded-full bg-[#10b981]/15 text-[#10b981] border border-[#10b981]/30 text-[10px] font-bold uppercase tracking-wider">
+              <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold uppercase tracking-wider">
                 UID: #AUR-9842
               </span>
-              <span className="px-2.5 py-0.5 rounded-full bg-[#00f2fe]/15 text-[#00f2fe] border border-[#00f2fe]/30 text-[10px] font-semibold uppercase">
+              <span className="px-2.5 py-0.5 rounded-full bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 text-[10px] font-semibold uppercase">
                 Pro Scholar Tier Active
               </span>
             </div>
-            <p className="text-xs text-[#849495] flex items-center gap-2 mt-1">
+            <p className="text-xs text-slate-400 flex items-center gap-2 mt-1">
               <span>Specialization: Distributed Systems & Modern Architecture</span>
-              <span className="w-1 h-1 rounded-full bg-[#849495]" />
-              <span className="text-[#00f2fe] font-semibold">Cohort #14 Autumn</span>
+              <span className="w-1 h-1 rounded-full bg-slate-600" />
+              <span className="text-indigo-400 font-semibold">Cohort #14 Autumn</span>
             </p>
           </div>
         </div>
@@ -161,48 +161,48 @@ export default function BentoGrid({
         <div className="flex items-center gap-3 flex-wrap relative z-10">
           <a
             href="/learning?tab=learning"
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#1a2236] text-[#dfe2f1] hover:bg-[#262f49] hover:text-white transition-all text-xs font-semibold border border-white/[0.08] shadow-sm"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/[0.04] text-slate-200 hover:bg-white/[0.08] hover:text-white transition-all text-xs font-semibold border border-white/[0.08] shadow-sm"
           >
-            <Terminal className="w-4 h-4 text-[#00f2fe]" />
+            <Terminal className="w-4 h-4 text-indigo-400" />
             <span>Web IDE Sandboxes</span>
           </a>
           <a
             href="/community"
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#00f2fe] text-[#0b0f19] hover:bg-[#00dce6] transition-all text-xs font-bold shadow-md shadow-[#00f2fe]/25"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 via-violet-600 to-indigo-600 text-white hover:opacity-95 transition-all text-xs font-bold shadow-lg shadow-indigo-500/25"
           >
-            <Users className="w-4 h-4 text-[#0b0f19]" />
+            <Users className="w-4 h-4 text-white" />
             <span>Discord Cohort #14</span>
           </a>
         </div>
       </motion.div>
 
-      {/* Stitch 4-Grid Telemetry Cards */}
+      {/* Modern 4-Grid Telemetry Cards */}
       {/* 1. Consistency Record */}
       <motion.article
         variants={cardVariants}
         whileHover={hoverAnimation}
         transition={hoverTransition}
-        className="rounded-3xl p-5 bg-[#121826]/80 border border-white/[0.08] backdrop-blur-xl relative overflow-hidden flex flex-col justify-between shadow-lg"
+        className="rounded-3xl p-5 bg-[#0b0f19]/80 border border-white/[0.07] border-t-white/[0.16] backdrop-blur-xl relative overflow-hidden flex flex-col justify-between shadow-xl"
       >
         <div className="flex items-start justify-between">
           <div className="flex flex-col">
-            <span className="text-[10px] uppercase font-bold tracking-wider text-[#849495]">Consistency Record</span>
-            <span className="text-3xl font-telemetry font-bold text-white mt-1">
-              {Math.max(14, analytics.streakDays)} <span className="text-sm font-normal text-[#849495]">Days</span>
+            <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Consistency Record</span>
+            <span className="text-3xl font-telemetry font-extrabold text-white mt-1">
+              {Math.max(14, analytics.streakDays)} <span className="text-sm font-normal text-slate-400">Days</span>
             </span>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-[#00f2fe]/10 border border-[#00f2fe]/20 text-[#00f2fe] flex items-center justify-center">
-            <Flame className="w-5 h-5 text-[#00f2fe]" />
+          <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center">
+            <Flame className="w-5 h-5 text-indigo-400" />
           </div>
         </div>
         <div className="mt-4 pt-2 flex items-center justify-between text-xs">
-          <span className="text-[#00f2fe] font-bold flex items-center gap-1 text-[11px]">
+          <span className="text-indigo-400 font-bold flex items-center gap-1 text-[11px]">
             <ArrowUp className="w-3.5 h-3.5" /> Top 5% Consistency
           </span>
-          <span className="text-[#849495] text-[11px]">Target: 21d</span>
+          <span className="text-slate-400 text-[11px]">Target: 21d</span>
         </div>
-        <div className="w-full bg-[#1a2236] h-1.5 rounded-full mt-2 overflow-hidden">
-          <div className="bg-[#00f2fe] h-full rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(0,242,254,0.5)]" style={{ width: "66%" }} />
+        <div className="w-full bg-white/[0.06] h-1.5 rounded-full mt-2 overflow-hidden">
+          <div className="bg-gradient-to-r from-indigo-500 to-violet-500 h-full rounded-full transition-all duration-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]" style={{ width: "66%" }} />
         </div>
       </motion.article>
 
@@ -211,31 +211,31 @@ export default function BentoGrid({
         variants={cardVariants}
         whileHover={hoverAnimation}
         transition={hoverTransition}
-        className="rounded-3xl p-5 bg-[#121826]/80 border border-white/[0.08] backdrop-blur-xl relative overflow-hidden flex flex-col justify-between shadow-lg"
+        className="rounded-3xl p-5 bg-[#0b0f19]/80 border border-white/[0.07] border-t-white/[0.16] backdrop-blur-xl relative overflow-hidden flex flex-col justify-between shadow-xl"
       >
         <div className="flex items-start justify-between">
           <div className="flex flex-col">
-            <span className="text-[10px] uppercase font-bold tracking-wider text-[#849495]">Total Focus Time</span>
-            <span className="text-3xl font-telemetry font-bold text-white mt-1">
-              42.5 <span className="text-sm font-normal text-[#849495]">hrs</span>
+            <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Total Focus Time</span>
+            <span className="text-3xl font-telemetry font-extrabold text-white mt-1">
+              42.5 <span className="text-sm font-normal text-slate-400">hrs</span>
             </span>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-[#10b981]/10 border border-[#10b981]/20 text-[#10b981] flex items-center justify-center">
-            <Clock className="w-5 h-5 text-[#10b981]" />
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center">
+            <Clock className="w-5 h-5 text-emerald-400" />
           </div>
         </div>
         <div className="mt-4 pt-2 flex items-center justify-between text-xs">
-          <span className="text-[#10b981] font-bold text-[11px]">+4.2 hrs this week</span>
+          <span className="text-emerald-400 font-bold text-[11px]">+4.2 hrs this week</span>
           <div className="flex items-end gap-1 h-4">
-            <span className="w-1 h-2 bg-[#262f49] rounded-full" />
-            <span className="w-1 h-3 bg-[#10b981]/60 rounded-full" />
-            <span className="w-1 h-4 bg-[#10b981] rounded-full" />
-            <span className="w-1 h-4 bg-[#00f2fe] rounded-full" />
-            <span className="w-1 h-2.5 bg-[#262f49] rounded-full" />
+            <span className="w-1 h-2 bg-white/10 rounded-full" />
+            <span className="w-1 h-3 bg-emerald-500/40 rounded-full" />
+            <span className="w-1 h-4 bg-emerald-400 rounded-full" />
+            <span className="w-1 h-4 bg-teal-400 rounded-full" />
+            <span className="w-1 h-2.5 bg-white/10 rounded-full" />
           </div>
         </div>
-        <div className="w-full bg-[#1a2236] h-1.5 rounded-full mt-2 overflow-hidden">
-          <div className="bg-[#10b981] h-full rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" style={{ width: "82%" }} />
+        <div className="w-full bg-white/[0.06] h-1.5 rounded-full mt-2 overflow-hidden">
+          <div className="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full transition-all duration-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" style={{ width: "82%" }} />
         </div>
       </motion.article>
 
@@ -244,25 +244,25 @@ export default function BentoGrid({
         variants={cardVariants}
         whileHover={hoverAnimation}
         transition={hoverTransition}
-        className="rounded-3xl p-5 bg-[#121826]/80 border border-white/[0.08] backdrop-blur-xl relative overflow-hidden flex flex-col justify-between shadow-lg"
+        className="rounded-3xl p-5 bg-[#0b0f19]/80 border border-white/[0.07] border-t-white/[0.16] backdrop-blur-xl relative overflow-hidden flex flex-col justify-between shadow-xl"
       >
         <div className="flex items-start justify-between">
           <div className="flex flex-col">
-            <span className="text-[10px] uppercase font-bold tracking-wider text-[#849495]">Lessons Mastered</span>
-            <span className="text-3xl font-telemetry font-bold text-white mt-1">
-              {Math.max(38, totalCompletedLessons)} <span className="text-sm font-normal text-[#849495]">/ 56</span>
+            <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Lessons Mastered</span>
+            <span className="text-3xl font-telemetry font-extrabold text-white mt-1">
+              {Math.max(38, totalCompletedLessons)} <span className="text-sm font-normal text-slate-400">/ 56</span>
             </span>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-[#6366f1]/10 border border-[#6366f1]/20 text-[#6366f1] flex items-center justify-center">
-            <CheckCircle2 className="w-5 h-5 text-[#818cf8]" />
+          <div className="w-10 h-10 rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-400 flex items-center justify-center">
+            <CheckCircle2 className="w-5 h-5 text-violet-400" />
           </div>
         </div>
         <div className="mt-4 pt-2 flex items-center justify-between text-xs">
-          <span className="text-[#818cf8] font-bold text-[11px]">9 Quizzes &gt; 90% score</span>
-          <span className="text-[#849495] text-[11px]">68% Ratio</span>
+          <span className="text-violet-300 font-bold text-[11px]">9 Quizzes &gt; 90% score</span>
+          <span className="text-slate-400 text-[11px]">68% Ratio</span>
         </div>
-        <div className="w-full bg-[#1a2236] h-1.5 rounded-full mt-2 overflow-hidden">
-          <div className="bg-[#6366f1] h-full rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(99,102,241,0.5)]" style={{ width: "68%" }} />
+        <div className="w-full bg-white/[0.06] h-1.5 rounded-full mt-2 overflow-hidden">
+          <div className="bg-gradient-to-r from-violet-500 to-indigo-500 h-full rounded-full transition-all duration-500 shadow-[0_0_10px_rgba(139,92,246,0.5)]" style={{ width: "68%" }} />
         </div>
       </motion.article>
 

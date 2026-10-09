@@ -252,13 +252,13 @@ export default function Sidebar({ activeTab, setActiveTab, profile }: SidebarPro
                         {isActive && (
                           <motion.div
                             layoutId="activeTabGlow"
-                            className="absolute inset-0 bg-gradient-to-r from-[#00f2fe]/15 to-[#6366f1]/10 border-l-2 border-[#00f2fe] rounded-xl"
+                            className="absolute inset-0 bg-gradient-to-r from-indigo-500/15 via-violet-500/10 to-transparent border-l-2 border-indigo-500 rounded-xl"
                             transition={{ type: "spring", stiffness: 380, damping: 30 }}
                           />
                         )}
 
                         <div className="relative z-10">
-                          <Icon className={`w-4.5 h-4.5 transition-transform duration-300 group-hover:scale-110 ${isActive ? "text-[#00f2fe]" : "text-zinc-400 group-hover:text-white"}`} />
+                          <Icon className={`w-4.5 h-4.5 transition-transform duration-300 group-hover:scale-110 ${isActive ? "text-indigo-400" : "text-zinc-400 group-hover:text-white"}`} />
                         </div>
 
                         <AnimatePresence>
@@ -383,34 +383,34 @@ export default function Sidebar({ activeTab, setActiveTab, profile }: SidebarPro
             )}
           </div>
 
-          {/* Node Edge Telemetry Card (from Stitch design) */}
+          {/* Node Edge Telemetry Card */}
           {!isCollapsed && (
-            <div className="mx-2 mb-2 p-2.5 rounded-xl bg-[#121826] border border-white/[0.06] flex items-center justify-between">
+            <div className="mx-2 mb-2 p-2.5 rounded-xl bg-[#0b0f19] border border-white/[0.07] flex items-center justify-between">
               <div className="flex flex-col">
-                <span className="text-[9px] uppercase tracking-wider text-[#849495] font-semibold">Node Edge</span>
-                <span className="text-xs text-[#00f2fe] font-bold flex items-center gap-1.5">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#10b981] animate-pulse"></span>
+                <span className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold">Node Edge</span>
+                <span className="text-xs text-indigo-400 font-bold flex items-center gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                   us-east-1 (Live)
                 </span>
               </div>
-              <Cpu className="w-4 h-4 text-[#00f2fe]/80" />
+              <Cpu className="w-4 h-4 text-indigo-400/80" />
             </div>
           )}
 
           {/* User profile section at the bottom */}
-          <div className={`mt-auto space-y-3 border-t border-white/5 pt-4 ${isCollapsed ? "flex flex-col items-center" : "px-3"}`}>
+          <div className={`mt-auto space-y-3 border-t border-white/[0.06] pt-4 ${isCollapsed ? "flex flex-col items-center" : "px-3"}`}>
             <Link
               href="/profile"
               className="flex items-center gap-3 overflow-hidden p-1.5 rounded-2xl hover:bg-white/5 transition-colors group"
             >
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#00f2fe] to-[#6366f1] shrink-0 flex items-center justify-center font-bold text-[#0b0f19] text-xs shadow-md shadow-[#00f2fe]/20 group-hover:scale-105 transition-transform">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 via-violet-500 to-cyan-400 shrink-0 flex items-center justify-center font-bold text-white text-xs shadow-md shadow-indigo-500/25 group-hover:scale-105 transition-transform">
                 {profile.full_name?.charAt(0)?.toUpperCase() || "U"}
               </div>
               {!isCollapsed && (
                 <div className="flex flex-col whitespace-nowrap overflow-hidden">
-                  <span className="text-xs font-semibold text-white group-hover:text-[#00f2fe] transition-colors truncate max-w-[130px]">{profile.full_name}</span>
-                  <span className="text-[10px] text-[#849495] truncate max-w-[130px]">{profile.email}</span>
-                  <span className="mt-1 w-fit rounded-full border border-[#00f2fe]/30 bg-[#00f2fe]/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-[#00f2fe]">
+                  <span className="text-xs font-semibold text-white group-hover:text-indigo-300 transition-colors truncate max-w-[130px]">{profile.full_name}</span>
+                  <span className="text-[10px] text-slate-400 truncate max-w-[130px]">{profile.email}</span>
+                  <span className="mt-1 w-fit rounded-full border border-indigo-500/30 bg-indigo-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-indigo-300">
                     {profile.role}
                   </span>
                 </div>

@@ -74,7 +74,8 @@ export default function ActivityChart({
             >
               <defs>
                 <linearGradient id="colorHours" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#00f2fe" stopOpacity={0.35} />
+                  <stop offset="5%" stopColor="#6366f1" stopOpacity={0.4} />
+                  <stop offset="60%" stopColor="#8b5cf6" stopOpacity={0.15} />
                   <stop offset="95%" stopColor="#6366f1" stopOpacity={0.0} />
                 </linearGradient>
               </defs>
@@ -87,7 +88,7 @@ export default function ActivityChart({
 
               <XAxis 
                 dataKey="day" 
-                stroke="#849495" 
+                stroke="#64748b" 
                 fontSize={10}
                 tickLine={false}
                 axisLine={false}
@@ -95,7 +96,7 @@ export default function ActivityChart({
               />
 
               <YAxis 
-                stroke="#849495" 
+                stroke="#64748b" 
                 fontSize={10}
                 tickLine={false}
                 axisLine={false}
@@ -104,21 +105,21 @@ export default function ActivityChart({
 
               <Tooltip 
                 content={<CustomTooltip />} 
-                cursor={{ stroke: 'rgba(0, 242, 254, 0.2)', strokeWidth: 1 }}
+                cursor={{ stroke: 'rgba(99, 102, 241, 0.25)', strokeWidth: 1 }}
               />
 
               <Area
                 type="monotone"
                 dataKey="modules"
-                stroke="#00f2fe"
+                stroke="#818cf8"
                 strokeWidth={2.5}
                 fillOpacity={1}
                 fill="url(#colorHours)"
                 activeDot={{ 
                   r: 5, 
-                  stroke: '#00f2fe', 
+                  stroke: '#818cf8', 
                   strokeWidth: 2, 
-                  fill: '#0b0f19' 
+                  fill: '#030712' 
                 }}
               />
             </AreaChart>

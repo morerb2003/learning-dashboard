@@ -58,39 +58,39 @@ export default function AdminHeader({
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">
-        {/* Stitch Telemetry Status Badges */}
-        <div className="hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#171b26] border border-white/[0.06] text-xs">
-          <span className="px-2 py-0.5 rounded-full bg-[#00f2fe]/10 text-[#00f2fe] text-[10px] font-bold uppercase tracking-wider border border-[#00f2fe]/30">
+        {/* Modern Telemetry Status Badges */}
+        <div className="hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#0b0f19] border border-white/[0.07] text-xs shadow-sm">
+          <span className="px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-300 text-[10px] font-bold uppercase tracking-wider border border-indigo-500/30">
             Ops v4.8
           </span>
           <div className="h-3 w-px bg-white/10"></div>
-          <span className="flex items-center gap-1.5 text-[11px] text-[#10b981] font-semibold">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#10b981] animate-pulse"></span>
+          <span className="flex items-center gap-1.5 text-[11px] text-emerald-400 font-semibold">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
             Razorpay Live
           </span>
           <div className="h-3 w-px bg-white/10"></div>
-          <span className="text-[10px] text-[#849495]">
+          <span className="text-[10px] text-slate-400">
             Sync: <strong className="text-white">1.2s</strong>
           </span>
         </div>
 
         {/* Quick Role Switcher Pills */}
-        <div className="hidden md:flex items-center p-1 rounded-full bg-[#171b26] border border-white/[0.06] text-[11px] font-semibold">
+        <div className="hidden md:flex items-center p-1 rounded-full bg-[#0b0f19] border border-white/[0.07] text-[11px] font-semibold">
           <Link
             href="/learning"
-            className="px-3 py-1 rounded-full text-[#849495] hover:text-white transition-all"
+            className="px-3 py-1 rounded-full text-slate-400 hover:text-white transition-all"
           >
             Student
           </Link>
           <Link
             href="/teacher"
-            className="px-3 py-1 rounded-full text-[#849495] hover:text-white transition-all"
+            className="px-3 py-1 rounded-full text-slate-400 hover:text-white transition-all"
           >
             Teacher
           </Link>
           <Link
             href="/admin"
-            className="px-3 py-1 rounded-full bg-[#f59e0b]/15 text-[#f59e0b] border border-[#f59e0b]/30 font-bold shadow-[0_0_12px_rgba(245,158,11,0.2)]"
+            className="px-3 py-1 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 font-bold shadow-[0_0_12px_rgba(245,158,11,0.25)]"
           >
             Admin
           </Link>
