@@ -1,201 +1,235 @@
-# AURA Learning Management System
+# 🎓 AURA — Next-Generation Learning Management System
 
-AURA is a role-based learning management system built with Next.js and
-Supabase. It provides student learning workflows, teacher course management,
-and platform administration in one application.
+A modern, role-based Learning Management System (LMS) built with **Next.js 16**, **React 19**, **Supabase**, **Upstash Redis**, and **Tailwind CSS 4**. AURA delivers an end-to-end educational platform with personalized student workflows, teacher course creation & earnings payouts, administrative backoffice governance, AI-assisted learning tools, and secure monetization.
 
-## Features
+---
 
-- Email/password authentication, Google OAuth, and password recovery
-- Student, pending teacher, teacher, and admin roles
-- Course discovery with search, filters, sorting, and enrollment
-- Lessons, progress tracking, notes, assignments, quizzes, and certificates
-- Course reviews, notifications, messaging, discussions, and announcements
-- Teacher analytics, course cloning, bulk lesson import, and CSV export
-- Admin user management, moderation, audit logs, and platform analytics
-- Supabase Row Level Security (RLS), database triggers, storage, and Realtime
-- Unit tests and Playwright end-to-end tests
+## ⚡ Key Features
 
-## Technology
+### 👨‍🎓 Student Learning Experience
+- **Catalog & Discovery**: Search, multi-criteria filtering, categorization, difficulty level sorting, and instant enrollment.
+- **Interactive Course Player**: Video lessons, lesson notes, syllabus progression, and completion tracking.
+- **Assessments & Credentials**: Multiple-choice/true-false quizzes with instant scoring, assignment submissions, and downloadable verified completion certificates.
+- **Interactive Community**: Course reviews with 1–5 star ratings, threaded discussion forums with real-time updates.
+- **AI-Powered Learning Suite**: On-demand AI Tutor drawer for conceptual clarification and AI Quiz Generator for self-evaluation.
+- **Telemetry & Gamification**: Live activity pulse, course view counters, and real-time learner XP leaderboard.
 
-- Next.js 16 App Router
-- React 19 and TypeScript
-- Supabase Auth, Postgres, Storage, and Realtime
-- Tailwind CSS 4
-- Framer Motion and Recharts
-- Node.js test runner and Playwright
+### 👩‍🏫 Teacher Studio & Course Management
+- **Course Authoring**: Course builder with syllabus hierarchy (modules & lessons), video attachments, free previews, and draft/published states.
+- **Course Administration**: Course cloning, bulk lesson import, student roster inspection, and CSV export.
+- **Assignment Grading**: View submitted student files and attach grades and qualitative feedback.
+- **Monetization & Payouts**: Real-time revenue analytics with automated **80/20 platform commission split**, ledger tracking, and payout request modal.
 
-## Quick Start
+### 🛡️ Administrative Governance & Security
+- **User Management**: Role elevation (`student` → `pending_teacher` → `teacher` → `admin`), user status controls, and role-based profiles.
+- **Moderation Queue**: Review user-flagged discussion content, resolve violations, and dismiss reports.
+- **Operational Audit Logs**: Immutable platform activity trail tracking critical events.
+- **Platform Analytics**: Global student enrollments, course activity, revenue charts, and platform announcements.
 
-Requirements:
+### ⚙️ Deep Customization (38 Settings)
+- **Appearance**: Dark / Light / System modes, 6 accent colors (Violet, Cyan, Sky, Emerald, Rose, Amber), compact layout density, and reduced-motion toggles.
+- **Notifications**: Instant, daily, or weekly notification frequency with granular alert channels (email, in-app, course updates, quizzes, certificates).
+- **Privacy & Security**: Profile visibility, learning progress display, password management, and active session termination.
+- **Role-Specific Preferences**: Tailored settings workspaces for Students, Teachers, and Admins.
 
-- Node.js 20.9 or newer
-- npm
-- A Supabase project
+---
 
-Install dependencies and configure the environment:
+## 🛠️ Technology Stack
+
+| Technology | Purpose |
+| :--- | :--- |
+| **Next.js 16 (App Router)** | Server Components (RSC), Dynamic Server Actions, and Turbopack |
+| **React 19** | Latest React concurrent features and modern state management |
+| **TypeScript 5** | Strict, end-to-end type safety |
+| **Supabase** | PostgreSQL database, Row Level Security (RLS), Auth, Storage, & Realtime |
+| **Upstash Redis** | Serverless rate-limiting, request caching, and payment idempotency locks |
+| **Razorpay** | Payment gateway with HMAC-SHA256 signature verification & webhooks |
+| **Tailwind CSS 4** | High-performance modern utility styling |
+| **Framer Motion** | Fluid micro-interactions, tilt cards, spotlights, and counters |
+| **Recharts** | Interactive revenue, enrollment, and activity analytics charts |
+| **Node.js Test Runner & Playwright** | 70 automated unit/integration tests and end-to-end browser testing |
+
+---
+
+## 🚀 Quick Start
+
+### 1. Prerequisites
+- **Node.js**: `v20.9` or newer
+- **npm**: `v10` or newer
+- **Supabase Account**: A provisioned PostgreSQL project ([supabase.com](https://supabase.com))
+- **Upstash Redis Account** *(Optional but recommended)*: Free serverless database ([upstash.com](https://upstash.com))
+- **Razorpay Account** *(Optional)*: Test API keys ([razorpay.com](https://razorpay.com))
+
+### 2. Installation & Setup
 
 ```bash
+# Clone the repository
+git clone https://github.com/morerb2003/learning-dashboard.git
+cd learning-dashboard
+
+# Install dependencies
 npm install
+
+# Create environment configuration
 copy .env.example .env.local
 ```
 
-Set the following required variables in `.env.local`:
+### 3. Configure Environment Variables (`.env.local`)
 
-```text
+```env
+# Required Supabase Credentials
 NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+
+# Upstash Redis (Server-only; optional, defaults to memory fail-safe fallback)
+UPSTASH_REDIS_REST_URL=https://your-upstash-redis-url.upstash.io
+UPSTASH_REDIS_REST_TOKEN=your-upstash-redis-rest-token
+
+# Payment Gateway (Optional, defaults to mock if unconfigured)
+PAYMENT_GATEWAY=mock # or "razorpay"
+RAZORPAY_KEY_ID=rzp_test_xxxxxxxxxxxxx
+RAZORPAY_KEY_SECRET=your_razorpay_key_secret
+RAZORPAY_WEBHOOK_SECRET=your_webhook_secret
 ```
 
-Run the database migrations sequentially in the Supabase SQL Editor as detailed in [migrations/README.md](migrations/README.md):
+### 4. Database Migrations
 
-1. `migrations/001_core_profiles.sql`
-2. `migrations/002_courses.sql`
-3. `migrations/003_learning_progress.sql`
-4. `migrations/004_quizzes.sql`
-5. `migrations/005_assignments.sql`
-6. `migrations/006_certificates.sql`
-7. `migrations/007_settings.sql`
-8. `migrations/008_role_profiles.sql`
-9. `migrations/009_payments.sql`
-10. `migrations/010_notifications.sql`
-11. `migrations/011_admin_audit.sql`
-12. `migrations/013_monetization_production.sql`
-13. `migrations/014_system_architecture_hardening.sql`
+Apply the migration scripts sequentially in the **Supabase Dashboard → SQL Editor** as documented in [migrations/README.md](migrations/README.md):
 
-All migration files are idempotent and production-safe.
+1. `migrations/001_core_profiles.sql` — Profiles, role constraints, and `auth.users` provisioning trigger
+2. `migrations/002_courses.sql` — Course catalog, modules, lessons, and publishing RLS
+3. `migrations/003_learning_progress.sql` — Student enrollments, lesson progress, and notes
+4. `migrations/004_quizzes.sql` — Multi-question quizzes and student attempt tracking
+5. `migrations/005_assignments.sql` — Teacher assignments and student file submissions
+6. `migrations/006_certificates.sql` — Dynamic course completion credentials and verification tokens
+7. `migrations/007_settings.sql` — 38 user preferences across appearance, privacy, and roles
+8. `migrations/008_role_profiles.sql` — Role extension tables (Student, Teacher, Admin)
+9. `migrations/009_payments.sql` — Subscriptions, coupons, and payment intents
+10. `migrations/010_notifications.sql` — In-app alerts, reviews, discussions, and Realtime publications
+11. `migrations/011_admin_audit.sql` — Operational audit logging and site-wide announcements
+12. `migrations/013_monetization_production.sql` — 80/20 teacher revenue ledger, payout requests, refunds, and webhooks
+13. `migrations/014_system_architecture_hardening.sql` — Idempotency locks, security tracking, and integrity checks
 
-Start the application:
+*All migrations are idempotent and non-destructive.*
+
+### 5. Supabase URL & Storage Configuration
+
+1. In **Authentication > URL Configuration**:
+   - **Site URL**: `http://localhost:3000`
+   - **Redirect URLs**: Add `http://localhost:3000/auth/callback`
+2. Storage buckets configured by migrations:
+   - `course-thumbnails` (Public)
+   - `assignment-submissions` (Authenticated)
+
+### 6. Run the Application
 
 ```bash
 npm run dev
 ```
 
-Open `http://localhost:3000`.
+Visit [http://localhost:3000](http://localhost:3000) in your browser.
 
-## Supabase Configuration
+---
 
-In **Authentication > URL Configuration**, set the site URL and allow the auth
-callback URL:
-
-```text
-http://localhost:3000
-http://localhost:3000/auth/callback
-```
-
-For a deployed app, replace the local origin with the production origin.
-
-The SQL setup creates these public storage buckets:
-
-- `course-thumbnails`
-- `assignment-submissions`
-
-Teacher registrations initially receive the `pending_teacher` role. An admin
-must promote the profile to `teacher` before teacher routes become available.
-
-## Upstash Redis Configuration (Rate Limiting, Cache, & Idempotency)
-
-AURA integrates **Upstash Redis** for high-performance serverless rate limiting, response caching, temporary verification data, login security throttling, and payment idempotency. Supabase PostgreSQL remains the persistent source of truth.
-
-### Setup Instructions:
-
-1. **Create an Upstash Redis Database**:
-   - Go to [Upstash Console](https://console.upstash.com/) and create a free or standard Redis database.
-   - Choose a region geographically close to your Supabase instance / Vercel deployment.
-2. **Copy REST Credentials**:
-   - Under database details, find the **REST API** section.
-   - Copy `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`.
-3. **Configure Local Environment**:
-   - Add the variables to your local `.env.local`:
-     ```env
-     UPSTASH_REDIS_REST_URL=https://your-upstash-redis-url.upstash.io
-     UPSTASH_REDIS_REST_TOKEN=your-upstash-redis-rest-token
-     ```
-   - **Security Note**: Never expose these credentials with `NEXT_PUBLIC_`. Redis is strictly server-only.
-4. **Configure Production (Vercel)**:
-   - In your Vercel Project Settings > **Environment Variables**, add `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`.
-5. **Restart & Redeploy**:
-   - For local development: restart `npm run dev`.
-   - For production: trigger a redeploy or git push.
-
-*Note: If Redis environment variables are omitted or temporarily unreachable, AURA automatically and gracefully activates in-memory fail-safe fallbacks so core LMS functionality is never interrupted.*
-
-## Razorpay Payment Gateway Configuration (Test & Live Modes)
-
-AURA natively integrates **Razorpay** for course enrollments and subscription upgrades, featuring HMAC-SHA256 signature verification, Redis payment idempotency, and automated webhook reconciliation.
-
-### Setup Instructions:
-
-1. **Obtain API Keys from Razorpay Dashboard**:
-   - Log in to your [Razorpay Dashboard](https://dashboard.razorpay.com/).
-   - Navigate to **Settings > API Keys**.
-   - Generate your **Key ID** (`rzp_test_...` or `rzp_live_...`) and **Key Secret**.
-2. **Configure Webhook**:
-   - In Razorpay Dashboard, go to **Settings > Webhooks > Add New Webhook**.
-   - Set **Webhook URL**: `https://your-domain.com/api/payments/webhook` (or using ngrok during local development).
-   - Enter a secure random string for **Secret** (e.g. 32 alphanumeric characters).
-   - Select active events:
-     - `payment.captured`
-     - `order.paid`
-     - `payment.failed`
-3. **Set Environment Variables in `.env.local`**:
-   ```env
-   RAZORPAY_KEY_ID=rzp_test_xxxxxxxxxxxxx
-   RAZORPAY_KEY_SECRET=your_razorpay_key_secret
-   RAZORPAY_WEBHOOK_SECRET=your_webhook_secret
-   PAYMENT_GATEWAY=razorpay
-   ```
-   *Security Warning*: `RAZORPAY_KEY_SECRET` and `RAZORPAY_WEBHOOK_SECRET` are strictly server-only. Never expose them to client code or prefix with `NEXT_PUBLIC_`.
-4. **Fallback / Test Mock Gateway**:
-   - If `PAYMENT_GATEWAY` is omitted or set to `mock`, AURA uses the built-in `MockPaymentGateway` for instantaneous testing without external network dependencies.
-
-## Commands
-
-```bash
-npm run dev             # Start the local development server
-npm run dev:host        # Expose the server to the local network
-npm run lint            # Run ESLint
-npm test                # Run unit tests
-npm run test:e2e        # Run Playwright tests
-npm run test:e2e:ui     # Open Playwright UI mode
-npm run test:e2e:install
-npm run build           # Validate types and create a production build
-npm start               # Run the production build
-```
-
-Authenticated E2E workflows use optional test account variables documented in
-[`.env.example`](.env.example). Tests skip workflows whose credentials or seed
-records are unavailable.
-
-## Project Structure
+## 📂 Project Structure
 
 ```text
-app/          App Router pages, layouts, and the OAuth callback route
-components/   Client UI grouped by feature
-lib/          Auth, Supabase, analytics, and server-side course operations
-types/        Shared TypeScript domain models
-tests/        Unit tests
-e2e/          Playwright tests
-docs/         Architecture, application API, and database references
-migrations/  Sequential Supabase schema and policy migrations
-proxy.ts      Session refresh and route-level access control
+learning-dashboard/
+├── app/                          # Next.js App Router (pages, layouts, routes)
+│   ├── admin/                    # Admin dashboard, users, courses, moderation, revenue
+│   ├── api/                      # REST API endpoints & webhook handlers
+│   │   ├── admin/payouts/        # Admin payout approval & disbursement
+│   │   ├── ai/                   # AI Tutor & Quiz Generator endpoints
+│   │   ├── payments/             # Intents, confirmation, coupons, refunds, webhooks
+│   │   ├── teacher/payouts/      # Teacher withdrawal requests
+│   │   └── telemetry/            # Live activity, course views, leaderboard
+│   ├── auth/callback/            # OAuth authentication callback route
+│   ├── course/[id]/              # Course overview, lesson player, & certificate
+│   ├── dashboard/                # Learner personalized dashboard & notes
+│   ├── learning/                 # Quizzes & assignment workspaces
+│   ├── teacher/                  # Teacher studio (courses, analytics, earnings, students)
+│   ├── login/ & register/        # Authentication pages
+│   ├── pricing/                  # Subscription plans & course checkout
+│   ├── settings/                 # 38 granular user & role settings
+│   └── proxy.ts                  # Edge session refresh and route access control
+├── components/                   # Modular React components grouped by domain
+│   ├── admin/                    # Admin tables, moderation queue, revenue charts
+│   ├── ai/                       # AI Tutor drawer and Quiz generator modal
+│   ├── assignments/              # Assignment workspaces & grading views
+│   ├── auth/                     # Authentication forms & layout
+│   ├── community/                # Discussion boards & reply threads
+│   ├── course/                   # Video player, checkout modal, reviews, certificates
+│   ├── dashboard/                # Student dashboard, activity charts, notes view
+│   ├── landing/                  # Bento grid, interactive hero, pricing preview, faq
+│   ├── layout/                   # Headers (Admin, Teacher, Student, Public), footers, sidebars
+│   ├── motion/                   # Framer motion effects (TiltCard, Spotlight, TextReveal)
+│   ├── settings/                 # Tabbed settings client views and role panels
+│   ├── teacher/                  # Analytics charts, stats cards, payout triggers
+│   ├── telemetry/                # LiveActivityPulse, LiveLeaderboardCard, views badge
+│   └── ui/                       # Reusable design system (Button, Card, Modal, Input, Badge, Tabs)
+├── docs/                         # In-depth system documentation
+│   ├── API.md                    # REST API endpoints and error specifications
+│   ├── ARCHITECTURE.md           # High-level architecture and data-flow diagrams
+│   ├── DATABASE.md               # Entity relationships (ERD), schema tables, and RLS
+│   └── payments-architecture.md  # Razorpay integration, 80/20 split, ledger, and refunds
+├── e2e/                          # Playwright end-to-end test suites
+├── lib/                          # Core business logic, services, and utilities
+│   ├── index.ts                  # Common utilities barrel export
+│   ├── ai/                       # AI service integrations & rate-limiting protection
+│   ├── auth/                     # Role guards, permissions, and redirects
+│   ├── course/                   # Course progress, enrollments, and reviews
+│   ├── payments/                 # Gateway selector, Razorpay client, pricing, and refunds
+│   ├── profile/                  # User profile queries and mutations
+│   ├── settings/                 # Settings actions, queries, and default generators
+│   └── supabase/                 # Supabase client, server, and admin factories
+├── migrations/                   # 14 idempotent sequential SQL migrations (001–014)
+│   └── README.md                 # Migration order, schema documentation, and RLS rules
+├── tests/                        # 70 unit and integration tests (node --test)
+└── types/                        # TypeScript domain interfaces with types/index.ts barrel
 ```
 
-## Documentation
+---
 
-- [Architecture](docs/ARCHITECTURE.md)
-- [Application API](docs/API.md)
-- [Database Schema](docs/DATABASE.md)
-- [Contributor Guide](CONTRIBUTING.md)
+## 📜 Available Scripts
 
-## Security Model
+| Command | Description |
+| :--- | :--- |
+| `npm run dev` | Start development server on `http://localhost:3000` |
+| `npm run dev:host` | Start development server accessible on local network (`0.0.0.0`) |
+| `npm run build` | Validate TypeScript types and compile optimized production build |
+| `npm start` | Run the compiled production build |
+| `npm test` | Run the 70 automated unit and integration tests |
+| `npm run lint` | Run ESLint across the codebase |
+| `npm run test:e2e` | Run Playwright end-to-end test suite |
+| `npm run test:e2e:ui` | Open Playwright test runner in interactive UI mode |
 
-The browser uses the public Supabase anon key. Authorization is enforced by:
+---
 
-1. `proxy.ts` for authentication and admin route redirects
-2. Server-side guards for role-sensitive pages
-3. Postgres RLS policies as the final data access boundary
-4. Ownership checks for teacher and student records
+## 🔒 Security Architecture
 
-Never place the Supabase service-role key in a `NEXT_PUBLIC_*` variable or
-client-side code.
+1. **Edge Proxy (`proxy.ts`)**: Session refresh and edge-level route protection redirecting unauthenticated or unauthorized users before rendering.
+2. **PostgreSQL Row-Level Security (RLS)**: Enforced directly at the database engine across all tables — users can only access records they own or are permitted to view.
+3. **Server-Side API Guards**: Server actions and API routes verify authentication tokens and validate role permissions (`student`, `teacher`, `admin`) via [`lib/auth/guards.ts`](lib/auth/guards.ts).
+4. **Financial Ledger & Idempotency**:
+   - Razorpay signatures verified with HMAC-SHA256 (`crypto.timingSafeEqual`).
+   - Payment order quotes generated server-side; client manipulation of prices is blocked.
+   - Redis-backed distributed locks prevent double-spend and parallel checkout requests.
+   - Webhook events deduplicated in database before execution.
+5. **Credential Isolation**: Secret keys (`RAZORPAY_KEY_SECRET`, `UPSTASH_REDIS_REST_TOKEN`, Supabase service keys) are strictly server-only and never exposed to client bundles.
+
+---
+
+## 📖 Documentation Index
+
+- [Architecture Guide](docs/ARCHITECTURE.md) — System boundaries, data flow, and components
+- [REST API Reference](docs/API.md) — Endpoints, payloads, and error codes
+- [Database Schema & ERD](docs/DATABASE.md) — Table definitions, constraints, and security policies
+- [Monetization & Payments Architecture](docs/payments-architecture.md) — Razorpay lifecycle, commission calculations, and ledger
+- [Database Migrations](migrations/README.md) — Sequential execution order and schema changes
+- [Contributor Guide](CONTRIBUTING.md) — Branch conventions, commit standards, and coding guidelines
+
+---
+
+## 📄 License
+
+This project is licensed under the [MIT License](LICENSE).
