@@ -108,8 +108,8 @@ an appropriate RLS policy and ownership checks in SQL.
 current `user_id`. `RealtimeRefresh` subscribes to configured table changes and
 refreshes server-rendered data.
 
-The publication setup is maintained in `professional-features.sql` and
-`remaining-features.sql`.
+The publication setup is maintained in `migrations/010_notifications.sql` and
+`migrations/011_admin_audit.sql`.
 
 ## Error Conventions
 

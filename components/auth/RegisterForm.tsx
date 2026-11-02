@@ -82,7 +82,7 @@ export default function RegisterForm() {
       if (authError) {
         setError(
           authError.message.toLowerCase().includes("database error")
-            ? "Registration is blocked by the database profile trigger. Run fix-registration.sql in Supabase SQL Editor, then try again."
+            ? "Registration is blocked by the database profile trigger. Apply migrations/001_core_profiles.sql in Supabase SQL Editor, then try again."
             : authError.message
         );
         return;

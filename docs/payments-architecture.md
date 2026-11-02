@@ -51,7 +51,7 @@ confirmation RPCs are executable only by the Supabase `service_role`.
 
 ## Database Schema
 
-The complete additive migration is in [`monetization.sql`](../monetization.sql).
+The complete additive migrations are in [`migrations/009_payments.sql`](../migrations/009_payments.sql) and [`migrations/013_monetization_production.sql`](../migrations/013_monetization_production.sql).
 
 | Table | Purpose |
 | --- | --- |

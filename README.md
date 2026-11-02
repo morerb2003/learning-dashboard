@@ -47,20 +47,23 @@ NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 ```
 
-Run the SQL files in the Supabase SQL Editor in this order:
+Run the database migrations sequentially in the Supabase SQL Editor as detailed in [migrations/README.md](migrations/README.md):
 
-1. `seed.sql`
-2. `admin-policies.sql`
-3. `lesson_progress.sql`
-4. `assignments.sql`
-5. `quizzes.sql`
-6. `teacher-course-management.sql`
-7. `professional-features.sql`
-8. `remaining-features.sql`
+1. `migrations/001_core_profiles.sql`
+2. `migrations/002_courses.sql`
+3. `migrations/003_learning_progress.sql`
+4. `migrations/004_quizzes.sql`
+5. `migrations/005_assignments.sql`
+6. `migrations/006_certificates.sql`
+7. `migrations/007_settings.sql`
+8. `migrations/008_role_profiles.sql`
+9. `migrations/009_payments.sql`
+10. `migrations/010_notifications.sql`
+11. `migrations/011_admin_audit.sql`
+12. `migrations/013_monetization_production.sql`
+13. `migrations/014_system_architecture_hardening.sql`
 
-The scripts are designed to be rerunnable. `fix-registration.sql`,
-`enrollments.sql`, and `lessons.sql` are compatibility or focused repair
-scripts and are not required after the complete sequence above.
+All migration files are idempotent and production-safe.
 
 Start the application:
 
@@ -174,7 +177,7 @@ types/        Shared TypeScript domain models
 tests/        Unit tests
 e2e/          Playwright tests
 docs/         Architecture, application API, and database references
-*.sql         Idempotent Supabase schema and policy scripts
+migrations/  Sequential Supabase schema and policy migrations
 proxy.ts      Session refresh and route-level access control
 ```
 
