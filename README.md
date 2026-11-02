@@ -102,13 +102,14 @@ Apply the migration scripts sequentially in the **Supabase Dashboard → SQL Edi
 4. `migrations/004_quizzes.sql` — Multi-question quizzes and student attempt tracking
 5. `migrations/005_assignments.sql` — Teacher assignments and student file submissions
 6. `migrations/006_certificates.sql` — Dynamic course completion credentials and verification tokens
-7. `migrations/007_settings.sql` — 38 user preferences across appearance, privacy, and roles
+7. `migrations/007_settings.sql` — User preferences across appearance, privacy, and roles
 8. `migrations/008_role_profiles.sql` — Role extension tables (Student, Teacher, Admin)
 9. `migrations/009_payments.sql` — Subscriptions, coupons, and payment intents
 10. `migrations/010_notifications.sql` — In-app alerts, reviews, discussions, and Realtime publications
 11. `migrations/011_admin_audit.sql` — Operational audit logging and site-wide announcements
-12. `migrations/013_monetization_production.sql` — 80/20 teacher revenue ledger, payout requests, refunds, and webhooks
-13. `migrations/014_system_architecture_hardening.sql` — Idempotency locks, security tracking, and integrity checks
+12. `migrations/012_payments_ledger.sql` — Subscription plans, payments transactions, coupon redemptions, and revenue ledger
+13. `migrations/013_monetization_production.sql` — 80/20 teacher revenue ledger, payout requests, refunds, and webhooks
+14. `migrations/014_system_architecture_hardening.sql` — Idempotency locks, security tracking, and integrity checks
 
 *All migrations are idempotent and non-destructive.*
 

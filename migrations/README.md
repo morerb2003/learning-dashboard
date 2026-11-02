@@ -16,11 +16,14 @@ Apply these files sequentially in the **Supabase Dashboard → SQL Editor**:
 | **004** | `004_quizzes.sql` | `quizzes`, `questions`, `attempts` | Multi-question quizzes and student submission attempts |
 | **005** | `005_assignments.sql` | `assignments`, `submissions` | Teacher assignments and student file/text submissions |
 | **006** | `006_certificates.sql` | `certificates` | Dynamic course completion credentials and verification tokens |
-| **007** | `007_settings.sql` | `user_settings` | 38 user preferences across appearance, privacy, notifications, and roles |
+| **007** | `007_settings.sql` | `user_settings` | User preferences across appearance, privacy, notifications, and roles |
 | **008** | `008_role_profiles.sql` | `student_profiles`, `teacher_profiles`, `admin_profiles` | Role extension tables for Student, Teacher, and Admin |
-| **009** | `009_payments.sql` | `subscriptions`, `payment_intents`, `coupons` | Monetization, access tiers, and checkout intents |
+| **009** | `009_payments.sql` | `subscriptions`, `payment_intents`, `coupons` | Initial monetization schemas and access tiers |
 | **010** | `010_notifications.sql` | `notifications`, `course_reviews`, `discussions`, `discussion_replies` | In-app alerts, reviews, and community discussion boards |
 | **011** | `011_admin_audit.sql` | `admin_audit_logs`, `announcements` | Operational security logging and site-wide broadcast announcements |
+| **012** | `012_payments_ledger.sql` | `subscription_plans`, `payments`, `coupon_redemptions`, `revenue_ledger` | Complete monetization ledger, payment transactions, and pricing stored procedures |
+| **013** | `013_monetization_production.sql` | `webhook_events`, `teacher_payouts`, `payment_refunds` | 80/20 teacher revenue split, payout requests, refunds, and webhook deduplication |
+| **014** | `014_system_architecture_hardening.sql` | `revenue_ledger` (enhanced), `teacher_payouts` (enhanced) | Concurrency row-locking for payouts, performance indexes, and architecture hardening |
 
 ---
 
@@ -30,4 +33,10 @@ Apply these files sequentially in the **Supabase Dashboard → SQL Editor**:
 * **`user_settings`**: Strictly private — users can only view and update their own `user_id` row.
 * **`enrollments` / `lesson_progress`**: Strictly private — students only see and update their own progress.
 * **`teacher_profiles`**: Public read; teachers can only edit their own profile; verification is admin-controlled.
-* **`admin_profiles` & `admin_audit_logs`**: Strictly restricted to accounts with `role = 'admin'`.
+* **`admin_profiles` & `admin_audit_logs`**: Restricted to accounts with `role = 'admin'`.
+* **`subscription_plans`**: Public read for active plans; admin management.
+* **`payments` & `coupon_redemptions`**: Strictly private — users only read their own transactions; admin reads all; mutations only via security definer RPCs.
+* **`revenue_ledger`**: Teachers view their earned revenue entries; admins view platform totals; direct client mutations are completely blocked.
+* **`teacher_payouts`**: Teachers view own withdrawal requests; admins review and process disbursements.
+* **`payment_refunds`**: Users view own refunds; admins process policy requests.
+* **`webhook_events`**: Strictly restricted to internal service role processing.
